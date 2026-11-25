@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reseñas | Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="bg-stone-100 min-h-screen">
+  <header class="bg-white border-b border-stone-200">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div>
+        <p class="text-xs uppercase tracking-[0.35em] text-stone-500">Panel Administrativo</p>
+        <h1 class="text-2xl font-semibold text-stone-900">GATON DO</h1>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <span class="text-sm text-stone-600"><%= currentAdminEmail || "" %></span>
+        <form action="/admin/logout" method="post">
+          <button class="rounded-xl bg-stone-900 text-white px-4 py-2 text-sm hover:bg-stone-800">
+            Cerrar sesión
+          </button>
+        </form>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-8">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+      <div>
+        <h2 class="text-3xl font-semibold text-stone-900">Reseñas</h2>
+        <p class="text-stone-600 mt-2">Aprueba, oculta o elimina las reseñas del sitio. Las reseñas nuevas quedan pendientes hasta que las apruebes.</p>
+      </div>
+
+      <a href="/admin/dashboard" class="rounded-xl bg-white border border-stone-300 px-4 py-2 text-sm font-medium hover:bg-stone-50 text-center">
+        Volver
+      </a>
+    </div>
+
+    <div class="space-y-4">
+      <% if (!reviews || reviews.length === 0) { %>
+        <div class="bg-white border border-stone-200 rounded-2xl p-8 text-center text-stone-500 shadow-sm">
+          No hay reseñas registradas.
+        </div>
+      <% } %>
+
+      <% if (reviews && reviews.length > 0) { %>
+        <% reviews.forEach(function(review) { %>
+          <% const product = productMap ? productMap[String(review.productId || "")] : null; %>
+          <div class="bg-white border border-stone-200 rounded-2xl p-6 shadow-sm">
+            <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
+              <div class="flex-1">
+                <div class="flex flex-wrap items-center gap-3 mb-3">
+                  <div class="text-amber-500 text-lg"><%= "★".repeat(review.rating || 5) %></div>
+
+                  <% if (review.approved) { %>
+                    <span class="inline-flex rounded-full bg-green-100 text-green-700 px-3 py-1 text-xs font-medium">
+                      Aprobada
+                    </span>
+                  <% } else { %>
+                    <span class="inline-flex rounded-full bg-yellow-100 text-yellow-700 px-3 py-1 text-xs font-medium">
+                      Pendiente
+                    </span>
+                  <% } %>
+
+                  <% if (review.visible) { %>
+                    <span class="inline-flex rounded-full bg-blue-100 text-blue-700 px-3 py-1 text-xs font-medium">
+                      Visible
+                    </span>
+                  <% } else { %>
+                    <span class="inline-flex rounded-full bg-stone-200 text-stone-700 px-3 py-1 text-xs font-medium">
+                      Oculta
+                    </span>
+                  <% } %>
+                </div>
+
+                <div class="flex flex-col md:flex-row gap-5">
+                  <% if (review.photoUrl) { %>
+                    <div class="w-full md:w-40 shrink-0">
+                      <img src="<%= review.photoUrl %>" alt="Foto de reseña de <%= review.customerName %>" class="w-full h-40 object-cover rounded-2xl border border-stone-200 bg-stone-50">
+                    </div>
+                  <% } %>
+
+                  <div class="flex-1 min-w-0">
+                    <h3 class="text-lg font-semibold text-stone-900"><%= review.customerName %></h3>
+                    <% if (review.province) { %>
+                      <p class="text-sm text-[#016B83] font-medium mt-1">Provincia: <%= review.province %></p>
+                    <% } %>
+
+                    <% if (review.email) { %>
+                      <a href="mailto:<%= review.email %>" class="text-sm text-stone-500 hover:text-stone-900 break-all"><%= review.email %></a>
+                    <% } else { %>
+                      <p class="text-sm text-stone-400">Sin correo registrado</p>
+                    <% } %>
+
+                    <p class="text-stone-600 mt-3 whitespace-pre-line"><%= review.comment %></p>
+
+                    <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-stone-500">
+                      <div>Producto: <% if (product) { %><a href="/product/<%= product.slug %>" target="_blank" class="text-[#016B83] font-medium"><%= product.name %></a><% } else { %><%= review.productId ? "Producto no encontrado" : "Testimonio general" %><% } %></div>
+                      <div>Fecha: <%= review.createdAt ? new Date(review.createdAt).toLocaleDateString("es-DO") : "-" %></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="w-full lg:w-[260px]">
+                <div class="bg-stone-50 rounded-2xl p-4 space-y-3">
+                  <% if (!review.approved) { %>
+                    <form action="/admin/reviews/<%= review._id %>/approve" method="post">
+                      <button type="submit" class="w-full rounded-xl bg-green-600 text-white px-4 py-3 text-sm font-medium hover:bg-green-700">
+                        Aprobar
+                      </button>
+                    </form>
+                  <% } %>
+
+                  <form action="/admin/reviews/<%= review._id %>/toggle-visible" method="post">
+                    <button type="submit" class="w-full rounded-xl bg-white border border-stone-300 px-4 py-3 text-sm font-medium hover:bg-stone-50">
+                      <%= review.visible ? "Ocultar" : "Mostrar" %>
+                    </button>
+                  </form>
+
+                  <form action="/admin/reviews/<%= review._id %>/delete" method="post" onsubmit="return confirm('¿Eliminar esta reseña?');">
+                    <button type="submit" class="w-full rounded-xl bg-red-600 text-white px-4 py-3 text-sm font-medium hover:bg-red-700">
+                      Eliminar
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      <% } %>
+    </div>
+  </main>
+</body>
+</html>

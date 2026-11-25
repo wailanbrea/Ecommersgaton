@@ -1,0 +1,35 @@
+{
+  "name": "gatondo-ecommerce",
+  "version": "1.0.0",
+  "description": "E-commerce administrable para GATON DO",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon server.js",
+    "start": "node server.js",
+    "start:local": "node local-dev.js",
+    "seed:local": "node scripts/seed-local.js",
+    "mongo:local": "node scripts/mongo-local.js",
+    "db:migrate": "node scripts/migrate-schema.js",
+    "db:import-mongo": "node scripts/migrate-mongo-to-mysql.js",
+    "db:verify-import": "node scripts/migrate-mongo-to-mysql.js --verify",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.6.1",
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "express-async-errors": "^3.1.1",
+    "express-session": "^1.18.0",
+    "multer": "^1.4.5-lts.1",
+    "mysql2": "^3.24.6"
+  },
+  "devDependencies": {
+    "mongodb-memory-server-core": "^10.4.3",
+    "mongoose": "^9.13.1",
+    "nodemon": "^3.1.4"
+  },
+  "overrides": {
+    "qs": "^6.16.2"
+  }
+}

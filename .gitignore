@@ -1,0 +1,9 @@
+node_modules/
+data/
+storage/
+.env
+.env.*
+!.env.example
+public/uploads/
+.playwright-cli/
+npm-debug.log*

@@ -1,0 +1,133 @@
+<%
+  function ref10Text(value, fallback = "") {
+    return String(value || fallback || "")
+      .replace(/&aacute;/g, "á").replace(/&eacute;/g, "é").replace(/&iacute;/g, "í").replace(/&oacute;/g, "ó").replace(/&uacute;/g, "ú")
+      .replace(/&Aacute;/g, "Á").replace(/&Eacute;/g, "É").replace(/&Iacute;/g, "Í").replace(/&Oacute;/g, "Ó").replace(/&Uacute;/g, "Ú")
+      .replace(/&ntilde;/g, "ñ").replace(/&Ntilde;/g, "Ñ").replace(/&amp;/g, "&")
+      .replace(/cat�logo/gi, "catálogo")
+      .replace(/colecci�n/gi, "colección")
+      .replace(/intenci�n/gi, "intención")
+      .replace(/dise�os/gi, "diseños")
+      .replace(/env�os/gi, "envíos")
+      .replace(/joyer�a/gi, "joyería")
+      .replace(/fraganc�as/gi, "fragancias")
+      .replace(/pa�s/gi, "país")
+      .replace(/pr�xima/gi, "próxima");
+  }
+
+  function ref10Comparable(value = "") {
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  }
+
+  function ref10IsGender(value = "") {
+    return ["hombre", "hombres", "mujer", "mujeres", "nino", "ninos", "nina", "ninas", "animal", "animales", "ni@s", "nin@s"].includes(ref10Comparable(value));
+  }
+
+  const ref10Topbar = ref10Text(
+    siteSettings?.topbarText,
+    "Fragancias de autor ✦ Envíos a todo el país RD ✦ Joyas personalizadas hechas a mano ✦ Plata 925 · Oro laminado"
+  );
+
+  const ref10CategorySource = (typeof headerCategories !== "undefined" && headerCategories) || (typeof publicCategories !== "undefined" && publicCategories) || (typeof categories !== "undefined" && categories) || [];
+  const ref10MenuCategories = ref10CategorySource
+    .filter((category) => category && category.slug && category.active !== false)
+    .filter((category) => !ref10IsGender(category.slug) && !ref10IsGender(category.name))
+    ;
+
+  const ref10CartCount = typeof cartCount !== "undefined" ? cartCount : (typeof cartItemCount !== "undefined" ? cartItemCount : 0);
+  const ref10Logo = siteSettings?.logoUrl || "/images/logo-gatondo-color.png";
+%>
+
+<header class="ref10-header" id="top">
+  <div class="ref10-topbar" aria-label="Anuncio de tienda">
+    <div class="ref10-topbar-track">
+      <span><%= ref10Topbar %></span>
+      <span><%= ref10Topbar %></span>
+      <span><%= ref10Topbar %></span>
+    </div>
+  </div>
+
+  <div class="ref10-nav ref10-nav-desktop">
+    <nav class="ref10-nav-side ref10-nav-left" aria-label="Navegación principal izquierda">
+      <a href="/#coleccion">Colección</a>
+      <a href="/#fragancias">Fragancias</a>
+      <a href="/#historia">Historia</a>
+    </nav>
+
+    <a href="/" class="ref10-logo-center" aria-label="GATON DO inicio">
+      <img src="<%= ref10Logo %>" alt="<%= ref10Text(siteSettings?.brandName, 'GATON DO') %>">
+    </a>
+
+    <nav class="ref10-nav-side ref10-nav-right" aria-label="Navegación principal derecha">
+      <a href="/#clientes">Clientes</a>
+      <a href="/#contacto">Contacto</a>
+      <a href="/shop" class="ref10-icon-link" aria-label="Buscar">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.7"></circle><path d="M20 20L16.5 16.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path></svg>
+      </a>
+      <a data-open-basket href="/cart" class="ref10-icon-link ref10-cart-link" aria-label="Carrito">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 9H17L16.2 20H7.8L7 9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"></path><path d="M9 9C9 5.8 10.2 4 12 4C13.8 4 15 5.8 15 9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path></svg>
+        <% if (ref10CartCount > 0) { %><span class="ref10-cart-count"><%= ref10CartCount %></span><% } %>
+      </a>
+    </nav>
+  </div>
+
+  <div class="ref10-nav ref10-nav-mobile">
+    <button class="ref10-menu-btn" type="button" aria-label="Abrir menú" data-ref10-menu-toggle aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+
+    <a href="/" class="ref10-mobile-logo" aria-label="GATON DO inicio">
+      <img src="<%= ref10Logo %>" alt="<%= ref10Text(siteSettings?.brandName, 'GATON DO') %>">
+    </a>
+
+    <div class="ref10-mobile-actions">
+      <a href="/shop" class="ref10-icon-link" aria-label="Buscar">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.7"></circle><path d="M20 20L16.5 16.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path></svg>
+      </a>
+      <a data-open-basket href="/cart" class="ref10-icon-link ref10-cart-link" aria-label="Carrito">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 9H17L16.2 20H7.8L7 9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"></path><path d="M9 9C9 5.8 10.2 4 12 4C13.8 4 15 5.8 15 9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path></svg>
+        <% if (ref10CartCount > 0) { %><span class="ref10-cart-count"><%= ref10CartCount %></span><% } %>
+      </a>
+    </div>
+  </div>
+
+  <div class="ref10-mobile-panel" data-ref10-mobile-panel>
+    <nav>
+      <a href="/">Inicio</a>
+      <a href="/#fragancias">Fragancias</a>
+      <a href="/#coleccion">Colección</a>
+      <a href="/shop">Catálogo completo</a>
+      <% ref10MenuCategories.forEach((category) => { %>
+        <a href="<%= category.destinationUrl || ('/shop?category=' + category.slug) %>"><%= ref10Text(category.name) %></a>
+      <% }) %>
+      <a href="/#historia">Historia</a>
+      <a href="/#clientes">Clientes</a>
+      <a href="/#contacto">Contacto</a>
+      <a data-open-basket href="/cart">Carrito</a>
+    </nav>
+  </div>
+</header>
+
+<script>
+  (function () {
+    const toggle = document.querySelector("[data-ref10-menu-toggle]");
+    const panel = document.querySelector("[data-ref10-mobile-panel]");
+    if (!toggle || !panel) return;
+
+    toggle.addEventListener("click", function () {
+      const isOpen = panel.classList.toggle("is-open");
+      toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    });
+
+    panel.querySelectorAll("a").forEach(function (link) {
+      link.addEventListener("click", function () {
+        panel.classList.remove("is-open");
+        toggle.setAttribute("aria-expanded", "false");
+      });
+    });
+  })();
+</script>

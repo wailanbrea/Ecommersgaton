@@ -1,0 +1,27 @@
+FASE 9 - REDISEÑO COMPLETO INSPIRADO EN LA REFERENCIA
+
+Archivos incluidos:
+- views/partials/header.ejs
+- views/store/home.ejs
+- views/partials/footer.ejs
+- public/css/app.css
+- src/middlewares/globals.js
+- src/routes/store.js
+
+Objetivo:
+Rehacer la home y header/footer con una estructura mucho más cercana a la referencia visual enviada:
+- barra superior verde con texto de anuncio;
+- header beige compacto, no gigante;
+- logo centrado en desktop y móvil limpio;
+- menú catálogo flotante, sin empujar contenido;
+- hero full screen con video o imagen desde SiteSettings;
+- colecciones principales en 4 tarjetas grandes premium;
+- secciones sin bordes laterales fuertes;
+- footer con iconos reales de redes sociales;
+- corrección defensiva de caracteres rotos.
+
+Después de subir:
+cd /var/www/projects/gaton-do-ecommerce
+pm2 restart gatondo-ecommerce
+
+Luego limpiar caché o abrir en incógnito.

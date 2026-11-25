@@ -1,0 +1,14 @@
+FASE 10B-1A - HOTFIX HEADER + HERO
+
+Incluye:
+- Header beige más compacto y alineado.
+- Logo central visible y mejor posicionado.
+- Hero ajustado para que no quede una zona oscura vacía al inicio.
+- Corrección incluida de store.js: home usa publicCategories, no visibleShopCategories.
+- Versionado del CSS en home.ejs a ?v=ref10b1a para evitar caché.
+
+Archivos:
+- views/partials/header.ejs
+- views/store/home.ejs
+- src/routes/store.js
+- public/css/app.css

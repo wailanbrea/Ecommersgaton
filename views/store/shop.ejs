@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catálogo | <%= siteSettings?.brandName || "GATON DO" %></title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/app.css?v=ref10c-mobilefit">
+</head>
+<body class="ref10-body ref10-shop-page">
+  <%
+    function t(value, fallback = "") {
+      const cleaner = typeof displayText === "function" ? displayText : (text) => String(text || "");
+      return cleaner(value || fallback || "");
+    }
+    function categoryLabel(product) {
+      return categoryMap && categoryMap[product.categoryId] ? categoryMap[product.categoryId].name : "Joyería";
+    }
+    function genderLabel(value) {
+      const found = (genderOptions || []).find((option) => option.value === value);
+      return found ? found.label : "";
+    }
+  %>
+
+  <%- include("../partials/header") %>
+
+  <main class="ref10-shop-main">
+    <section class="ref10-shop-hero">
+      <span>Catálogo</span>
+      <h1><%= selectedCategory ? t(selectedCategory.name) : t(siteSettings?.catalogTitle, "Joyería") %></h1>
+      <p><%= t(siteSettings?.catalogText, "Cada pieza está pensada para acompañarte. Selecciona, agrega al carrito y finaliza tu pedido por WhatsApp.") %></p>
+    </section>
+
+    <section class="ref10-shop-filter-wrap">
+      <form method="get" action="/shop" class="ref10-shop-filter-card">
+        <div class="ref10-filter-field ref10-filter-search">
+          <label>Buscar</label>
+          <input type="text" name="q" value="<%= currentQuery || '' %>" placeholder="<%= siteSettings?.searchHint || 'Busca por nombre o etiqueta' %>">
+        </div>
+
+        <div class="ref10-filter-field">
+          <label>Categoría</label>
+          <select name="category">
+            <option value="">Todas</option>
+            <% (categories || []).forEach(category => { %>
+              <option value="<%= category.slug %>" <%= currentCategorySlug === category.slug ? "selected" : "" %>><%= t(category.name) %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div class="ref10-filter-field">
+          <label>Género</label>
+          <select name="gender">
+            <option value="">Todos</option>
+            <% (genderOptions || []).forEach(option => { %>
+              <option value="<%= option.value %>" <%= currentGender === option.value ? "selected" : "" %>><%= option.label %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div class="ref10-filter-actions">
+          <button type="submit"><%= siteSettings?.filterLabel || "Filtrar" %></button>
+          <a href="/shop"><%= siteSettings?.clearLabel || "Limpiar" %></a>
+        </div>
+      </form>
+    </section>
+
+    <section class="ref10-shop-chips">
+      <a href="/shop" class="<%= !currentCategorySlug && !currentGender ? 'active' : '' %>">Todo</a>
+      <% (categories || []).forEach(category => { %>
+        <a href="/shop?category=<%= category.slug %>" class="<%= currentCategorySlug === category.slug ? 'active' : '' %>"><%= t(category.name) %></a>
+      <% }) %>
+    </section>
+
+    <section class="ref10-shop-gender-chips">
+      <% (genderOptions || []).forEach(option => { %>
+        <a href="/shop?<%= currentCategorySlug ? ('category=' + encodeURIComponent(currentCategorySlug) + '&') : '' %>gender=<%= option.value %>" class="<%= currentGender === option.value ? 'active' : '' %>"><%= option.label %></a>
+      <% }) %>
+    </section>
+
+    <section class="ref10-shop-products">
+      <% if (!products.length) { %>
+        <div class="ref10-empty-state">No hay productos para mostrar con esos filtros.</div>
+      <% } else { %>
+        <div class="ref10-product-grid ref10-shop-product-grid">
+          <% products.forEach((product, index) => { %>
+            <a href="/product/<%= product.slug %>" class="ref10-product-card">
+              <div class="ref10-product-image">
+                <% if (product.featured || index === 0) { %><span class="ref10-product-badge"><%= product.featured ? 'Destacado' : 'Nuevo' %></span><% } %>
+                <% if (isProductUnavailable && isProductUnavailable(product)) { %><span class="ref10-product-badge danger">Agotado</span><% } %>
+                <% if (product.mainImageUrl) { %>
+                  <img src="<%= product.mainImageUrl %>" alt="<%= t(product.name) %>">
+                <% } else { %>
+                  <img src="/images/logo-gatondo-color.png" alt="GATON DO" class="ref10-product-placeholder">
+                <% } %>
+              </div>
+              <div class="ref10-product-copy">
+                <small><%= t(categoryLabel(product)) %><% if (product.gender) { %> · <%= genderLabel(product.gender) %><% } %></small>
+                <h3><%= t(product.name) %></h3>
+                <% if (product.shortDescription) { %><p><%= t(product.shortDescription) %></p><% } %>
+                <div class="ref10-product-bottom">
+                  <strong><%= formatCurrency ? formatCurrency(product.basePrice || 0) : ('RD$ ' + Number(product.basePrice || 0).toLocaleString('en-US')) %></strong>
+                  <span>+</span>
+                </div>
+                <% if (product.compareAtPrice && product.compareAtPrice > product.basePrice) { %>
+                  <div class="ref10-old-price"><%= formatCurrency(product.compareAtPrice || 0) %></div>
+                <% } %>
+              </div>
+            </a>
+          <% }) %>
+        </div>
+      <% } %>
+    </section>
+  </main>
+
+  <%- include("../partials/footer") %>
+</body>
+</html>

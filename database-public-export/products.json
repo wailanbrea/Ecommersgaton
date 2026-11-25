@@ -1,0 +1,700 @@
+[
+  {
+    "_id": "6a6365ed29e74a6b1f0c951b",
+    "name": "Collar de Prueba GATÓN",
+    "slug": "prueba-collar-gaton",
+    "shortDescription": "Producto temporal para probar Collares.",
+    "description": "Producto temporal para probar Collares.",
+    "categoryId": "69d3e23a35cfc49aababccf8",
+    "gender": "",
+    "tags": [
+      "producto-prueba",
+      "collar",
+      "collares"
+    ],
+    "basePrice": 1450,
+    "compareAtPrice": 1650,
+    "mainImageUrl": "/images/logo-gatondo-color.png",
+    "gallery": [],
+    "videoUrl": "",
+    "hasVariants": false,
+    "variants": [],
+    "hasCustomization": true,
+    "customizationFields": [
+      {
+        "key": "texto",
+        "label": "Texto a grabar",
+        "placeholder": "Ej: Ana, Te amo, 14.02.26, Siempre juntos…",
+        "required": true,
+        "maxLength": 35
+      }
+    ],
+    "fontOptions": [
+      {
+        "name": "Script Elegante",
+        "previewText": "Ana",
+        "previewImageUrl": "",
+        "cssFontFamily": "'Great Vibes', cursive"
+      },
+      {
+        "name": "Clásica",
+        "previewText": "Ana",
+        "previewImageUrl": "",
+        "cssFontFamily": "'Cormorant Garamond', serif"
+      },
+      {
+        "name": "Moderna",
+        "previewText": "Ana",
+        "previewImageUrl": "",
+        "cssFontFamily": "Montserrat, sans-serif"
+      },
+      {
+        "name": "Bold",
+        "previewText": "Ana",
+        "previewImageUrl": "",
+        "cssFontFamily": "Anton, sans-serif"
+      },
+      {
+        "name": "Fina",
+        "previewText": "Ana",
+        "previewImageUrl": "",
+        "cssFontFamily": "Raleway, sans-serif"
+      }
+    ],
+    "stock": 10,
+    "outOfStock": false,
+    "featured": true,
+    "active": true,
+    "createdAt": "2026-07-24T13:17:33.140Z",
+    "updatedAt": "2026-08-03T13:43:18.984Z",
+    "__v": 1,
+    "choiceGroups": [
+      {
+        "key": "color",
+        "label": "Color",
+        "displayType": "swatch",
+        "required": true,
+        "options": [
+          {
+            "label": "Dorado",
+            "value": "dorado",
+            "colorHex": "#D4AF37",
+            "imageUrl": ""
+          },
+          {
+            "label": "Plateado",
+            "value": "plateado",
+            "colorHex": "#C0C0C0",
+            "imageUrl": ""
+          },
+          {
+            "label": "Rosado",
+            "value": "rosado",
+            "colorHex": "#D8A7B1",
+            "imageUrl": ""
+          }
+        ]
+      },
+      {
+        "key": "largo",
+        "label": "Largo",
+        "displayType": "button",
+        "required": true,
+        "options": [
+          {
+            "label": "40 cm",
+            "value": "40cm",
+            "colorHex": "",
+            "imageUrl": ""
+          },
+          {
+            "label": "45 cm",
+            "value": "45cm",
+            "colorHex": "",
+            "imageUrl": ""
+          },
+          {
+            "label": "50 cm",
+            "value": "50cm",
+            "colorHex": "",
+            "imageUrl": ""
+          }
+        ]
+      }
+    ],
+    "customizationUploadEnabled": true,
+    "customizationUploadHelp": "PNG, JPG, SVG, PDF o AI. Máximo 20 MB.",
+    "customizationUploadLabel": "Sube tu diseño",
+    "customizationUploadMaxSizeMB": 20,
+    "customizationUploadRequired": false,
+    "engravingPreviewEnabled": true,
+    "engravingPreviewLabel": "Vista previa del grabado"
+  },
+  {
+    "_id": "6a6365ed29e74a6b1f0c951d",
+    "name": "Anillo de Prueba GATÓN",
+    "slug": "prueba-anillo-gaton",
+    "shortDescription": "Producto temporal para probar Anillos.",
+    "description": "Producto temporal para probar Anillos.",
+    "categoryId": "6a6365ed29e74a6b1f0c9516",
+    "gender": "",
+    "tags": [
+      "producto-prueba",
+      "anillo",
+      "anillos"
+    ],
+    "basePrice": 1250,
+    "compareAtPrice": 1450,
+    "mainImageUrl": "/images/logo-gatondo-color.png",
+    "gallery": [],
+    "videoUrl": "",
+    "hasVariants": false,
+    "variants": [],
+    "hasCustomization": true,
+    "customizationFields": [
+      {
+        "key": "texto",
+        "label": "Texto a grabar",
+        "placeholder": "Ej: Ana, Te amo, 14.02.26, Siempre juntos…",
+        "required": false,
+        "maxLength": 35
+      }
+    ],
+    "fontOptions": [
+      {
+        "name": "Script Elegante",
+        "previewText": "Ana",
+        "previewImageUrl": "",
+        "cssFontFamily": "'Great Vibes', cursive"
+      },
+      {
+        "name": "Clásica",
+        "previewText": "Ana",
+        "previewImageUrl": "",
+        "cssFontFamily": "'Cormorant Garamond', serif"
+      },
+      {
+        "name": "Moderna",
+        "previewText": "Ana",
+        "previewImageUrl": "",
+        "cssFontFamily": "Montserrat, sans-serif"
+      },
+      {
+        "name": "Bold",
+        "previewText": "Ana",
+        "previewImageUrl": "",
+        "cssFontFamily": "Anton, sans-serif"
+      },
+      {
+        "name": "Fina",
+        "previewText": "Ana",
+        "previewImageUrl": "",
+        "cssFontFamily": "Raleway, sans-serif"
+      }
+    ],
+    "stock": 10,
+    "outOfStock": false,
+    "featured": false,
+    "active": true,
+    "createdAt": "2026-07-24T13:17:33.145Z",
+    "updatedAt": "2026-08-04T06:58:01.193Z",
+    "__v": 2,
+    "choiceGroups": [
+      {
+        "key": "opcion-1",
+        "label": "Opción 1",
+        "displayType": "button",
+        "required": true,
+        "options": [
+          {
+            "label": "Dorado",
+            "value": "dorado",
+            "colorHex": "#D4AF37",
+            "imageUrl": ""
+          },
+          {
+            "label": "Plateado",
+            "value": "plateado",
+            "colorHex": "#C0C0C0",
+            "imageUrl": ""
+          },
+          {
+            "label": "Rosado",
+            "value": "rosado",
+            "colorHex": "#D8A7B1",
+            "imageUrl": ""
+          },
+          {
+            "label": "Negro",
+            "value": "negro",
+            "colorHex": "#000000",
+            "imageUrl": ""
+          }
+        ]
+      },
+      {
+        "key": "opcion-2",
+        "label": "Opción 2",
+        "displayType": "button",
+        "required": true,
+        "options": [
+          {
+            "label": "6",
+            "value": "6",
+            "colorHex": "",
+            "imageUrl": ""
+          },
+          {
+            "label": "7",
+            "value": "7",
+            "colorHex": "",
+            "imageUrl": ""
+          },
+          {
+            "label": "8",
+            "value": "8",
+            "colorHex": "",
+            "imageUrl": ""
+          },
+          {
+            "label": "9",
+            "value": "9",
+            "colorHex": "",
+            "imageUrl": ""
+          }
+        ]
+      }
+    ],
+    "customizationUploadEnabled": true,
+    "customizationUploadHelp": "PNG, JPG, SVG, PDF o AI. Máximo 20 MB.",
+    "customizationUploadLabel": "Sube tu diseño",
+    "customizationUploadMaxSizeMB": 20,
+    "customizationUploadRequired": false,
+    "engravingPreviewEnabled": true,
+    "engravingPreviewLabel": "Vista previa del grabado"
+  },
+  {
+    "_id": "6a6365ed29e74a6b1f0c951f",
+    "name": "Pulsera de Prueba GATÓN",
+    "slug": "prueba-pulsera-gaton",
+    "shortDescription": "Producto temporal para probar Pulseras.",
+    "description": "Producto temporal para probar Pulseras.",
+    "categoryId": "69d3e23a35cfc49aababccf9",
+    "gender": "",
+    "tags": [
+      "producto-prueba",
+      "pulsera",
+      "brazalete",
+      "brazaletes"
+    ],
+    "basePrice": 1350,
+    "compareAtPrice": 1550,
+    "mainImageUrl": "/images/logo-gatondo-color.png",
+    "gallery": [],
+    "videoUrl": "",
+    "hasVariants": false,
+    "variants": [],
+    "hasCustomization": true,
+    "customizationFields": [
+      {
+        "key": "texto",
+        "label": "Texto a grabar",
+        "placeholder": "Ej: Ana, Te amo, 14.02.26, Siempre juntos…",
+        "required": true,
+        "maxLength": 35
+      }
+    ],
+    "fontOptions": [
+      {
+        "name": "Script Elegante",
+        "previewText": "Ana",
+        "previewImageUrl": "",
+        "cssFontFamily": "'Great Vibes', cursive"
+      },
+      {
+        "name": "Clásica",
+        "previewText": "Ana",
+        "previewImageUrl": "",
+        "cssFontFamily": "'Cormorant Garamond', serif"
+      },
+      {
+        "name": "Moderna",
+        "previewText": "Ana",
+        "previewImageUrl": "",
+        "cssFontFamily": "Montserrat, sans-serif"
+      },
+      {
+        "name": "Bold",
+        "previewText": "Ana",
+        "previewImageUrl": "",
+        "cssFontFamily": "Anton, sans-serif"
+      },
+      {
+        "name": "Fina",
+        "previewText": "Ana",
+        "previewImageUrl": "",
+        "cssFontFamily": "Raleway, sans-serif"
+      }
+    ],
+    "stock": 10,
+    "outOfStock": false,
+    "featured": false,
+    "active": true,
+    "createdAt": "2026-07-24T13:17:33.148Z",
+    "updatedAt": "2026-08-03T13:43:19.012Z",
+    "__v": 1,
+    "choiceGroups": [
+      {
+        "key": "color",
+        "label": "Color",
+        "displayType": "swatch",
+        "required": true,
+        "options": [
+          {
+            "label": "Dorado",
+            "value": "dorado",
+            "colorHex": "#D4AF37",
+            "imageUrl": ""
+          },
+          {
+            "label": "Plateado",
+            "value": "plateado",
+            "colorHex": "#C0C0C0",
+            "imageUrl": ""
+          },
+          {
+            "label": "Rosado",
+            "value": "rosado",
+            "colorHex": "#D8A7B1",
+            "imageUrl": ""
+          }
+        ]
+      },
+      {
+        "key": "medida",
+        "label": "Medida",
+        "displayType": "button",
+        "required": true,
+        "options": [
+          {
+            "label": "15 cm",
+            "value": "15cm",
+            "colorHex": "",
+            "imageUrl": ""
+          },
+          {
+            "label": "17 cm",
+            "value": "17cm",
+            "colorHex": "",
+            "imageUrl": ""
+          },
+          {
+            "label": "19 cm",
+            "value": "19cm",
+            "colorHex": "",
+            "imageUrl": ""
+          }
+        ]
+      }
+    ],
+    "customizationUploadEnabled": true,
+    "customizationUploadHelp": "PNG, JPG, SVG, PDF o AI. Máximo 20 MB.",
+    "customizationUploadLabel": "Sube tu diseño",
+    "customizationUploadMaxSizeMB": 20,
+    "customizationUploadRequired": false,
+    "engravingPreviewEnabled": true,
+    "engravingPreviewLabel": "Vista previa del grabado"
+  },
+  {
+    "_id": "6a6365ed29e74a6b1f0c9521",
+    "name": "Aretes de Prueba GATÓN",
+    "slug": "prueba-aretes-gaton",
+    "shortDescription": "Producto temporal para probar Aretes.",
+    "description": "Producto temporal para probar Aretes.",
+    "categoryId": "6a6365ed29e74a6b1f0c9519",
+    "gender": "",
+    "tags": [
+      "producto-prueba",
+      "aretes"
+    ],
+    "basePrice": 950,
+    "compareAtPrice": 1150,
+    "mainImageUrl": "/images/logo-gatondo-color.png",
+    "gallery": [],
+    "videoUrl": "",
+    "hasVariants": false,
+    "variants": [],
+    "hasCustomization": true,
+    "customizationFields": [
+      {
+        "key": "texto",
+        "label": "Texto a grabar",
+        "placeholder": "Ej: Ana, Te amo, 14.02.26, Siempre juntos…",
+        "required": true,
+        "maxLength": 35
+      }
+    ],
+    "fontOptions": [
+      {
+        "name": "Script Elegante",
+        "previewText": "Ana",
+        "previewImageUrl": "",
+        "cssFontFamily": "'Great Vibes', cursive"
+      },
+      {
+        "name": "Clásica",
+        "previewText": "Ana",
+        "previewImageUrl": "",
+        "cssFontFamily": "'Cormorant Garamond', serif"
+      },
+      {
+        "name": "Moderna",
+        "previewText": "Ana",
+        "previewImageUrl": "",
+        "cssFontFamily": "Montserrat, sans-serif"
+      },
+      {
+        "name": "Bold",
+        "previewText": "Ana",
+        "previewImageUrl": "",
+        "cssFontFamily": "Anton, sans-serif"
+      },
+      {
+        "name": "Fina",
+        "previewText": "Ana",
+        "previewImageUrl": "",
+        "cssFontFamily": "Raleway, sans-serif"
+      }
+    ],
+    "stock": 10,
+    "outOfStock": false,
+    "featured": false,
+    "active": true,
+    "createdAt": "2026-07-24T13:17:33.152Z",
+    "updatedAt": "2026-08-03T13:43:19.024Z",
+    "__v": 1,
+    "choiceGroups": [
+      {
+        "key": "color",
+        "label": "Color",
+        "displayType": "swatch",
+        "required": true,
+        "options": [
+          {
+            "label": "Dorado",
+            "value": "dorado",
+            "colorHex": "#D4AF37",
+            "imageUrl": ""
+          },
+          {
+            "label": "Plateado",
+            "value": "plateado",
+            "colorHex": "#C0C0C0",
+            "imageUrl": ""
+          },
+          {
+            "label": "Rosado",
+            "value": "rosado",
+            "colorHex": "#D8A7B1",
+            "imageUrl": ""
+          }
+        ]
+      },
+      {
+        "key": "tamano",
+        "label": "Tamaño",
+        "displayType": "button",
+        "required": true,
+        "options": [
+          {
+            "label": "Pequeño",
+            "value": "pequeno",
+            "colorHex": "",
+            "imageUrl": ""
+          },
+          {
+            "label": "Mediano",
+            "value": "mediano",
+            "colorHex": "",
+            "imageUrl": ""
+          },
+          {
+            "label": "Grande",
+            "value": "grande",
+            "colorHex": "",
+            "imageUrl": ""
+          }
+        ]
+      }
+    ],
+    "customizationUploadEnabled": true,
+    "customizationUploadHelp": "PNG, JPG, SVG, PDF o AI. Máximo 20 MB.",
+    "customizationUploadLabel": "Sube tu diseño",
+    "customizationUploadMaxSizeMB": 20,
+    "customizationUploadRequired": false,
+    "engravingPreviewEnabled": true,
+    "engravingPreviewLabel": "Vista previa del grabado"
+  },
+  {
+    "_id": "6a6365ed29e74a6b1f0c9523",
+    "name": "Joya Personalizada de Prueba GATÓN",
+    "slug": "prueba-personalizado-gaton",
+    "shortDescription": "Producto temporal para probar Personalizados.",
+    "description": "Producto temporal para probar Personalizados.",
+    "categoryId": "69d3e23a35cfc49aababccf7",
+    "gender": "",
+    "tags": [
+      "producto-prueba",
+      "personalizado",
+      "grabado-laser"
+    ],
+    "basePrice": 1850,
+    "compareAtPrice": 2050,
+    "mainImageUrl": "/images/logo-gatondo-color.png",
+    "gallery": [],
+    "videoUrl": "",
+    "hasVariants": false,
+    "variants": [],
+    "hasCustomization": true,
+    "customizationFields": [
+      {
+        "key": "texto",
+        "label": "Texto a grabar",
+        "placeholder": "Ej: Ana, Te amo, 14.02.26, Siempre juntos…",
+        "required": false,
+        "maxLength": 35
+      }
+    ],
+    "fontOptions": [
+      {
+        "name": "Script Elegante",
+        "previewText": "Ana",
+        "previewImageUrl": "",
+        "cssFontFamily": "'Great Vibes', cursive"
+      },
+      {
+        "name": "Clásica",
+        "previewText": "Ana",
+        "previewImageUrl": "",
+        "cssFontFamily": "'Cormorant Garamond', serif"
+      },
+      {
+        "name": "Moderna",
+        "previewText": "Ana",
+        "previewImageUrl": "",
+        "cssFontFamily": "Montserrat, sans-serif"
+      },
+      {
+        "name": "Bold",
+        "previewText": "Ana",
+        "previewImageUrl": "",
+        "cssFontFamily": "Anton, sans-serif"
+      },
+      {
+        "name": "Fina",
+        "previewText": "Ana",
+        "previewImageUrl": "",
+        "cssFontFamily": "Raleway, sans-serif"
+      }
+    ],
+    "stock": 10,
+    "outOfStock": false,
+    "featured": false,
+    "active": true,
+    "createdAt": "2026-07-24T13:17:33.156Z",
+    "updatedAt": "2026-08-04T06:57:28.651Z",
+    "__v": 3,
+    "choiceGroups": [
+      {
+        "key": "opcion-1",
+        "label": "Opción 1",
+        "displayType": "button",
+        "required": true,
+        "options": [
+          {
+            "label": "Dorado",
+            "value": "dorado",
+            "colorHex": "#D4AF37",
+            "imageUrl": ""
+          },
+          {
+            "label": "Plateado",
+            "value": "plateado",
+            "colorHex": "#C0C0C0",
+            "imageUrl": ""
+          },
+          {
+            "label": "Rosado",
+            "value": "rosado",
+            "colorHex": "#D8A7B1",
+            "imageUrl": ""
+          }
+        ]
+      },
+      {
+        "key": "opcion-2",
+        "label": "Opción 2",
+        "displayType": "button",
+        "required": true,
+        "options": [
+          {
+            "label": "15 cm",
+            "value": "15cm",
+            "colorHex": "",
+            "imageUrl": ""
+          },
+          {
+            "label": "17 cm",
+            "value": "17cm",
+            "colorHex": "",
+            "imageUrl": ""
+          },
+          {
+            "label": "19 cm",
+            "value": "19cm",
+            "colorHex": "",
+            "imageUrl": ""
+          }
+        ]
+      }
+    ],
+    "customizationUploadEnabled": true,
+    "customizationUploadHelp": "PNG, JPG, SVG, PDF o AI. Máximo 20 MB.",
+    "customizationUploadLabel": "Sube tu diseño",
+    "customizationUploadMaxSizeMB": 20,
+    "customizationUploadRequired": false,
+    "engravingPreviewEnabled": true,
+    "engravingPreviewLabel": "Vista previa del grabado"
+  },
+  {
+    "_id": "6a6365ed29e74a6b1f0c9525",
+    "name": "Perfume de Prueba GATÓN",
+    "slug": "prueba-perfume-gaton",
+    "shortDescription": "Producto temporal para probar Fragancias.",
+    "description": "Producto temporal para probar Fragancias.",
+    "categoryId": "69d3e23a35cfc49aababccf4",
+    "gender": "",
+    "tags": [
+      "producto-prueba",
+      "perfume",
+      "fragancia"
+    ],
+    "basePrice": 1650,
+    "compareAtPrice": 1850,
+    "mainImageUrl": "/images/logo-gatondo-white.png",
+    "gallery": [],
+    "videoUrl": "",
+    "hasVariants": false,
+    "variants": [],
+    "hasCustomization": false,
+    "customizationFields": [],
+    "fontOptions": [],
+    "stock": 10,
+    "outOfStock": false,
+    "featured": false,
+    "active": true,
+    "createdAt": "2026-07-24T13:17:33.161Z",
+    "updatedAt": "2026-07-24T13:17:33.161Z",
+    "__v": 0
+  }
+]

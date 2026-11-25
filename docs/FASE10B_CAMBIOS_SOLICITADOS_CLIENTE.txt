@@ -1,0 +1,51 @@
+FASE 10B - CAMBIOS SOLICITADOS POR EL CLIENTE
+
+Base utilizada:
+- GATONDO_Fase10A_Replica_Referencia_Home.zip
+
+Objetivo:
+- Aplicar los nuevos textos comerciales y ajustes visuales solicitados por el cliente sin alterar productos, categorías, carrito, panel administrativo ni rutas existentes.
+
+Archivos modificados:
+- views/store/home.ejs
+- views/partials/header.ejs
+- views/partials/footer.ejs
+- public/css/app.css
+
+Cambios incluidos:
+- Nuevo encabezado "Personalización · Joyería · Fragancias".
+- Nuevo título "Joyas que cuentan tu historia".
+- Nuevos botones "Personalizar ahora" y "Explorar colecciones".
+- Dos franjas informativas con servicios y opciones de personalización.
+- Catálogo renombrado a "Colección" y nueva descripción de joyería.
+- "Nuestra esencia" reemplazada por "Nuestra filosofía" con el contenido solicitado.
+- Nueva presentación y botón para la sección de fragancias.
+- Proceso de pedido actualizado a los tres pasos indicados.
+- Contacto actualizado con el número +1 (849) 402-1457.
+- Texto de envíos corregido.
+- Pie de página actualizado con el lema "Joyas que cuentan tu historia".
+- Iconos de Instagram, TikTok, WhatsApp y Facebook con colores identificables.
+- Facebook agregado con la página oficial de GATÓN DO.
+- Ajustes responsive para los nuevos textos e iconos.
+
+Video del encabezado:
+- Se seleccionó un plano horizontal, oscuro y elegante de joyería en primer plano.
+- Fuente: Pexels, video 11353206.
+- Página de origen: https://www.pexels.com/video/close-up-view-of-jewellery-11353206/
+- El video está marcado por Pexels como gratuito para usar.
+- La imagen del encabezado permanece configurada como respaldo mientras carga el video.
+
+Validaciones realizadas:
+- Plantilla EJS renderizada con datos simulados sin errores.
+- Hoja CSS analizada sin errores de sintaxis.
+- Textos principales y enlaces verificados.
+- Textos antiguos solicitados para reemplazo ya no aparecen en las vistas.
+
+Instalación recomendada:
+1. Descomprimir este paquete en el servidor.
+2. Ejecutar GATONDO_Instalar_Fase10B.sh desde la carpeta descomprimida.
+3. Abrir https://gatondo.com en modo incógnito para evitar caché anterior.
+
+Nota:
+- El instalador crea un respaldo con fecha y hora antes de copiar los archivos.
+- No se modifican modelos, base de datos, credenciales ni funciones administrativas.

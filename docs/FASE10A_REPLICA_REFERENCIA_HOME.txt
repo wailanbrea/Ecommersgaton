@@ -1,0 +1,41 @@
+FASE 10A - REPLICA ESTRUCTURA REFERENCIA HOME
+
+Objetivo:
+Reconstruir la home de GATON DO para seguir la estructura visual de la pagina de referencia del mismo cliente, usando informacion real de GATON DO.
+
+Archivos incluidos:
+- views/partials/header.ejs
+- views/store/home.ejs
+- views/partials/footer.ejs
+- public/css/app.css
+- src/middlewares/globals.js
+- src/routes/store.js
+
+Cambios principales:
+- Header compacto estilo referencia.
+- Topbar verde con texto en movimiento.
+- Logo centrado.
+- Menu dividido izquierda/derecha en desktop.
+- Menu mobile limpio, sin duplicar logo ni montar textos.
+- Hero fullscreen con soporte para video o imagen desde SiteSettings.
+- Franja verde tipo marquee debajo del hero.
+- Nuestras colecciones con 4 tarjetas principales.
+- Historia/esencia con imagen izquierda y texto derecha.
+- Grid de productos estilo referencia.
+- Seccion de fragancias con fondo verde oscuro.
+- Tu pedido en 3 pasos.
+- Testimonios.
+- Contacto con formulario que abre WhatsApp.
+- Footer en columnas como referencia.
+
+Instalacion:
+1. Reemplazar los archivos respetando las rutas.
+2. Ejecutar:
+   cd /var/www/projects/gaton-do-ecommerce
+   pm2 restart gatondo-ecommerce
+3. Abrir en modo incognito o limpiar cache.
+
+Notas:
+- Esta fase no cambia modelos ni credenciales.
+- Usa los campos existentes de SiteSettings para heroVideoUrl, heroImageUrl, heroTitle, heroSubtitle, heroButtonText, heroButtonUrl, aboutText, phone/whatsapp.
+- El catalogo completo y detalle de producto quedan para Fase 10B/10C si se quiere replicar tambien esas pantallas con el mismo estilo.

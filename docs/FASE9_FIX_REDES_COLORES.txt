@@ -1,0 +1,19 @@
+GATON DO - Fix redes sociales con colores reales
+
+Archivos incluidos:
+- views/partials/footer.ejs
+- public/css/app.css
+
+Qué cambia:
+- Instagram usa degradado visual de marca.
+- TikTok usa icono con negro, cyan y rosa.
+- Facebook usa azul.
+- WhatsApp usa verde.
+- Mantiene el diseño premium del footer con fondo oscuro y círculos elegantes.
+
+Instalación:
+1. Subir/reemplazar los archivos en las mismas rutas del proyecto.
+2. Reiniciar PM2:
+   cd /var/www/projects/gaton-do-ecommerce
+   pm2 restart gatondo-ecommerce
+3. Recargar con Ctrl+F5 o modo incógnito.

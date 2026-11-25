@@ -1,0 +1,24 @@
+FASE 10C-1 — MOBILE FIT REFERENCIA
+
+Objetivo:
+Ajustar las proporciones móviles para acercarlas a la página de referencia.
+
+Cambios:
+- Topbar móvil más fina y no fija.
+- Header móvil más compacto: 31px topbar + 63px navegación = 94px total.
+- Logo móvil reducido y centrado para no deformar el header.
+- Hero móvil a pantalla completa real usando 100svh menos header.
+- Títulos, botones y textos del hero ajustados para que no queden gigantes.
+- Menú móvil flotante a 70vw con scroll interno.
+- Secciones móviles sin bordes pesados y con ancho completo.
+- Colecciones y productos en una columna estilo referencia.
+- Cache busting en vistas públicas: /css/app.css?v=ref10c-mobilefit.
+
+Archivos modificados:
+- public/css/app.css
+- views/store/home.ejs
+- views/store/shop.ejs
+- views/store/product-detail.ejs
+- views/store/cart.ejs
+- views/store/checkout.ejs
+- views/store/order-success.ejs

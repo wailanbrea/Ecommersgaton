@@ -1,0 +1,33 @@
+FASE 10B-2 — Funciones pendientes del cliente
+
+Incluye:
+- Producto: nuevo campo allowPhotoCustomization para activar/desactivar carga de foto por producto.
+- Panel admin: checkbox "Permite cargar foto para fotograbado" en crear/editar producto.
+- Producto público: si el producto permite personalización y foto, el cliente puede subir JPG/PNG/WEBP.
+- La foto se guarda en public/uploads/customizations.
+- Carrito/checkout: la foto queda asociada al item.
+- Pedido: la foto queda guardada dentro del pedido.
+- Admin pedidos: permite ver/descargar la foto del fotograbado.
+- WhatsApp: el mensaje avisa cuando el cliente cargó una imagen y pide revisar el panel.
+- Envío: si no hay opciones configuradas, usa opciones base: Retiro, Delivery SD, Envío al interior.
+- CSS: añade reglas para evitar scroll de fondo cuando exista carrito lateral/modal.
+
+Después de subir:
+cd /var/www/projects/gaton-do-ecommerce
+npm install
+pm2 restart gatondo-ecommerce
+
+Validar:
+node -c src/routes/store.js
+node -c src/routes/admin.js
+node -c src/models/Product.js
+node -c src/models/Order.js
+
+Probar:
+1. Crear/editar un producto personalizado y activar "Permite cargar foto para fotograbado".
+2. Abrir el producto público y subir una foto.
+3. Agregar al carrito.
+4. Ir a checkout y elegir forma de envío.
+5. Crear pedido.
+6. En pedido exitoso, abrir WhatsApp y confirmar que avisa que hay foto.
+7. En /admin/orders, revisar que la foto aparezca en el pedido.

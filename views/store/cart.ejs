@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carrito | <%= siteSettings?.brandName || "GATON DO" %></title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/app.css?v=ref10c-mobilefit">
+</head>
+<body class="ref10-body ref10-cart-page bg-[#f8f6f2] text-stone-900">
+  <%- include("../partials/header") %>
+
+  <main class="ref10-cart-main max-w-7xl mx-auto px-4 py-10">
+    <section class="mb-8">
+      <p class="text-xs uppercase tracking-[0.35em] text-stone-500">Carrito</p>
+      <h1 class="text-4xl font-semibold mt-2">Tu pedido</h1>
+    </section>
+
+    <% if (!cart.length) { %>
+      <div class="bg-white border border-stone-200 rounded-3xl p-10 text-center shadow-sm">
+        <p class="text-stone-500 mb-6">Tu carrito está vacío.</p>
+        <a href="/shop" class="rounded-xl bg-stone-900 text-white px-6 py-3 font-medium hover:bg-stone-800">
+          Ir al catálogo
+        </a>
+      </div>
+    <% } else { %>
+      <% if (hasStockIssues) { %>
+        <div class="mb-6 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 text-sm">
+          Algunos productos cambiaron de disponibilidad. Revisa las cantidades antes de continuar.
+        </div>
+      <% } %>
+
+      <div class="grid grid-cols-1 lg:grid-cols-[1.5fr,0.8fr] gap-8">
+        <div class="space-y-4">
+          <% cart.forEach(item => { %>
+            <div class="bg-white border border-stone-200 rounded-3xl p-5 shadow-sm">
+              <div class="grid grid-cols-1 md:grid-cols-[120px,1fr] gap-5">
+                <div class="aspect-square bg-stone-100 rounded-2xl overflow-hidden">
+                  <% if (item.imageUrl) { %>
+                    <img src="<%= item.imageUrl %>" alt="<%= item.productName %>" class="w-full h-full object-cover">
+                  <% } else { %>
+                    <div class="w-full h-full flex items-center justify-center text-stone-400 text-sm">Sin imagen</div>
+                  <% } %>
+                </div>
+
+                <div>
+                  <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                    <div>
+                      <h3 class="text-xl font-semibold text-stone-900"><%= item.productName %></h3>
+
+                      <% if (item.variantLabel || item.variantOptionValue) { %>
+                        <p class="text-sm text-stone-500 mt-2">
+                          Variante: <%= item.variantLabel || item.variantOptionValue %>
+                        </p>
+                      <% } %>
+
+                      <% if (item.customizationSummary) { %>
+                        <p class="text-sm text-stone-500 mt-2">
+                          Personalización: <%= item.customizationSummary %>
+                        </p>
+                      <% } %>
+
+                      <% if (item.customizationPhotoUrl) { %>
+                        <p class="text-sm text-stone-500 mt-2">
+                          Foto cargada para fotograbado: <a href="<%= item.customizationPhotoUrl %>" target="_blank" class="text-[#016B83] underline">ver imagen</a>
+                        </p>
+                      <% } %>
+
+                      <div class="mt-3 flex items-center gap-2 flex-wrap">
+                        <span class="font-medium text-stone-900">RD$ <%= Number(item.unitPrice || 0).toFixed(2) %></span>
+                        <% if (item.compareAtPrice && item.compareAtPrice > item.unitPrice) { %>
+                          <span class="text-sm text-stone-400 line-through">RD$ <%= Number(item.compareAtPrice).toFixed(2) %></span>
+                        <% } %>
+                      </div>
+
+                      <div class="mt-3 text-sm <%= item.stockUnavailable ? 'text-red-600 font-medium' : 'text-stone-500' %>">
+                        <%= item.stockMessage || '' %>
+                      </div>
+                    </div>
+
+                    <div class="text-right">
+                      <div class="text-sm text-stone-500">Subtotal</div>
+                      <div class="text-xl font-semibold text-stone-900">RD$ <%= Number(item.lineTotal || 0).toFixed(2) %></div>
+                    </div>
+                  </div>
+
+                  <div class="mt-5 flex flex-wrap gap-3 items-center">
+                    <form action="/cart/update/<%= encodeURIComponent(item.cartKey) %>" method="post" class="flex items-center gap-3">
+                      <input
+                        type="number"
+                        name="quantity"
+                        min="1"
+                        value="<%= item.quantity %>"
+                        class="w-24 rounded-xl border border-stone-300 px-4 py-3">
+                      <button type="submit" <%= item.stockUnavailable ? "disabled" : "" %> class="rounded-xl bg-white border border-stone-300 px-4 py-3 text-sm font-medium hover:bg-stone-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Actualizar
+                      </button>
+                    </form>
+
+                    <form action="/cart/remove/<%= encodeURIComponent(item.cartKey) %>" method="post">
+                      <button type="submit" class="rounded-xl bg-red-600 text-white px-4 py-3 text-sm font-medium hover:bg-red-700">
+                        Quitar
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% }) %>
+
+          <form action="/cart/clear" method="post">
+            <button type="submit" class="rounded-xl bg-white border border-stone-300 px-5 py-3 text-sm font-medium hover:bg-stone-50">
+              Vaciar carrito
+            </button>
+          </form>
+        </div>
+
+        <aside>
+          <div class="bg-white border border-stone-200 rounded-3xl p-6 shadow-sm sticky top-24">
+            <h2 class="text-2xl font-semibold mb-6">Resumen</h2>
+
+            <%- include("../partials/basket-summary", { amount: subtotal }) %>
+            <div class="mt-8 space-y-3">
+              <% if (hasStockIssues) { %>
+                <span class="block text-center rounded-xl bg-stone-300 text-stone-600 px-5 py-3 font-medium cursor-not-allowed">
+                  Revisa el stock antes de continuar
+                </span>
+              <% } else { %>
+                <a href="/checkout" class="block text-center rounded-xl bg-stone-900 text-white px-5 py-3 font-medium hover:bg-stone-800">
+                  Ir al checkout
+                </a>
+              <% } %>
+              <a href="/shop" class="block text-center rounded-xl bg-white border border-stone-300 px-5 py-3 font-medium hover:bg-stone-50">
+                Seguir comprando
+              </a>
+            </div>
+          </div>
+        </aside>
+      </div>
+    <% } %>
+  </main>
+</body>
+</html>

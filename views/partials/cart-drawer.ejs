@@ -1,0 +1,136 @@
+<div
+  class="ref10-cart-drawer"
+  data-ref10-cart-drawer
+  aria-hidden="true"
+>
+  <button
+    type="button"
+    class="ref10-cart-backdrop"
+    data-ref10-cart-close
+    aria-label="Cerrar carrito"
+  ></button>
+
+  <aside
+    class="ref10-cart-panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="ref10CartTitle"
+    tabindex="-1"
+    data-ref10-cart-panel
+  >
+    <header class="ref10-cart-panel-header">
+      <div>
+        <span>GATÓN DO</span>
+        <h2 id="ref10CartTitle">Tu carrito</h2>
+      </div>
+
+      <button
+        type="button"
+        class="ref10-cart-close"
+        data-ref10-cart-close
+        aria-label="Cerrar carrito"
+      >
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M6 6L18 18M18 6L6 18"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          ></path>
+        </svg>
+      </button>
+    </header>
+
+    <div class="ref10-cart-panel-content">
+      <div
+        class="ref10-cart-loading"
+        data-ref10-cart-loading
+        hidden
+      >
+        <span></span>
+        <p>Cargando tu carrito...</p>
+      </div>
+
+      <div
+        class="ref10-cart-error"
+        data-ref10-cart-error
+        hidden
+      >
+        No pudimos cargar el carrito.
+      </div>
+
+      <div
+        class="ref10-cart-empty"
+        data-ref10-cart-empty
+        hidden
+      >
+        <div class="ref10-cart-empty-logo">
+          <img
+            src="/images/logo-gatondo-color.png"
+            alt="GATÓN DO"
+          >
+        </div>
+
+        <h3>Tu carrito está vacío</h3>
+        <p>
+          Explora nuestras piezas y agrega tus favoritas.
+        </p>
+
+        <a href="/#joyeria-productos" data-ref10-cart-close>
+          Explorar colección
+        </a>
+      </div>
+
+      <div
+        class="ref10-cart-items"
+        data-ref10-cart-items
+        aria-live="polite"
+      ></div>
+    </div>
+
+    <footer
+      class="ref10-cart-panel-footer"
+      data-ref10-cart-footer
+      hidden
+    >
+      <div class="ref10-cart-total-row">
+        <span>Total</span>
+        <strong data-ref10-cart-total>RD$ 0.00</strong>
+      </div>
+
+      <p
+        class="ref10-cart-stock-warning"
+        data-ref10-cart-stock-warning
+        hidden
+      >
+        Revisa los productos con problemas de disponibilidad.
+      </p>
+
+      <a
+        href="#"
+        target="_blank"
+        rel="noopener"
+        class="ref10-cart-whatsapp"
+        data-ref10-cart-whatsapp
+      >
+        FINALIZAR POR WHATSAPP
+      </a>
+
+      <p class="ref10-cart-confirmation">
+        Coordinamos pago y envío al confirmar.
+      </p>
+
+      <a href="/checkout" class="ref10-cart-checkout-link">
+        Completar datos y método de envío
+      </a>
+    </footer>
+  </aside>
+</div>
+
+<div
+  class="ref10-cart-toast"
+  data-ref10-cart-toast
+  role="status"
+  aria-live="polite"
+  hidden
+></div>

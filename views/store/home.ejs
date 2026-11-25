@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= siteSettings?.brandName || "GATON DO" %></title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/app.css?v=ref10c-mobilefit">
+</head>
+<body class="ref10-body">
+  <%
+    function t(value, fallback = "") {
+      const cleaner = typeof displayText === "function" ? displayText : (text) => String(text || "");
+      return cleaner(value || fallback || "");
+    }
+
+    function comparable(value = "") {
+      return String(value || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    }
+
+    function isGender(value = "") {
+      return ["hombre", "hombres", "mujer", "mujeres", "nino", "ninos", "nina", "ninas", "animal", "animales", "ni@s", "nin@s"].includes(comparable(value));
+    }
+
+    function productCategoryName(product) {
+      if (product?.category?.name) return product.category.name;
+      if (product?.categoryName) return product.categoryName;
+      if (product?.categorySlug) return product.categorySlug;
+      return "Joyería";
+    }
+
+    const allPublicCategories = (
+      (typeof publicCategories !== "undefined" && publicCategories) ||
+      (typeof headerCategories !== "undefined" && headerCategories) ||
+      (typeof categories !== "undefined" && categories) ||
+      []
+    )
+      .filter((category) => category && category.slug && category.active !== false)
+      .filter((category) => !isGender(category.name) && !isGender(category.slug));
+
+    const preferredCollectionSlugs = ["collares", "brazaletes", "anillos", "fragancias"];
+    const featuredCollectionCategories = allPublicCategories.filter((category) => category.collectionFeatured);
+    const mainCollections = (featuredCollectionCategories.length ? featuredCollectionCategories : preferredCollectionSlugs
+      .map((slug) => allPublicCategories.find((category) => comparable(category.slug) === slug || comparable(category.name) === slug))
+      .filter(Boolean)
+      .concat(allPublicCategories.filter((category) => !preferredCollectionSlugs.includes(comparable(category.slug)) && !preferredCollectionSlugs.includes(comparable(category.name)))))
+      .filter((category, index, arr) => arr.findIndex((item) => String(item._id || item.slug) === String(category._id || category.slug)) === index)
+      .slice(0, 4);
+
+    const heroVideo = siteSettings?.heroVideoUrl || "";
+    const heroImage = siteSettings?.heroImageUrl || "";
+    const fallbackHeroProduct = (latestProducts || []).find((product) => product && product.mainImageUrl);
+    const heroBg = heroImage || (fallbackHeroProduct ? fallbackHeroProduct.mainImageUrl : "");
+    const featuredList = (featuredProducts && featuredProducts.length ? featuredProducts : latestProducts || []).slice(0, 8);
+    const fragranceProducts = (latestProducts || [])
+      .filter((product) => comparable(productCategoryName(product)).includes("fragancia") || comparable(product.name).includes("fragancia") || comparable(product.name).includes("perfume"))
+      .slice(0, 4);
+    const fragranceList = (fragranceProducts.length ? fragranceProducts : featuredList).slice(0, 4);
+    const whatsappDigits = String(siteSettings?.whatsapp || siteSettings?.phone || "").replace(/\D/g, "");
+    const whatsappLink = whatsappDigits ? `https://wa.me/${whatsappDigits}` : "";
+  %>
+
+  <%- include("../partials/header") %>
+
+  <main class="ref10-main">
+    <section class="ref10-hero" id="inicio">
+      <% if (heroVideo) { %>
+        <video class="ref10-hero-media" autoplay muted loop playsinline>
+          <source src="<%= heroVideo %>">
+        </video>
+      <% } else if (heroBg) { %>
+        <img class="ref10-hero-media" src="<%= heroBg %>" alt="<%= t(siteSettings?.brandName, 'GATON DO') %>">
+      <% } %>
+      <div class="ref10-hero-overlay"></div>
+      <div class="ref10-hero-content">
+        <img src="<%= siteSettings?.heroLogoUrl || '/images/logo-gatondo-white.png' %>" alt="<%= t(siteSettings?.brandName, 'GATON DO') %>" class="ref10-hero-logo">
+        <h1><%= t(siteSettings?.heroTitle, "Joyas con intención") %></h1>
+        <p><%= t(siteSettings?.heroSubtitle, "Piezas hechas a mano que cuentan tu historia. Plata, oro y fragancias de autor, diseñadas en República Dominicana.") %></p>
+        <div class="ref10-hero-actions">
+          <a href="<%= siteSettings?.heroButtonUrl || '/shop' %>" class="ref10-btn ref10-btn-primary"><%= t(siteSettings?.heroButtonText, "Ver la colección") %></a>
+          <a href="<%= siteSettings?.heroSecondaryButtonUrl || '#historia' %>" class="ref10-btn ref10-btn-outline"><%= t(siteSettings?.heroSecondaryButtonText, "Nuestra esencia") %></a>
+        </div>
+      </div>
+    </section>
+
+    <div class="ref10-marquee-band">
+      <div class="ref10-marquee-track">
+        <% const marqueePieces = String(siteSettings?.marqueeText || "Joyas con intención ✦ Hecho a mano ✦ GATON ✦ Personalizados").split("✦").map((item) => item.trim()).filter(Boolean); %>
+        <% marqueePieces.concat(marqueePieces, marqueePieces).forEach((piece) => { %>
+          <span><%= t(piece) %></span><i>✦</i>
+        <% }) %>
+      </div>
+    </div>
+
+    <section class="ref10-section ref10-collections" id="coleccion">
+      <div class="ref10-container">
+        <div class="ref10-heading ref10-heading-center">
+          <span><%= t(siteSettings?.collectionsEyebrow, "Explora") %></span>
+          <h2><%= t(siteSettings?.collectionsTitle, "Nuestras colecciones") %></h2>
+        </div>
+
+        <div class="ref10-collection-grid">
+          <% mainCollections.forEach((category, index) => { %>
+            <a href="<%= category.destinationUrl || ('/shop?category=' + category.slug) %>" class="ref10-collection-card ref10-tone-<%= (index % 4) + 1 %>">
+              <% if (category.imageUrl) { %>
+                <img src="<%= category.imageUrl %>" alt="<%= t(category.name) %>">
+              <% } else { %>
+                <img src="/images/logo-gatondo-white.png" alt="<%= t(category.name) %>" class="ref10-card-logo">
+              <% } %>
+              <div class="ref10-collection-shade"></div>
+              <div class="ref10-collection-copy">
+                <h3><%= t(category.name) %></h3>
+                <p><%= t(siteSettings?.collectionLinkText, "Ver piezas") %> →</p>
+              </div>
+            </a>
+          <% }) %>
+        </div>
+      </div>
+    </section>
+
+    <section class="ref10-section ref10-products-light">
+      <div class="ref10-container">
+        <div class="ref10-heading ref10-heading-center">
+          <span><%= t(siteSettings?.catalogEyebrow, "Catálogo") %></span>
+          <h2><%= t(siteSettings?.catalogTitle, "Joyería") %></h2>
+          <p><%= t(siteSettings?.catalogText, "Cada pieza está pensada para acompañarte. Selecciona, agrega al carrito y finaliza tu pedido por WhatsApp.") %></p>
+        </div>
+
+        <nav class="ref10-shop-chips" aria-label="Colecciones"><a href="/shop">Todo</a><% allPublicCategories.forEach(category => { %><a href="<%= category.destinationUrl || ('/shop?category=' + category.slug) %>"><%= category.name %></a><% }) %></nav>
+        <div class="ref10-product-grid">
+          <% featuredList.slice(0, 8).forEach((product, index) => { %>
+            <a href="/product/<%= product.slug %>" class="ref10-product-card">
+              <div class="ref10-product-image">
+                <% if (product.featured || index === 0) { %><span class="ref10-product-badge">Best seller</span><% } %>
+                <% if (product.mainImageUrl) { %>
+                  <img src="<%= product.mainImageUrl %>" alt="<%= t(product.name) %>">
+                <% } else { %>
+                  <img src="/images/logo-gatondo-color.png" alt="GATON DO" class="ref10-product-placeholder">
+                <% } %>
+              </div>
+              <div class="ref10-product-copy">
+                <small><%= t(productCategoryName(product)) %></small>
+                <h3><%= t(product.name) %></h3>
+                <% if (product.shortDescription) { %><p><%= t(product.shortDescription) %></p><% } %>
+                <div class="ref10-product-bottom">
+                  <% if (product.compareAtPrice > product.basePrice) { %><del><%= formatCurrency(product.compareAtPrice) %></del><% } %><strong><%= formatCurrency ? formatCurrency(product.basePrice || 0) : ('RD$ ' + Number(product.basePrice || 0).toLocaleString('en-US')) %></strong>
+                  <span>+</span>
+                </div>
+              </div>
+            </a>
+          <% }) %>
+        </div>
+      </div>
+    </section>
+
+    <section class="ref10-section ref10-fragrances" id="fragancias">
+      <div class="ref10-container">
+        <div class="ref10-heading ref10-heading-center ref10-heading-dark">
+          <span><%= t(siteSettings?.fragranceEyebrow, "Fragancias de autor") %></span>
+          <h2><%= t(siteSettings?.fragranceTitle, "Una esencia para cada historia") %></h2>
+          <p><%= t(siteSettings?.fragranceText, "Aromas envolventes que complementan tu estilo. Edición limitada, embotellados con intención.") %></p>
+        </div>
+
+        <p style="text-align:center"><a class="ref10-btn" href="<%= siteSettings?.fragranceButtonUrl || '/shop?category=fragancias' %>"><%= t(siteSettings?.fragranceButtonText, "Explorar Fragancias") %></a></p>
+        <div class="ref10-product-grid ref10-dark-product-grid">
+          <% fragranceList.forEach((product, index) => { %>
+            <a href="/product/<%= product.slug %>" class="ref10-product-card ref10-dark-product-card">
+              <div class="ref10-product-image">
+                <% if (index === 0) { %><span class="ref10-product-badge gold">Edición limitada</span><% } %>
+                <% if (product.mainImageUrl) { %>
+                  <img src="<%= product.mainImageUrl %>" alt="<%= t(product.name) %>">
+                <% } else { %>
+                  <img src="/images/logo-gatondo-white.png" alt="GATON DO" class="ref10-product-placeholder">
+                <% } %>
+              </div>
+              <div class="ref10-product-copy">
+                <small>Fragancia</small>
+                <h3><%= t(product.name) %></h3>
+                <% if (product.shortDescription) { %><p><%= t(product.shortDescription) %></p><% } %>
+                <div class="ref10-product-bottom">
+                  <% if (product.compareAtPrice > product.basePrice) { %><del><%= formatCurrency(product.compareAtPrice) %></del><% } %><strong><%= formatCurrency ? formatCurrency(product.basePrice || 0) : ('RD$ ' + Number(product.basePrice || 0).toLocaleString('en-US')) %></strong>
+                  <span>+</span>
+                </div>
+              </div>
+            </a>
+          <% }) %>
+        </div>
+      </div>
+    </section>
+
+    <section class="ref10-section ref10-story" id="historia">
+      <div class="ref10-container ref10-story-grid">
+        <div class="ref10-story-visual">
+          <% if (siteSettings?.aboutImageUrl) { %>
+            <img src="<%= siteSettings.aboutImageUrl %>" alt="Historia GATON DO">
+          <% } else { %>
+            <img src="/images/logo-gatondo-color.png" alt="GATON DO" class="ref10-story-logo">
+          <% } %>
+          <em>EST · 2024</em>
+        </div>
+
+        <div class="ref10-story-copy">
+          <span><%= t(siteSettings?.aboutSubtitle, "Nuestra esencia") %></span>
+          <h2><%= t(siteSettings?.aboutTitle, "Joyas que nacen de una idea") %></h2>
+          <p><%= t(siteSettings?.aboutText, "GATON nace de la creencia de que cada accesorio debe tener un significado. No vendemos solo joyas: creamos piezas con intención, pensadas para marcar momentos, personas y recuerdos.") %></p>
+          <p>Trabajamos con plata 925, oro laminado y fragancias de autor. Todo hecho a mano y con la posibilidad de personalizarlo a tu manera.</p>
+          <div class="ref10-pills">
+            <span>✦ Hecho a mano</span>
+            <span>✦ Materiales nobles</span>
+            <span>✦ Personalizable</span>
+          </div>
+          <a href="<%= siteSettings?.storyButtonUrl || '/shop' %>" class="ref10-btn ref10-btn-primary"><%= t(siteSettings?.storyButtonText, "Descubre la colección") %></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="ref10-section ref10-steps">
+      <div class="ref10-container">
+        <div class="ref10-heading ref10-heading-center">
+          <span><%= t(siteSettings?.stepsEyebrow, "¿Cómo pedir?") %></span>
+          <h2><%= t(siteSettings?.stepsTitle, "Tu pedido en 3 pasos") %></h2>
+        </div>
+        <%
+          const defaultSteps = [
+            { number: "01", title: "Elige tu pieza", text: "Explora el catálogo y agrega tus favoritos al carrito." },
+            { number: "02", title: "Finaliza por WhatsApp", text: "Tu pedido puede enviarse automáticamente a nuestro WhatsApp." },
+            { number: "03", title: "Recíbelo en casa", text: "Coordinamos el pago y enviamos a todo el país RD." }
+          ];
+          const stepsToShow = (siteSettings?.steps && siteSettings.steps.length ? siteSettings.steps : defaultSteps).slice(0, 3);
+        %>
+        <div class="ref10-steps-grid">
+          <% stepsToShow.forEach((step, index) => { %>
+            <article><em><%= t(step.number, String(index + 1).padStart(2, "0")) %></em><h3><%= t(step.title, defaultSteps[index]?.title || "Paso") %></h3><p><%= t(step.text, defaultSteps[index]?.text || "") %></p></article>
+          <% }) %>
+        </div>
+      </div>
+    </section>
+
+    <section class="ref10-section ref10-testimonials" id="clientes">
+      <div class="ref10-container">
+        <div class="ref10-heading ref10-heading-center">
+          <span><%= t(siteSettings?.testimonialsEyebrow, "Clientes") %></span>
+          <h2><%= t(siteSettings?.testimonialsTitle, "Lo que dicen de GATON") %></h2>
+        </div>
+        <% if (reviews && reviews.length) { %>
+          <div class="ref10-testimonial-grid">
+            <% reviews.slice(0, 3).forEach((review) => { %>
+              <% const reviewProduct = (typeof reviewProductMap !== 'undefined' && reviewProductMap) ? reviewProductMap[String(review.productId || '')] : null; %>
+              <article class="ref10-testimonial-card">
+                <b>“</b>
+                <% if (review.photoUrl) { %><img src="<%= review.photoUrl %>" alt="Foto de reseña" class="ref10-review-photo"><% } %>
+                <p>“<%= t(review.comment) %>”</p>
+                <% if (reviewProduct) { %><a href="/product/<%= reviewProduct.slug %>">Producto: <%= t(reviewProduct.name) %></a><% } %>
+                <small>— <%= t(review.customerName) %></small>
+              </article>
+            <% }) %>
+          </div>
+        <% } else { %>
+          <div class="ref10-testimonial-grid">
+            <article class="ref10-testimonial-card"><b>“</b><p>“Me hicieron un collar personalizado y quedó hermoso.”</p><small>— Cliente GATON</small></article>
+            <article class="ref10-testimonial-card"><b>“</b><p>“La calidad se siente premium y la atención fue excelente.”</p><small>— Cliente GATON</small></article>
+            <article class="ref10-testimonial-card"><b>“</b><p>“Pedí por WhatsApp y coordinamos todo rápido.”</p><small>— Cliente GATON</small></article>
+          </div>
+        <% } %>
+      </div>
+    </section>
+
+    <section class="ref10-section ref10-contact" id="contacto">
+      <div class="ref10-container ref10-contact-grid">
+        <div class="ref10-contact-copy">
+          <span><%= t(siteSettings?.contactEyebrow, "Contáctanos") %></span>
+          <h2><%= t(siteSettings?.contactTitle, "Hablemos de tu próxima joya") %></h2>
+          <p><%= t(siteSettings?.contactText, "¿Quieres una pieza personalizada o tienes dudas sobre un producto? Escríbenos y te respondemos en breve.") %></p>
+          <dl>
+            <div><dt>WhatsApp</dt><dd><%= t(siteSettings?.phone || siteSettings?.whatsapp, '+1 (849) 330-6269') %></dd></div>
+            <div><dt>Instagram</dt><dd>@gaton.do</dd></div>
+            <div><dt>Ubicación</dt><dd>Santo Domingo, RD</dd></div>
+            <div><dt>Envíos</dt><dd>A todo el país DO</dd></div>
+          </dl>
+        </div>
+
+        <form class="ref10-contact-form" onsubmit="event.preventDefault(); window.open(this.dataset.whatsapp + encodeURIComponent('Hola GATON DO, mi nombre es ' + this.nombre.value + '. Teléfono: ' + this.telefono.value + '. Me interesa: ' + this.interes.value + '. Mensaje: ' + this.mensaje.value), '_blank');" data-whatsapp="<%= whatsappDigits ? ('https://wa.me/' + whatsappDigits + '?text=') : 'https://wa.me/?text=' %>">
+          <label>Nombre<input type="text" name="nombre" placeholder="Tu nombre" required></label>
+          <label>Teléfono / WhatsApp<input type="tel" name="telefono" placeholder="(809) 000-0000" required></label>
+          <label>Me interesa<select name="interes"><option>Joya personalizada</option><option>Collares</option><option>Anillos</option><option>Fragancias</option><option>Consulta general</option></select></label>
+          <label>Mensaje<textarea name="mensaje" rows="5" placeholder="Cuéntanos qué tienes en mente..."></textarea></label>
+          <button type="submit">Enviar por WhatsApp</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <%- include("../partials/footer") %>
+</body>
+</html>

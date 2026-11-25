@@ -1,0 +1,31 @@
+<dialog id="basket-panel" aria-labelledby="basket-title">
+<header><h2 id="basket-title">Tu carrito</h2><form method="dialog"><button aria-label="Cerrar carrito">×</button></form></header>
+<% const lines = typeof basketLines === 'undefined' ? [] : basketLines; if (!lines.length) { %>
+<section class="basket-empty"><img src="/images/logo-gatondo-color.png" alt=""><h3>Tu carrito está vacío</h3><p>Agrega tus piezas favoritas para comenzar.</p></section>
+<% } else { %>
+  <% lines.forEach(item => { %>
+    <article class="basket-line">
+      <% if (item.imageUrl) { %>
+        <img class="basket-thumb" src="<%= item.imageUrl %>" alt="<%= item.productName %>" width="64" height="64">
+      <% } else { %>
+        <span class="basket-thumb">Sin foto</span>
+      <% } %>
+      <div>
+        <strong><%= item.productName %></strong>
+        <p><%= item.quantity %> × <%= formatCurrency(item.unitPrice) %></p>
+        <p>Subtotal del producto <%= formatCurrency(item.quantity * item.unitPrice) %></p>
+      </div>
+    </article>
+  <% }) %>
+  <%- include("basket-summary", { amount: lines.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0) }) %>
+  <a href="/cart">Editar carrito</a> · <a href="/checkout">Finalizar pedido</a>
+<% } %>
+</dialog>
+<script>
+(() => {
+ const panel=document.getElementById('basket-panel');
+ document.querySelectorAll('[data-open-basket]').forEach(link=>link.addEventListener('click',event=>{event.preventDefault();panel.showModal()}));
+ panel.addEventListener('click',event=>{if(event.target===panel && event.clientX<panel.getBoundingClientRect().left)panel.close()});
+ if(new URLSearchParams(location.search).get('cart')==='added')panel.showModal();
+})();
+</script>

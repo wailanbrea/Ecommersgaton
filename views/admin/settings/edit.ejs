@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configuración | Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/app.css?v=ref10b1">
+</head>
+<body class="bg-stone-100 min-h-screen">
+  <%- include("../../partials/admin-header") %>
+
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <div class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <h2 class="text-3xl font-semibold text-stone-900">Configuración visual y contenido</h2>
+        <p class="text-stone-600 mt-2">Edita textos, botones, enlaces, banner, secciones de inicio, contacto y envíos sin tocar código.</p>
+      </div>
+      <a href="/admin/dashboard" class="rounded-xl bg-white border border-stone-300 px-5 py-3 text-sm font-medium hover:bg-stone-50">Volver</a>
+    </div>
+
+    <% if (error) { %>
+      <div class="mb-6 rounded-xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm"><%= error %></div>
+    <% } %>
+
+    <% if (success) { %>
+      <div class="mb-6 rounded-xl bg-green-50 border border-green-200 text-green-700 px-4 py-3 text-sm">Configuración guardada correctamente.</div>
+    <% } %>
+
+    <form action="/admin/settings" method="post" enctype="multipart/form-data" class="admin-settings-form bg-white border border-stone-200 rounded-2xl p-6 shadow-sm space-y-10">
+      <section class="admin-form-section">
+        <h3>Identidad y barra superior</h3>
+        <p>Esta parte controla el logo, eslogan y la barra verde superior que se desplaza.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
+          <label>Nombre de marca<input type="text" name="brandName" value="<%= formData.brandName || '' %>"></label>
+          <label>Eslogan<input type="text" name="slogan" value="<%= formData.slogan || '' %>"></label>
+          <label class="md:col-span-2">Texto de barra superior<input type="text" name="topbarText" value="<%= formData.topbarText || '' %>" placeholder="Envíos disponibles en RD • Joyas con intención • Personalizados con estilo"></label>
+          <label class="md:col-span-2">Franja después del hero<input type="text" name="marqueeText" value="<%= formData.marqueeText || '' %>" placeholder="Joyas con intención ✦ Hecho a mano ✦ GATON ✦ Personalizados"></label>
+          <label>Texto del enlace de las tarjetas<input name="collectionLinkText" value="<%= formData.collectionLinkText || '' %>"></label>
+          <label>Texto del botón de fragancias<input name="fragranceButtonText" value="<%= formData.fragranceButtonText || '' %>"></label>
+          <label>Destino del botón de fragancias<input name="fragranceButtonUrl" value="<%= formData.fragranceButtonUrl || '' %>"></label>
+          <label>Botón de filtrar<input name="filterLabel" value="<%= formData.filterLabel || '' %>"></label>
+          <label>Enlace para limpiar filtros<input name="clearLabel" value="<%= formData.clearLabel || '' %>"></label>
+          <label>Ayuda del buscador<input name="searchHint" value="<%= formData.searchHint || '' %>"></label>
+          <label>Logo de portada (URL)<input name="heroLogoUrl" value="<%= formData.heroLogoUrl || '' %>"></label>
+          <label>Logo del pie (URL)<input name="footerLogoUrl" value="<%= formData.footerLogoUrl || '' %>"></label>
+          <label>URL logo opcional<input type="text" name="logoUrl" value="<%= formData.logoUrl || '' %>" placeholder="/images/logo-gatondo-color.png"></label>
+          <label>Fuente principal<input type="text" name="primaryFont" value="<%= formData.primaryFont || 'Times New Roman' %>"></label>
+          <label>Fuente secundaria<input type="text" name="secondaryFont" value="<%= formData.secondaryFont || 'Open Sans' %>"></label>
+        </div>
+      </section>
+
+      <section class="admin-form-section">
+        <h3>Hero / portada principal</h3>
+        <p>La portada puede mostrar video o imagen. Si hay video, el video tiene prioridad.</p>
+        <div class="grid grid-cols-1 gap-5 mt-5">
+          <label>Título principal<input type="text" name="heroTitle" value="<%= formData.heroTitle || '' %>" placeholder="Joyas con intención"></label>
+          <label>Subtítulo<textarea name="heroSubtitle" rows="3"><%= formData.heroSubtitle || '' %></textarea></label>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <label>Texto botón principal<input type="text" name="heroButtonText" value="<%= formData.heroButtonText || 'Ver la colección' %>"></label>
+            <label>URL botón principal<input type="text" name="heroButtonUrl" value="<%= formData.heroButtonUrl || '/shop' %>"></label>
+            <label>Texto botón secundario<input type="text" name="heroSecondaryButtonText" value="<%= formData.heroSecondaryButtonText || 'Nuestra esencia' %>"></label>
+            <label>URL botón secundario<input type="text" name="heroSecondaryButtonUrl" value="<%= formData.heroSecondaryButtonUrl || '#historia' %>"></label>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <label>Imagen portada<input type="file" name="heroImageFile" accept="image/jpeg,image/png,image/webp,image/gif"><input type="text" name="heroImageUrl" value="<%= formData.heroImageUrl || '' %>" placeholder="O URL actual de imagen"></label>
+            <label>Video/GIF portada<input type="file" name="heroVideoFile" accept="video/mp4,video/webm,video/quicktime,image/gif"><input type="text" name="heroVideoUrl" value="<%= formData.heroVideoUrl || '' %>" placeholder="O URL actual de video"></label>
+          </div>
+        </div>
+      </section>
+
+      <section class="admin-form-section">
+        <h3>Colecciones principales</h3>
+        <p>Estos textos aparecen sobre los 4 cuadros grandes. Los cuadros se eligen desde Categorías marcando “Mostrar en inicio”.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
+          <label>Texto pequeño<input type="text" name="collectionsEyebrow" value="<%= formData.collectionsEyebrow || 'Explora' %>"></label>
+          <label>Título<input type="text" name="collectionsTitle" value="<%= formData.collectionsTitle || 'Nuestras colecciones' %>"></label>
+          <label class="md:col-span-2">Título antiguo DESCUBRE<input type="text" name="discoverTitle" value="<%= formData.discoverTitle || '' %>"></label>
+          <label class="md:col-span-2">Texto antiguo DESCUBRE<textarea name="discoverText" rows="3"><%= formData.discoverText || '' %></textarea></label>
+        </div>
+      </section>
+
+      <section class="admin-form-section">
+        <h3>Sección historia / esencia</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
+          <label>Texto pequeño<input type="text" name="aboutSubtitle" value="<%= formData.aboutSubtitle || 'Nuestra esencia' %>"></label>
+          <label>Título<input type="text" name="aboutTitle" value="<%= formData.aboutTitle || '' %>"></label>
+          <label class="md:col-span-2">Texto<textarea name="aboutText" rows="5"><%= formData.aboutText || '' %></textarea></label>
+          <label>Imagen de la sección<input type="file" name="aboutImageFile" accept="image/jpeg,image/png,image/webp,image/gif"><input type="text" name="aboutImageUrl" value="<%= formData.aboutImageUrl || '' %>" placeholder="O URL actual de imagen"></label>
+          <label>Texto botón<input type="text" name="storyButtonText" value="<%= formData.storyButtonText || 'Descubre la colección' %>"><input type="text" name="storyButtonUrl" value="<%= formData.storyButtonUrl || '/shop' %>" placeholder="URL del botón"></label>
+        </div>
+      </section>
+
+      <section class="admin-form-section">
+        <h3>Sección catálogo en inicio</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
+          <label>Texto pequeño<input type="text" name="catalogEyebrow" value="<%= formData.catalogEyebrow || 'Catálogo' %>"></label>
+          <label>Título<input type="text" name="catalogTitle" value="<%= formData.catalogTitle || 'Joyería' %>"></label>
+          <label class="md:col-span-2">Texto<textarea name="catalogText" rows="3"><%= formData.catalogText || '' %></textarea></label>
+        </div>
+      </section>
+
+      <section class="admin-form-section">
+        <h3>Sección fragancias</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
+          <label>Texto pequeño<input type="text" name="fragranceEyebrow" value="<%= formData.fragranceEyebrow || 'Fragancias de autor' %>"></label>
+          <label>Título<input type="text" name="fragranceTitle" value="<%= formData.fragranceTitle || 'Una esencia para cada historia' %>"></label>
+          <label class="md:col-span-2">Texto<textarea name="fragranceText" rows="3"><%= formData.fragranceText || '' %></textarea></label>
+        </div>
+      </section>
+
+      <section class="admin-form-section">
+        <h3>Tu pedido en 3 pasos</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
+          <label>Texto pequeño<input type="text" name="stepsEyebrow" value="<%= formData.stepsEyebrow || '¿Cómo pedir?' %>"></label>
+          <label>Título<input type="text" name="stepsTitle" value="<%= formData.stepsTitle || 'Tu pedido en 3 pasos' %>"></label>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mt-5">
+          <% const defaultSteps = [{number:'01',title:'Elige tu pieza',text:'Explora el catálogo y agrega tus favoritos al carrito.'},{number:'02',title:'Finaliza por WhatsApp',text:'Tu pedido puede enviarse automáticamente a nuestro WhatsApp.'},{number:'03',title:'Recíbelo en casa',text:'Coordinamos el pago y enviamos a todo el país RD.'}]; %>
+          <% for (let i = 0; i < 3; i++) { const step = (formData.steps || [])[i] || defaultSteps[i]; %>
+            <div class="rounded-2xl border border-stone-200 p-4 bg-stone-50 space-y-3">
+              <label>Número<input type="text" name="stepNumber" value="<%= step.number || defaultSteps[i].number %>"></label>
+              <label>Título<input type="text" name="stepTitle" value="<%= step.title || defaultSteps[i].title %>"></label>
+              <label>Texto<textarea name="stepText" rows="3"><%= step.text || defaultSteps[i].text %></textarea></label>
+            </div>
+          <% } %>
+        </div>
+      </section>
+
+      <section class="admin-form-section">
+        <h3>Testimonios y contacto</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
+          <label>Texto pequeño testimonios<input type="text" name="testimonialsEyebrow" value="<%= formData.testimonialsEyebrow || 'Clientes' %>"></label>
+          <label>Título testimonios<input type="text" name="testimonialsTitle" value="<%= formData.testimonialsTitle || 'Lo que dicen de GATON' %>"></label>
+          <label>Texto pequeño contacto<input type="text" name="contactEyebrow" value="<%= formData.contactEyebrow || 'Contáctanos' %>"></label>
+          <label>Título contacto<input type="text" name="contactTitle" value="<%= formData.contactTitle || 'Hablemos de tu próxima joya' %>"></label>
+          <label class="md:col-span-2">Texto contacto<textarea name="contactText" rows="3"><%= formData.contactText || '' %></textarea></label>
+        </div>
+      </section>
+
+      <section class="admin-form-section">
+        <h3>Contacto, redes y footer</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
+          <label>Correo<input type="email" name="email" value="<%= formData.email || '' %>"></label>
+          <label>Teléfono llamadas<input type="text" name="phone" value="<%= formData.phone || '' %>"></label>
+          <label>WhatsApp<input type="text" name="whatsapp" value="<%= formData.whatsapp || '' %>"></label>
+          <label>Instagram URL<input type="text" name="instagram" value="<%= formData.instagram || '' %>"></label>
+          <label>Instagram texto visible<input type="text" name="instagramHandle" value="<%= formData.instagramHandle || '@gaton.do' %>"></label>
+          <label>TikTok URL<input type="text" name="tiktok" value="<%= formData.tiktok || '' %>"></label>
+          <label>Facebook URL<input type="text" name="facebook" value="<%= formData.facebook || '' %>"></label>
+          <label>Ubicación<input type="text" name="locationText" value="<%= formData.locationText || 'Santo Domingo, RD' %>"></label>
+          <label>Texto de envíos<input type="text" name="shippingText" value="<%= formData.shippingText || 'A todo el país DO' %>"></label>
+        </div>
+      </section>
+
+      <section class="admin-form-section">
+        <div class="flex items-center justify-between gap-4 mb-4">
+          <div><h3>Opciones de envío</h3><p>Estas opciones se usarán en checkout y en el mensaje de WhatsApp.</p></div>
+          <button type="button" id="addShippingBtn" class="rounded-xl bg-stone-900 text-white px-4 py-2 text-sm font-medium">Agregar envío</button>
+        </div>
+        <div id="shippingOptionsWrap" class="space-y-4">
+          <% const shippings = formData.shippingOptions && formData.shippingOptions.length ? formData.shippingOptions : [{name:'Delivery Santo Domingo',description:'Entrega dentro de Santo Domingo',price:0,active:true},{name:'Envío al interior',description:'Coordinación a provincia',price:0,active:true},{name:'Retiro / coordinar por WhatsApp',description:'Coordinar directamente con la tienda',price:0,active:true}]; %>
+          <% shippings.forEach((option) => { %>
+            <div class="shipping-row grid grid-cols-1 md:grid-cols-4 gap-3 rounded-2xl border border-stone-200 p-4 bg-stone-50">
+              <input type="text" name="shippingName" value="<%= option.name || '' %>" placeholder="Nombre">
+              <input type="text" name="shippingDescription" value="<%= option.description || '' %>" placeholder="Descripción">
+              <input type="text" name="shippingPrice" value="<%= option.price || 0 %>" placeholder="Costo">
+              <label class="flex items-center gap-2"><input type="checkbox" name="shippingActive" value="true" <%= option.active !== false ? 'checked' : '' %>> Activo</label>
+            </div>
+          <% }) %>
+        </div>
+      </section>
+
+      <div class="sticky bottom-0 bg-white/90 backdrop-blur border-t border-stone-200 py-4 flex justify-end gap-3">
+        <a href="/admin/dashboard" class="rounded-xl bg-white border border-stone-300 px-5 py-3 text-sm font-medium">Cancelar</a>
+        <button type="submit" class="rounded-xl bg-stone-900 text-white px-6 py-3 text-sm font-semibold">Guardar configuración</button>
+      </div>
+    </form>
+  </main>
+
+  <script>
+    document.getElementById('addShippingBtn')?.addEventListener('click', function () {
+      const wrap = document.getElementById('shippingOptionsWrap');
+      const div = document.createElement('div');
+      div.className = 'shipping-row grid grid-cols-1 md:grid-cols-4 gap-3 rounded-2xl border border-stone-200 p-4 bg-stone-50';
+      div.innerHTML = `
+        <input type="text" name="shippingName" placeholder="Nombre">
+        <input type="text" name="shippingDescription" placeholder="Descripción">
+        <input type="text" name="shippingPrice" placeholder="Costo">
+        <label class="flex items-center gap-2"><input type="checkbox" name="shippingActive" value="true" checked> Activo</label>
+      `;
+      wrap.appendChild(div);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+FASE 10C — Pulido visual catálogo/producto/carrito/checkout
+
+Archivos incluidos:
+- views/store/shop.ejs
+- views/store/product-detail.ejs
+- views/store/cart.ejs
+- views/store/checkout.ejs
+- views/store/order-success.ejs
+- public/css/app.css
+
+Objetivo:
+Unificar el catálogo, ficha de producto, carrito, checkout y pantalla de éxito con el rediseño tipo referencia aplicado en la Home.
+
+Cambios principales:
+- /shop con hero premium, filtros tipo card flotante, chips de categorías y chips de género.
+- Categoría y género visualmente separados.
+- Tarjetas de producto más alineadas con la estética de la referencia.
+- Precio de oferta visible como precio tachado.
+- Detalle de producto con galería, variantes, fuentes y formulario más premium.
+- Carrito y checkout con cards limpias, bordes suaves y estilo consistente.
+- Pantalla de pedido confirmado más elegante.
+- CSS adicional para evitar que el carrito/modal haga scroll en la página de atrás.
+
+Instalación:
+1. Subir las carpetas views, public y docs encima del proyecto.
+2. Validar sintaxis si se desea:
+   node -c src/routes/store.js
+   node -c src/routes/admin.js
+3. Reiniciar:
+   pm2 restart gatondo-ecommerce
+4. Probar:
+   /
+   /shop
+   /product/<slug>
+   /cart
+   /checkout
+
+Nota:
+Esta fase no cambia modelos ni base de datos. Es principalmente vista + CSS.

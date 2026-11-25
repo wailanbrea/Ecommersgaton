@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | GATON DO</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="bg-stone-100 min-h-screen">
+  <header class="bg-white border-b border-stone-200">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div>
+        <p class="text-xs uppercase tracking-[0.35em] text-stone-500">Panel Administrativo</p>
+        <h1 class="text-2xl font-semibold text-stone-900">GATON DO</h1>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <span class="text-sm text-stone-600"><%= currentAdminEmail || "" %></span>
+        <form action="/admin/logout" method="post">
+          <button class="rounded-xl bg-stone-900 text-white px-4 py-2 text-sm hover:bg-stone-800">
+            Cerrar sesión
+          </button>
+        </form>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-8">
+    <section class="mb-8">
+      <h2 class="text-3xl font-semibold text-stone-900">Dashboard</h2>
+      <p class="text-stone-600 mt-2">
+        Desde aquí administras productos, pedidos, reseñas y configuración del sitio.
+      </p>
+    </section>
+
+    <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mb-8">
+      <div class="bg-white border border-stone-200 rounded-2xl p-5 shadow-sm">
+        <p class="text-sm text-stone-500">Productos</p>
+        <h3 class="text-3xl font-semibold text-stone-900 mt-2"><%= productCount %></h3>
+      </div>
+
+      <div class="bg-white border border-stone-200 rounded-2xl p-5 shadow-sm">
+        <p class="text-sm text-stone-500">Categorías</p>
+        <h3 class="text-3xl font-semibold text-stone-900 mt-2"><%= categoryCount %></h3>
+      </div>
+
+      <div class="bg-white border border-stone-200 rounded-2xl p-5 shadow-sm">
+        <p class="text-sm text-stone-500">Reseñas</p>
+        <h3 class="text-3xl font-semibold text-stone-900 mt-2"><%= reviewCount %></h3>
+      </div>
+
+      <div class="bg-white border border-stone-200 rounded-2xl p-5 shadow-sm">
+        <p class="text-sm text-stone-500">Pedidos</p>
+        <h3 class="text-3xl font-semibold text-stone-900 mt-2"><%= orderCount %></h3>
+      </div>
+
+      <div class="bg-white border border-stone-200 rounded-2xl p-5 shadow-sm">
+        <p class="text-sm text-stone-500">Admins</p>
+        <h3 class="text-3xl font-semibold text-stone-900 mt-2"><%= adminCount %></h3>
+      </div>
+    </section>
+
+    <section class="bg-white border border-stone-200 rounded-2xl p-6 shadow-sm mb-8">
+      <h3 class="text-xl font-semibold text-stone-900 mb-5">Accesos rápidos</h3>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <a href="/admin/products/new" class="rounded-2xl bg-stone-900 text-white px-5 py-4 font-medium hover:bg-stone-800">
+          + Agregar producto
+        </a>
+
+        <a href="/admin/categories/new" class="rounded-2xl bg-white border border-stone-300 px-5 py-4 font-medium hover:bg-stone-50">
+          + Agregar categoría
+        </a>
+
+        <a href="/admin/products" class="rounded-2xl bg-white border border-stone-300 px-5 py-4 font-medium hover:bg-stone-50">
+          Ver productos
+        </a>
+
+        <a href="/admin/orders" class="rounded-2xl bg-white border border-stone-300 px-5 py-4 font-medium hover:bg-stone-50">
+          Ver pedidos
+        </a>
+
+        <a href="/admin/reviews" class="rounded-2xl bg-white border border-stone-300 px-5 py-4 font-medium hover:bg-stone-50">
+          Moderar reseñas
+        </a>
+
+        <a href="/admin/settings" class="rounded-2xl bg-white border border-stone-300 px-5 py-4 font-medium hover:bg-stone-50">
+          Configurar sitio
+        </a>
+      </div>
+    </section>
+
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="bg-white border border-stone-200 rounded-2xl p-6 shadow-sm">
+        <h3 class="text-xl font-semibold text-stone-900 mb-4">Información base del sitio</h3>
+
+        <div class="space-y-3 text-sm">
+          <div>
+            <span class="text-stone-500">Marca:</span>
+            <strong class="text-stone-900"><%= siteSettings?.brandName || "GATON DO" %></strong>
+          </div>
+          <div>
+            <span class="text-stone-500">Eslogan:</span>
+            <strong class="text-stone-900"><%= siteSettings?.slogan || "Joyas con intención" %></strong>
+          </div>
+          <div>
+            <span class="text-stone-500">Correo:</span>
+            <strong class="text-stone-900"><%= siteSettings?.email || "gatonaromaterapia@gmail.com" %></strong>
+          </div>
+          <div>
+            <span class="text-stone-500">WhatsApp:</span>
+            <strong class="text-stone-900"><%= siteSettings?.whatsapp || "+1 (849) 330-6269" %></strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white border border-stone-200 rounded-2xl p-6 shadow-sm">
+        <h3 class="text-xl font-semibold text-stone-900 mb-4">Rutas rápidas</h3>
+        <ul class="space-y-3 text-stone-700 text-sm list-disc pl-5">
+          <li><strong>Agregar producto:</strong> /admin/products/new</li>
+          <li><strong>Ver productos:</strong> /admin/products</li>
+          <li><strong>Agregar categoría:</strong> /admin/categories/new</li>
+          <li><strong>Ver pedidos:</strong> /admin/orders</li>
+          <li><strong>Reseñas:</strong> /admin/reviews</li>
+          <li><strong>Configuración:</strong> /admin/settings</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

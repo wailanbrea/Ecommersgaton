@@ -1,0 +1,55 @@
+<%
+  function footer10Text(value, fallback = "") {
+    return String(value || fallback || "")
+      .replace(/&aacute;/g, "á").replace(/&eacute;/g, "é").replace(/&iacute;/g, "í").replace(/&oacute;/g, "ó").replace(/&uacute;/g, "ú")
+      .replace(/&ntilde;/g, "ñ").replace(/&amp;/g, "&")
+      .replace(/intenci�n/gi, "intención").replace(/joyer�a/gi, "joyería").replace(/fraganc�as/gi, "fragancias");
+  }
+
+  const footerBrand = footer10Text(siteSettings?.brandName, "GATON DO");
+  const instagramUrl = siteSettings?.instagramUrl || siteSettings?.instagram || "https://www.instagram.com/gaton.do";
+  const tiktokUrl = siteSettings?.tiktokUrl || siteSettings?.tiktok || "https://www.tiktok.com/@gaton.do";
+  const facebookUrl = siteSettings?.facebookUrl || siteSettings?.facebook || "";
+  const linktreeUrl = siteSettings?.linktreeUrl || siteSettings?.linktree || "";
+  const whatsappDigits = String(siteSettings?.whatsapp || siteSettings?.whatsappNumber || siteSettings?.phone || "").replace(/\D/g, "");
+  const whatsappUrl = whatsappDigits ? `https://wa.me/${whatsappDigits}` : "";
+%>
+
+<footer class="ref10-footer">
+  <div class="ref10-footer-inner">
+    <div class="ref10-footer-brand">
+      <a href="/" aria-label="<%= footerBrand %>"><img src="<%= siteSettings?.footerLogoUrl || '/images/logo-gatondo-white.png' %>" alt="<%= footerBrand %>"></a>
+      <p><%= footer10Text(siteSettings?.slogan || siteSettings?.footerSlogan, "Joyas con intención. Hechas a mano en República Dominicana.") %></p>
+    </div>
+
+    <nav class="ref10-footer-col" aria-label="Tienda">
+      <h3>Tienda</h3>
+      <a href="/shop">Joyería</a>
+      <a href="/shop?category=fragancias">Fragancias</a>
+      <a href="/shop?q=personalizado">Personalizados</a>
+    </nav>
+
+    <nav class="ref10-footer-col" aria-label="GATON">
+      <h3>GATON</h3>
+      <a href="/#historia">Historia</a>
+      <a href="/#clientes">Clientes</a>
+      <a href="/#contacto">Contacto</a>
+    </nav>
+
+    <nav class="ref10-footer-col" aria-label="Síguenos">
+      <h3>Síguenos</h3>
+      <% if (instagramUrl) { %><a href="<%= instagramUrl %>" target="_blank" rel="noopener">Instagram</a><% } %>
+      <% if (tiktokUrl) { %><a href="<%= tiktokUrl %>" target="_blank" rel="noopener">TikTok</a><% } %>
+      <% if (whatsappUrl) { %><a href="<%= whatsappUrl %>" target="_blank" rel="noopener">WhatsApp</a><% } %>
+      <% if (facebookUrl) { %><a href="<%= facebookUrl %>" target="_blank" rel="noopener">Facebook</a><% } %>
+      <% if (linktreeUrl) { %><a href="<%= linktreeUrl %>" target="_blank" rel="noopener">Linktree</a><% } %>
+    </nav>
+  </div>
+
+  <div class="ref10-footer-bottom">
+    <span>© 2024–<%= new Date().getFullYear() %> <%= footerBrand %> · Joyería & Fragancias</span>
+    <span><%= siteSettings?.locationText %></span>
+  </div>
+</footer>
+
+<%- include("basket-panel") %>

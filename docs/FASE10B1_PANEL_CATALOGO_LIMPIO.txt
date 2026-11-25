@@ -1,0 +1,30 @@
+FASE 10B-1 — PANEL EDITABLE + CATEGORÍAS/GÉNEROS LIMPIOS
+
+OBJETIVO
+- Permitir editar desde /admin/settings los textos principales de la home inspirada en la referencia.
+- Separar categorías de géneros.
+- Evitar que Hombre, Mujeres, Niñ@s o Animales aparezcan como categorías principales.
+- Permitir elegir desde /admin/categories qué 4 categorías aparecen en “Nuestras colecciones”.
+- Rediseñar /shop con filtros separados por categoría, género y búsqueda.
+
+ARCHIVOS INCLUIDOS
+- src/models/SiteSettings.js
+- src/models/Category.js
+- src/routes/admin.js
+- src/routes/store.js
+- src/middlewares/globals.js
+- views/admin/settings/edit.ejs
+- views/admin/categories/new.ejs
+- views/admin/categories/edit.ejs
+- views/admin/products/new.ejs
+- views/admin/products/edit.ejs
+- views/store/home.ejs
+- views/store/shop.ejs
+- public/css/app.css
+
+NOTAS
+- Esta fase no borra datos existentes.
+- Los géneros existentes que fueron creados como categorías quedan ocultos del menú público y filtros de categoría.
+- Para que una categoría salga en la home, marca “Mostrar en inicio como colección principal”.
+- Si no marcas ninguna, el sistema intenta usar Collares, Brazaletes, Anillos, Fragancias/Personalizados como respaldo.
+- La parte de foto para fotograbado, selección de envío antes de WhatsApp y scroll interno del carrito queda para la Fase 10B-2.

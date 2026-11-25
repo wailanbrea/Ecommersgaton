@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nuevo producto | Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="bg-stone-100 min-h-screen">
+  <%- include("../../partials/admin-header") %>
+
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <div class="mb-8">
+      <h2 class="text-3xl font-semibold text-stone-900">Nuevo producto</h2>
+      <p class="text-stone-600 mt-2">Formulario mejorado sin JSON manual.</p>
+    </div>
+
+    <% if (error) { %>
+      <div class="mb-6 rounded-xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
+        <%= error %>
+      </div>
+    <% } %>
+
+    <form action="/admin/products/new" method="post" enctype="multipart/form-data" class="bg-white border border-stone-200 rounded-2xl p-6 shadow-sm space-y-8">
+      <section>
+        <h3 class="text-xl font-semibold text-stone-900 mb-4">Información general</h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-stone-700 mb-2">Nombre *</label>
+            <input type="text" name="name" required value="<%= formData.name %>" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-stone-700 mb-2">Slug</label>
+            <input type="text" name="slug" value="<%= formData.slug %>" class="w-full rounded-xl border border-stone-300 px-4 py-3" placeholder="se genera si lo dejas vacío">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-stone-700 mb-2">Categoría</label>
+            <select name="categoryId" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+              <option value="">Selecciona una categoría</option>
+              <% categories.forEach(category => { %>
+                <option value="<%= category._id %>" <%= String(formData.categoryId) === String(category._id) ? "selected" : "" %>>
+                  <%= category.name %>
+                </option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-stone-700 mb-2">Género / público</label>
+            <select name="gender" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+              <% (genderOptions || []).forEach(option => { %>
+                <option value="<%= option.value %>" <%= String(formData.gender || "") === String(option.value) ? "selected" : "" %>>
+                  <%= option.label %>
+                </option>
+              <% }) %>
+            </select>
+            <p class="text-xs text-stone-500 mt-2">Se usa para filtrar en catálogo: Hombre, Mujer, Niñ@s o Animales.</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-stone-700 mb-2">Tags (separados por coma)</label>
+            <input type="text" name="tags" value="<%= formData.tags %>" class="w-full rounded-xl border border-stone-300 px-4 py-3" placeholder="joyas, collar, regalo">
+          </div>
+        </div>
+
+        <div class="mt-6">
+          <label class="block text-sm font-medium text-stone-700 mb-2">Descripción corta</label>
+          <textarea name="shortDescription" rows="3" class="w-full rounded-xl border border-stone-300 px-4 py-3"><%= formData.shortDescription %></textarea>
+        </div>
+
+        <div class="mt-6">
+          <label class="block text-sm font-medium text-stone-700 mb-2">Descripción completa</label>
+          <textarea name="description" rows="5" class="w-full rounded-xl border border-stone-300 px-4 py-3"><%= formData.description %></textarea>
+        </div>
+      </section>
+
+      <section>
+        <h3 class="text-xl font-semibold text-stone-900 mb-4">Precio, stock y estado</h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-stone-700 mb-2">Precio base</label>
+            <input type="text" inputmode="decimal" name="basePrice" value="<%= formData.basePrice %>" placeholder="RD$1,200.00" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-stone-700 mb-2">Precio de oferta / compareAt</label>
+            <input type="text" inputmode="decimal" name="compareAtPrice" value="<%= formData.compareAtPrice %>" placeholder="RD$1,500.00" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-stone-700 mb-2">Stock</label>
+            <input type="number" name="stock" value="<%= formData.stock %>" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+          </div>
+        </div>
+
+        <div class="mt-6 flex flex-wrap gap-6">
+          <label class="inline-flex items-center gap-3">
+            <input type="checkbox" name="featured" <%= formData.featured ? "checked" : "" %>>
+            <span class="text-sm text-stone-700">Destacado</span>
+          </label>
+
+          <label class="inline-flex items-center gap-3">
+            <input type="checkbox" name="active" <%= formData.active ? "checked" : "" %>>
+            <span class="text-sm text-stone-700">Activo</span>
+          </label>
+
+          <label class="inline-flex items-center gap-3">
+            <input type="checkbox" name="outOfStock" <%= formData.outOfStock ? "checked" : "" %>>
+            <span class="text-sm text-stone-700">Agotado</span>
+          </label>
+
+          <label class="inline-flex items-center gap-3">
+            <input type="checkbox" name="hasVariants" id="hasVariantsToggle" <%= formData.hasVariants ? "checked" : "" %>>
+            <span class="text-sm text-stone-700">Tiene variantes</span>
+          </label>
+
+          <label class="inline-flex items-center gap-3">
+            <input type="checkbox" name="hasCustomization" id="hasCustomizationToggle" <%= formData.hasCustomization ? "checked" : "" %>>
+            <span class="text-sm text-stone-700">Permite personalización</span>
+          </label>
+
+          <label class="inline-flex items-center gap-3">
+            <input type="checkbox" name="allowPhotoCustomization" <%= formData.allowPhotoCustomization ? "checked" : "" %>>
+            <span class="text-sm text-stone-700">Permite cargar foto para fotograbado</span>
+          </label>
+        </div>
+      </section>
+
+      <section>
+        <h3 class="text-xl font-semibold text-stone-900 mb-4">Media</h3>
+
+        <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 mb-5">
+          Puedes subir archivos desde tu computadora. Si no subes nada, se conserva la URL escrita.
+          Formatos permitidos: JPG, PNG, WEBP, GIF, MP4, WEBM y MOV.
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-3">
+            <label class="block text-sm font-medium text-stone-700">Imagen principal</label>
+            <input type="file" name="mainImageFile" accept="image/jpeg,image/png,image/webp,image/gif" class="w-full rounded-xl border border-stone-300 px-4 py-3 bg-white">
+            <input type="text" name="mainImageUrl" value="<%= formData.mainImageUrl %>" placeholder="O pega/conserva una URL existente" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+            <% if (formData.mainImageUrl) { %>
+              <div class="text-xs text-stone-500 break-all">Actual: <%= formData.mainImageUrl %></div>
+            <% } %>
+          </div>
+
+          <div class="space-y-3">
+            <label class="block text-sm font-medium text-stone-700">Video / GIF</label>
+            <input type="file" name="videoFile" accept="video/mp4,video/webm,video/quicktime,image/gif" class="w-full rounded-xl border border-stone-300 px-4 py-3 bg-white">
+            <input type="text" name="videoUrl" value="<%= formData.videoUrl %>" placeholder="O pega/conserva una URL existente" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+            <% if (formData.videoUrl) { %>
+              <div class="text-xs text-stone-500 break-all">Actual: <%= formData.videoUrl %></div>
+            <% } %>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="flex items-center justify-between gap-4 mb-4">
+          <h3 class="text-xl font-semibold text-stone-900">Galería</h3>
+          <button type="button" id="addGalleryBtn" class="rounded-xl bg-stone-900 text-white px-4 py-2 text-sm font-medium hover:bg-stone-800">
+            Agregar URL
+          </button>
+        </div>
+
+        <div id="galleryContainer" class="space-y-4">
+          <% if (formData.gallery && formData.gallery.length) { %>
+            <% formData.gallery.forEach((item) => { %>
+              <div class="gallery-item bg-stone-50 border border-stone-200 rounded-2xl p-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium mb-2">URL o ruta guardada</label>
+                    <input type="text" name="galleryUrl" value="<%= item.url || '' %>" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-2">Tipo</label>
+                    <select name="galleryType" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+                      <option value="image" <%= item.type === "image" ? "selected" : "" %>>Imagen</option>
+                      <option value="video" <%= item.type === "video" ? "selected" : "" %>>Video</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-2">Texto alternativo</label>
+                    <input type="text" name="galleryAltText" value="<%= item.altText || '' %>" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+                  </div>
+                </div>
+                <div class="mt-4">
+                  <button type="button" class="remove-block rounded-xl bg-red-600 text-white px-4 py-2 text-sm">Quitar</button>
+                </div>
+              </div>
+            <% }) %>
+          <% } %>
+        </div>
+
+        <div class="mt-5 rounded-2xl border border-dashed border-stone-300 bg-stone-50 p-4">
+          <label class="block text-sm font-medium text-stone-700 mb-2">Subir nuevas imágenes/videos a la galería</label>
+          <input type="file" name="galleryFiles" multiple accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" class="w-full rounded-xl border border-stone-300 bg-white px-4 py-3">
+          <p class="text-xs text-stone-500 mt-2">Los archivos que subas aquí se agregarán a la galería sin borrar las URLs existentes.</p>
+        </div>
+      </section>
+
+      <section id="variantsSection">
+        <div class="flex items-center justify-between gap-4 mb-4">
+          <h3 class="text-xl font-semibold text-stone-900">Variantes</h3>
+          <button type="button" id="addVariantBtn" class="rounded-xl bg-stone-900 text-white px-4 py-2 text-sm font-medium hover:bg-stone-800">
+            Agregar variante
+          </button>
+        </div>
+
+        <div id="variantsContainer" class="space-y-4">
+          <% if (formData.variants && formData.variants.length) { %>
+            <% formData.variants.forEach((variant, index) => { %>
+              <div class="variant-item bg-stone-50 border border-stone-200 rounded-2xl p-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium mb-2">Nombre de la variante</label>
+                    <input type="text" name="variantLabel" value="<%= variant.label || '' %>" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-2">Tipo de opción</label>
+                    <input type="text" name="variantOptionName" value="<%= variant.optionName || '' %>" placeholder="Color / Tamaño" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-2">Valor de la opción</label>
+                    <input type="text" name="variantOptionValue" value="<%= variant.optionValue || '' %>" placeholder="Dorado / M" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-2">Precio</label>
+                    <input type="text" inputmode="decimal" name="variantPrice" value="<%= variant.price || 0 %>" placeholder="RD$1,200.00" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-2">Precio anterior / oferta</label>
+                    <input type="text" inputmode="decimal" name="variantCompareAtPrice" value="<%= variant.compareAtPrice || 0 %>" placeholder="RD$1,500.00" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-2">Stock</label>
+                    <input type="number" name="variantStock" value="<%= variant.stock || 0 %>" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+                  </div>
+                  <div class="md:col-span-2">
+                    <label class="block text-sm font-medium mb-2">Imagen de la variante</label>
+                    <input type="hidden" name="variantImageUrl" value="<%= variant.imageUrl || '' %>">
+                    <input type="file" name="variantImageFile<%= index %>" accept="image/*" data-upload-prefix="variantImageFile" class="w-full rounded-xl border border-stone-300 px-4 py-3 bg-white">
+                    <% if (variant.imageUrl) { %>
+                      <p class="text-xs text-stone-500 mt-2">Imagen actual: <%= variant.imageUrl %></p>
+                    <% } %>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-2">Estado</label>
+                    <select name="variantOutOfStock" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+                      <option value="false" <%= !variant.outOfStock ? "selected" : "" %>>Disponible</option>
+                      <option value="true" <%= variant.outOfStock ? "selected" : "" %>>Agotada</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="mt-4">
+                  <button type="button" class="remove-block rounded-xl bg-red-600 text-white px-4 py-2 text-sm">Quitar</button>
+                </div>
+              </div>
+            <% }) %>
+          <% } %>
+        </div>
+      </section>
+
+      <section id="customizationSection">
+        <div class="flex items-center justify-between gap-4 mb-4">
+          <h3 class="text-xl font-semibold text-stone-900">Campos de personalización</h3>
+          <button type="button" id="addCustomFieldBtn" class="rounded-xl bg-stone-900 text-white px-4 py-2 text-sm font-medium hover:bg-stone-800">
+            Agregar campo
+          </button>
+        </div>
+
+        <div id="customFieldsContainer" class="space-y-4">
+          <% if (formData.customizationFields && formData.customizationFields.length) { %>
+            <% formData.customizationFields.forEach((field) => { %>
+              <div class="custom-item bg-stone-50 border border-stone-200 rounded-2xl p-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium mb-2">Identificador interno</label>
+                    <input type="text" name="customKey" value="<%= field.key || '' %>" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-2">Nombre de la variante</label>
+                    <input type="text" name="customLabel" value="<%= field.label || '' %>" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-2">Ejemplo dentro del campo</label>
+                    <input type="text" name="customPlaceholder" value="<%= field.placeholder || '' %>" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-2">Máximo caracteres</label>
+                    <input type="number" name="customMaxLength" value="<%= field.maxLength || 100 %>" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+                  </div>
+                  <div class="flex items-end">
+                    <div class="flex items-center gap-3">
+                      <label class="inline-flex items-center gap-3">
+                        <input type="hidden" name="customRequired" value="false">
+                        <input type="checkbox" name="customRequired" value="true" <%= field.required ? "checked" : "" %>>
+                        <span class="text-sm">Obligatorio</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                <div class="mt-4">
+                  <button type="button" class="remove-block rounded-xl bg-red-600 text-white px-4 py-2 text-sm">Quitar</button>
+                </div>
+              </div>
+            <% }) %>
+          <% } %>
+        </div>
+      </section>
+
+      <section>
+        <div class="flex items-center justify-between gap-4 mb-4">
+          <h3 class="text-xl font-semibold text-stone-900">Tipografías</h3>
+          <button type="button" id="addFontBtn" class="rounded-xl bg-stone-900 text-white px-4 py-2 text-sm font-medium hover:bg-stone-800">
+            Agregar tipografía
+          </button>
+        </div>
+
+        <div id="fontsContainer" class="space-y-4">
+          <% if (formData.fontOptions && formData.fontOptions.length) { %>
+            <% formData.fontOptions.forEach((font, index) => { %>
+              <div class="font-item bg-stone-50 border border-stone-200 rounded-2xl p-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium mb-2">Nombre</label>
+                    <input type="text" name="fontName" value="<%= font.name || '' %>" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-2">Texto de vista previa</label>
+                    <input type="text" name="fontPreviewText" value="<%= font.previewText || '' %>" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-2">Imagen de vista previa</label>
+                    <input type="hidden" name="fontPreviewImageUrl" value="<%= font.previewImageUrl || '' %>">
+                    <input type="file" name="fontPreviewImageFile<%= index %>" accept="image/*" data-upload-prefix="fontPreviewImageFile" class="w-full rounded-xl border border-stone-300 px-4 py-3 bg-white">
+                    <% if (font.previewImageUrl) { %>
+                      <p class="text-xs text-stone-500 mt-2">Imagen actual: <%= font.previewImageUrl %></p>
+                    <% } %>
+                  </div>
+                </div>
+                <div class="mt-4">
+                  <button type="button" class="remove-block rounded-xl bg-red-600 text-white px-4 py-2 text-sm">Quitar</button>
+                </div>
+              </div>
+            <% }) %>
+          <% } %>
+        </div>
+      </section>
+
+      <div class="flex flex-wrap gap-3">
+        <a href="/admin/products" class="rounded-xl bg-white border border-stone-300 px-5 py-3 text-sm font-medium hover:bg-stone-50">
+          Cancelar
+        </a>
+        <button type="submit" class="rounded-xl bg-stone-900 text-white px-5 py-3 text-sm font-medium hover:bg-stone-800">
+          Guardar producto
+        </button>
+      </div>
+    </form>
+  </main>
+
+  <template id="galleryTemplate">
+    <div class="gallery-item bg-stone-50 border border-stone-200 rounded-2xl p-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm font-medium mb-2">URL o ruta guardada</label>
+          <input type="text" name="galleryUrl" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Tipo</label>
+          <select name="galleryType" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+            <option value="image">Imagen</option>
+            <option value="video">Video</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Texto alternativo</label>
+          <input type="text" name="galleryAltText" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+        </div>
+      </div>
+      <div class="mt-4">
+        <button type="button" class="remove-block rounded-xl bg-red-600 text-white px-4 py-2 text-sm">Quitar</button>
+      </div>
+    </div>
+  </template>
+
+  <template id="variantTemplate">
+    <div class="variant-item bg-stone-50 border border-stone-200 rounded-2xl p-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm font-medium mb-2">Nombre de la variante</label>
+          <input type="text" name="variantLabel" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Tipo de opción</label>
+          <input type="text" name="variantOptionName" placeholder="Color / Tamaño" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Valor de la opción</label>
+          <input type="text" name="variantOptionValue" placeholder="Dorado / M" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Precio</label>
+          <input type="text" inputmode="decimal" name="variantPrice" value="0" placeholder="RD$1,200.00" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Precio anterior / oferta</label>
+          <input type="text" inputmode="decimal" name="variantCompareAtPrice" value="0" placeholder="RD$1,500.00" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Stock</label>
+          <input type="number" name="variantStock" value="0" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium mb-2">Imagen de la variante</label>
+          <input type="hidden" name="variantImageUrl">
+          <input type="file" name="variantImageFile0" accept="image/*" data-upload-prefix="variantImageFile" class="w-full rounded-xl border border-stone-300 px-4 py-3 bg-white">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Estado</label>
+          <select name="variantOutOfStock" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+            <option value="false" selected>Disponible</option>
+            <option value="true">Agotada</option>
+          </select>
+        </div>
+      </div>
+      <div class="mt-4">
+        <button type="button" class="remove-block rounded-xl bg-red-600 text-white px-4 py-2 text-sm">Quitar</button>
+      </div>
+    </div>
+  </template>
+
+  <template id="customTemplate">
+    <div class="custom-item bg-stone-50 border border-stone-200 rounded-2xl p-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium mb-2">Identificador interno</label>
+          <input type="text" name="customKey" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Nombre de la variante</label>
+          <input type="text" name="customLabel" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Ejemplo dentro del campo</label>
+          <input type="text" name="customPlaceholder" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Máximo caracteres</label>
+          <input type="number" name="customMaxLength" value="100" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+        </div>
+        <div class="flex items-end">
+          <label class="inline-flex items-center gap-3">
+            <input type="hidden" name="customRequired" value="false">
+            <input type="checkbox" name="customRequired" value="true">
+            <span class="text-sm">Obligatorio</span>
+          </label>
+        </div>
+      </div>
+      <div class="mt-4">
+        <button type="button" class="remove-block rounded-xl bg-red-600 text-white px-4 py-2 text-sm">Quitar</button>
+      </div>
+    </div>
+  </template>
+
+  <template id="fontTemplate">
+    <div class="font-item bg-stone-50 border border-stone-200 rounded-2xl p-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm font-medium mb-2">Nombre</label>
+          <input type="text" name="fontName" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Texto de vista previa</label>
+          <input type="text" name="fontPreviewText" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Imagen de vista previa</label>
+          <input type="hidden" name="fontPreviewImageUrl">
+          <input type="file" name="fontPreviewImageFile0" accept="image/*" data-upload-prefix="fontPreviewImageFile" class="w-full rounded-xl border border-stone-300 px-4 py-3 bg-white">
+        </div>
+      </div>
+      <div class="mt-4">
+        <button type="button" class="remove-block rounded-xl bg-red-600 text-white px-4 py-2 text-sm">Quitar</button>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    function refreshUploadIndexes() {
+      document.querySelectorAll(".variant-item").forEach(function (item, index) {
+        item.querySelectorAll('[data-upload-prefix="variantImageFile"]').forEach(function (input) {
+          input.name = "variantImageFile" + index;
+        });
+      });
+
+      document.querySelectorAll(".font-item").forEach(function (item, index) {
+        item.querySelectorAll('[data-upload-prefix="fontPreviewImageFile"]').forEach(function (input) {
+          input.name = "fontPreviewImageFile" + index;
+        });
+      });
+    }
+
+    function appendTemplate(templateId, containerId) {
+      const template = document.getElementById(templateId);
+      const container = document.getElementById(containerId);
+      const clone = template.content.cloneNode(true);
+      container.appendChild(clone);
+      refreshUploadIndexes();
+    }
+
+    document.getElementById("addGalleryBtn").addEventListener("click", function () {
+      appendTemplate("galleryTemplate", "galleryContainer");
+    });
+
+    document.getElementById("addVariantBtn").addEventListener("click", function () {
+      appendTemplate("variantTemplate", "variantsContainer");
+    });
+
+    document.getElementById("addCustomFieldBtn").addEventListener("click", function () {
+      appendTemplate("customTemplate", "customFieldsContainer");
+    });
+
+    document.getElementById("addFontBtn").addEventListener("click", function () {
+      appendTemplate("fontTemplate", "fontsContainer");
+    });
+
+    document.addEventListener("click", function (e) {
+      if (e.target.classList.contains("remove-block")) {
+        const block = e.target.closest(".gallery-item, .variant-item, .custom-item, .font-item");
+        if (block) {
+          block.remove();
+          refreshUploadIndexes();
+        }
+      }
+    });
+    refreshUploadIndexes();
+  </script>
+</body>
+</html>
