@@ -109,6 +109,13 @@ done
 echo "=== [5/7] Ejecutando migración de esquema y carga inicial idempotente ==="
 # shellcheck disable=SC1090
 source "$ENV_FILE"
+for _ in $(seq 1 15); do
+  if [ "$(docker inspect --format '{{.State.Running}}' "$CONTAINER_NAME" 2>/dev/null || echo false)" = "true" ] && \
+     [ "$(docker inspect --format '{{.State.Restarting}}' "$CONTAINER_NAME" 2>/dev/null || echo false)" = "false" ]; then
+    break
+  fi
+  sleep 2
+done
 docker exec -e DB_USERNAME=root -e DB_PASSWORD="$MYSQL_ROOT_PASSWORD" "$CONTAINER_NAME" php artisan migrate --force
 docker exec -e ENV_FILE=/dev/null -e ADMIN_NAME="$ADMIN_NAME" -e ADMIN_EMAIL="$ADMIN_EMAIL" -e ADMIN_PASSWORD="$ADMIN_PASSWORD" "$CONTAINER_NAME" node scripts/bootstrap-catalog.js --import
 

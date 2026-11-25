@@ -16,4 +16,8 @@ if [ "$(id -u)" = "0" ]; then
   chown -R node:node /app/public/uploads /app/storage
 fi
 
+if [ -n "${MYSQL_USER:-}" ] && [ -n "${MYSQL_DATABASE:-}" ]; then
+  node /app/scripts/migrate-schema.js
+fi
+
 exec "$@"

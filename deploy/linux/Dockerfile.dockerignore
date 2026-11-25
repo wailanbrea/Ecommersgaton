@@ -12,7 +12,6 @@ storage
 .playwright-cli
 test-results
 playwright-report
-**/*.sql
 **/*.sql.gz
 **/*.tar.gz
 **/*.zip
