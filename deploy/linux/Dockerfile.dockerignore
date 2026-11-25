@@ -1,0 +1,22 @@
+# Build from a clean, verified Git commit.
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+node_modules
+data
+storage
+.playwright-cli
+test-results
+playwright-report
+**/*.sql
+**/*.sql.gz
+**/*.tar.gz
+**/*.zip
+**/*.key
+**/*.pem
+**/*.p12
+**/*.pfx

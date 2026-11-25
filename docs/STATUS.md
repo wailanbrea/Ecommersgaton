@@ -42,3 +42,10 @@ MySQL/MariaDB ya es la base usada por la web y las sesiones. Se importaron y cot
 **Dependencias/riesgos:** MariaDB debe estar disponible y el esquema debe aplicarse antes del arranque. Los campos anidados se guardan en JSON MySQL por compatibilidad; los agregados de reportes relacionales requerirían normalización y ADR. `npm audit --omit=dev` informó 0 vulnerabilidades; auditoría total reportó 2 moderadas en dependencias de desarrollo (`minimatch`).
 
 **Próximo paso:** revisión del diff y validación del propietario; después, tarea separada para Docker/Auto-Deploy siguiendo instrucciones BSolutions. No conectar al VPS ni hacer push como parte de esta migración.
+
+## Actualización · Infraestructura Docker y Auto-Deploy en VPS Linux (24 de noviembre de 2026)
+
+El propietario configuró el registro DNS `gaton.bsolutions.dev` (`A` → `147.93.5.21`, proxy Cloudflare activo) y autorizó la creación de la infraestructura Docker aislada (`deploy/linux/`), la publicación en `https://github.com/wailanbrea/Ecommersgaton.git` y el script de alta inicial para `root` compatible con `bs-autodeploy` (`vmi3761714`).
+
+- Se crearon `deploy/linux/Dockerfile`, `deploy/linux/docker-compose.yml`, `deploy/linux/entrypoint.sh`, `deploy/linux/Dockerfile.dockerignore`, `deploy/linux/initial-catalog.json` (6 categorías, 15 productos, 1 configuración sin secretos), `scripts/bootstrap-catalog.js` y `deploy/linux/install-gaton-vps.sh`.
+- El instalador `install-gaton-vps.sh` fue copiado a `/home/bsdeploy/install-gaton-vps.sh` en `147.93.5.21` listo para ejecutarse como `root`.

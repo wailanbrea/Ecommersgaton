@@ -10,6 +10,7 @@
     "seed:local": "node scripts/seed-local.js",
     "mongo:local": "node scripts/mongo-local.js",
     "db:migrate": "node scripts/migrate-schema.js",
+    "db:bootstrap": "node scripts/bootstrap-catalog.js --import",
     "db:import-mongo": "node scripts/migrate-mongo-to-mysql.js",
     "db:verify-import": "node scripts/migrate-mongo-to-mysql.js --verify",
     "test": "node --test"

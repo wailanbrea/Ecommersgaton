@@ -4,6 +4,7 @@ storage/
 .env
 .env.*
 !.env.example
-public/uploads/
+public/uploads/customizations/*
+!public/uploads/customizations/.gitkeep
 .playwright-cli/
 npm-debug.log*

@@ -1,0 +1,79 @@
+services:
+  db:
+    image: mariadb:11.4
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Define MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-gatondo_prod}
+      MYSQL_USER: ${MYSQL_USER:-gatondo_app}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Define MYSQL_PASSWORD}
+    volumes:
+      - gaton_db_data:/var/lib/mysql
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD-SHELL", "healthcheck.sh --connect --innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  app:
+    image: gaton-app:latest
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: "80"
+      TRUST_PROXY: "1"
+      ENV_FILE: /dev/null
+      MYSQL_HOST: db
+      MYSQL_PORT: "3306"
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-gatondo_prod}
+      MYSQL_USER: ${MYSQL_USER:-gatondo_app}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Define MYSQL_PASSWORD}
+      MYSQL_POOL_SIZE: "10"
+      SESSION_SECRET: ${SESSION_SECRET:?Define SESSION_SECRET}
+      SITE_BRAND_NAME: ${SITE_BRAND_NAME:-GATON DO}
+      SITE_SLOGAN: ${SITE_SLOGAN:-Joyas que cuentan tu historia}
+    ports:
+      - "127.0.0.1:${GATON_HOST_PORT:-18081}:80"
+    volumes:
+      - gaton_uploads:/app/public/uploads
+      - gaton_storage:/app/storage
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - default
+
+  worker:
+    image: gaton-app:latest
+    profiles: [operaciones]
+    restart: unless-stopped
+    command: ["sh", "-c", "sleep infinity"]
+    networks:
+      - default
+
+  scheduler:
+    image: gaton-app:latest
+    profiles: [operaciones]
+    restart: unless-stopped
+    command: ["sh", "-c", "sleep infinity"]
+    networks:
+      - default
+
+  media:
+    image: gaton-app:latest
+    profiles: [operaciones]
+    restart: unless-stopped
+    command: ["sh", "-c", "sleep infinity"]
+    networks:
+      - default
+
+volumes:
+  gaton_db_data:
+  gaton_uploads:
+  gaton_storage:
