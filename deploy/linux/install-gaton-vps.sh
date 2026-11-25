@@ -10,6 +10,11 @@ set -euo pipefail
 test "$(id -u)" -eq 0 || { echo "ERROR: Ejecuta este script como root (sudo -i o en Cockpit)."; exit 1; }
 test "$(hostname)" = "vmi3761714" || { echo "ERROR: Servidor inesperado: $(hostname)"; exit 1; }
 
+# Candado compartido con bs-autodeploy.timer para evitar que ambos recreen el contenedor al mismo tiempo
+LOCK_FILE="/run/bs-autodeploy.lock"
+exec 9>"$LOCK_FILE"
+flock -w 120 9 || { echo "ERROR: No se pudo adquirir el candado ${LOCK_FILE}"; exit 1; }
+
 PROJECT_NAME="gaton"
 REPO_URL="https://github.com/wailanbrea/Ecommersgaton.git"
 BRANCH="main"
@@ -225,8 +230,21 @@ KEEP_RELEASES="3"
 POST_DEPLOY_HOOK=""
 EOF
 chmod 644 /etc/bs-autodeploy/gaton.conf
+rm -f /var/lib/bs-autodeploy/gaton.failed_commit
 
-/usr/local/sbin/bs-git-autodeploy.sh || true
+write_ts=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+cat <<EOF > /var/log/bs-autodeploy/gaton.status.json
+{
+  "project": "gaton",
+  "status": "deployed",
+  "active_image": "${NEW_IMAGE}",
+  "active_sha": "${NEW_SHA}",
+  "target_commit": "${NEW_COMMIT}",
+  "message": "Deployed successfully",
+  "updated_at": "${write_ts}"
+}
+EOF
+chmod 644 /var/log/bs-autodeploy/gaton.status.json
 cat /var/log/bs-autodeploy/gaton.status.json || true
 
 echo ""
