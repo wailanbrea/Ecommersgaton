@@ -6,6 +6,8 @@
 
 `npm test`: 4 pasaron, 0 fallaron. Compilación EJS de `views/partials/header.ejs`: correcta. Esta verificación cubre solo el menú en 390 × 844; `T04` permanece `PENDING` para el resto de anchos, zoom, accesibilidad y flujo de compra móvil.
 
+Después de publicar `f458b29`, Auto-Deploy informó `deployed` con imagen `gaton-app:f458b29`. En el sitio público, `/` y `/shop` respondieron 200; Playwright volvió a abrir el menú en 390 × 844 y encontró exactamente los mismos siete enlaces y destinos, con el panel visible y `aria-expanded=true`. La consola registró un 404 de `/favicon.ico`, hallazgo previo y ajeno a este cambio.
+
 ## Ejecutado el 24 de noviembre de 2026
 
 Windows, Node 24.4.0, npm 11.4.2, MongoDB 7.0.24/WiredTiger real en replica set de un miembro, loopback y datos sintéticos. Comandos en [DEPLOYMENT](DEPLOYMENT.md), registro de salida en [baseline.txt](fase0/baseline.txt). Cada aserción detiene la prueba ante fallo.
