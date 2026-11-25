@@ -230,6 +230,11 @@ function createModel(config) {
     }
   };
   createDocument.exists = async (filter = {}) => Boolean(await createDocument.findOne(filter).select("_id").lean());
+  createDocument.countDocuments = async (filter = {}) => {
+    const { sql, values } = buildWhere(filter);
+    const [rows] = await pool.execute(`SELECT COUNT(*) AS count FROM \`${config.table}\` ${sql}`, values);
+    return Number(rows[0]?.count || 0);
+  };
   createDocument.findByIdAndUpdate = async (id, update = {}) => {
     const document = await createDocument.findById(id);
     if (!document) return null;
