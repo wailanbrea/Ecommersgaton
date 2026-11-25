@@ -1,5 +1,11 @@
 # Matriz de pruebas · F0
 
+## Verificación acotada · Menú móvil · 25 de noviembre de 2026
+
+`WEB-07` / escenario `T04` — Chromium local en viewport 390 × 844. Se abrió el menú y se comprobó que el panel quedara visible con `aria-expanded=true` y exactamente estos siete enlaces, en este orden: Inicio, Fragancias, Colección, Personalizados, Historia, Clientes y Contacto. No aparecen Catálogo completo, categorías adicionales ni Carrito dentro del panel; los iconos de búsqueda y carrito de la barra permanecen separados. Destinos observados: `/`, `/#fragancias`, `/#coleccion`, `/shop?category=personalizados`, `/#historia`, `/#clientes`, `/#contacto`.
+
+`npm test`: 4 pasaron, 0 fallaron. Compilación EJS de `views/partials/header.ejs`: correcta. Esta verificación cubre solo el menú en 390 × 844; `T04` permanece `PENDING` para el resto de anchos, zoom, accesibilidad y flujo de compra móvil.
+
 ## Ejecutado el 24 de noviembre de 2026
 
 Windows, Node 24.4.0, npm 11.4.2, MongoDB 7.0.24/WiredTiger real en replica set de un miembro, loopback y datos sintéticos. Comandos en [DEPLOYMENT](DEPLOYMENT.md), registro de salida en [baseline.txt](fase0/baseline.txt). Cada aserción detiene la prueba ante fallo.

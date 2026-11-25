@@ -37,6 +37,11 @@
     .filter((category) => category && category.slug && category.active !== false)
     .filter((category) => !ref10IsGender(category.slug) && !ref10IsGender(category.name))
     ;
+  const ref10PersonalizedCategory = ref10MenuCategories.find((category) =>
+    ref10Comparable(category.slug) === "personalizados" || ref10Comparable(category.name) === "personalizados"
+  );
+  const ref10PersonalizedUrl = ref10PersonalizedCategory?.destinationUrl
+    || (ref10PersonalizedCategory ? `/shop?category=${encodeURIComponent(ref10PersonalizedCategory.slug)}` : "/shop?q=personalizado");
 
   const ref10CartCount = typeof cartCount !== "undefined" ? cartCount : (typeof cartItemCount !== "undefined" ? cartItemCount : 0);
   const ref10Logo = siteSettings?.logoUrl || "/images/logo-gatondo-color.png";
@@ -100,14 +105,10 @@
       <a href="/">Inicio</a>
       <a href="/#fragancias">Fragancias</a>
       <a href="/#coleccion">Colección</a>
-      <a href="/shop">Catálogo completo</a>
-      <% ref10MenuCategories.forEach((category) => { %>
-        <a href="<%= category.destinationUrl || ('/shop?category=' + category.slug) %>"><%= ref10Text(category.name) %></a>
-      <% }) %>
+      <a href="<%= ref10PersonalizedUrl %>">Personalizados</a>
       <a href="/#historia">Historia</a>
       <a href="/#clientes">Clientes</a>
       <a href="/#contacto">Contacto</a>
-      <a data-open-basket href="/cart">Carrito</a>
     </nav>
   </div>
 </header>

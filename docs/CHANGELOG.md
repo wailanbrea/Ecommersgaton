@@ -1,5 +1,11 @@
 # Historial
 
+## 2026-11-25 · Menú móvil
+
+- El menú desplegable móvil ahora muestra únicamente Inicio, Fragancias, Colección, Personalizados, Historia, Clientes y Contacto, siguiendo la referencia del cliente.
+- Se conserva el destino configurado para la categoría Personalizados; si no existe, usa la búsqueda de productos personalizados.
+- Verificación local acotada a 390 × 844: siete enlaces exactos en orden; `npm test` (4/4) y compilación EJS correctas. Ver `docs/TEST_MATRIX.md`.
+
 ## 2026-11-24 · F0
 
 Identificada y reconciliada la entrega de septiembre. Registrados los 94 requisitos, 27 escenarios de aceptación, rutas, export y dependencias. Instalación y smoke local sobre MongoDB replica set, pruebas básicas de ancho y estudio sintético de personalización. ADRs en propuesta. Archivos de control creados en el repositorio local; el código del cliente se conserva en su ubicación original. Fase 1 pendiente de autorización.
