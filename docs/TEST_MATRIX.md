@@ -19,6 +19,19 @@
 
 Comandos ejecutados: `npm test` (6/6); `npm run db:migrate` dos veces (segunda sin operaciones); `npm run build:admin-css`; `npm audit --omit=dev` (0 vulnerabilidades); compilación de 30 templates. No se han ejecutado pruebas de concurrencia, backup/restauración, carga o autorización por empleado. La evidencia acredita solo el entorno local.
 
+## Verificación post-despliegue · VPS Linux · 25 de noviembre de 2026
+
+| ID | Criterio | Resultado observado | Estado |
+|---|---|---|---|
+| PROD-01 | Auto-Deploy publicó el commit objetivo y quedó sano | `/var/log/bs-autodeploy/gaton.status.json`: `deployed`, `active_sha=9196bad`; imagen `gaton-app:9196bad` | VERIFIED |
+| PROD-02 | Readiness de la app desplegada | `https://gaton.bsolutions.dev/health/ready`: HTTP 200, `database=mysql`; dashboard administrativo cargó en sesión real | VERIFIED |
+| PROD-03 | Conteos e IDs de producto/categoría comparados antes/después | 15 productos, 6 categorías, 0 reseñas, 0 pedidos y 2 administradores; 15 IDs de producto y 6 IDs de categoría iguales a la línea base guardada en STATUS | VERIFIED |
+| PROD-04 | Panel y módulo de ventas en producción | Sidebar nuevo y ruta de ventas visibles; cero pagos/pedidos en el rango actual; CSV/Excel/PDF descargados con éxito | VERIFIED (render/descarga) |
+| PROD-05 | Inventario y auditoría | 15 líneas, stock 12; CSV/Excel/PDF descargados; ruta del historial respondió y mostró cero movimientos | VERIFIED (render/descarga) |
+| PROD-06 | Importación con datos productivos | Se dejó sin ejecutar para no mutar inventario de producción. Preview y aplicación completos sí se ejercitaron en MySQL local con reversión de cantidad | NOT RUN (protección de datos) |
+
+La prueba de ventas pagadas y los imports son evidencia de laboratorio, no pagos comerciales ni una importación de producción. Backup y rollback no se ensayaron mediante restauración; el motor desplegó con su flujo automático y el estado final reportó `deployed`.
+
 ## Verificación acotada · Menú móvil · 25 de noviembre de 2026
 
 `WEB-07` / escenario `T04` — Chromium local en viewport 390 × 844. Se abrió el menú y se comprobó que el panel quedara visible con `aria-expanded=true` y exactamente estos siete enlaces, en este orden: Inicio, Fragancias, Colección, Personalizados, Historia, Clientes y Contacto. No aparecen Catálogo completo, categorías adicionales ni Carrito dentro del panel; los iconos de búsqueda y carrito de la barra permanecen separados. Destinos observados: `/`, `/#fragancias`, `/#coleccion`, `/shop?category=personalizados`, `/#historia`, `/#clientes`, `/#contacto`.

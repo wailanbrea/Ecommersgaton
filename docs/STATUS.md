@@ -20,6 +20,14 @@ IDs de productos observados en `/admin/products` (15): `6b063233d965071c9546cdfc
 
 IDs de categorías observados en `/admin/categories` (6): `6b0621098d60e58ee82c9ed8`, `6b0621098d60e58ee82c9ed9`, `6b0621098d60e58ee82c9eda`, `6b0621098d60e58ee82c9edb`, `6b0621098d60e58ee82c9edc`, `6b06315bd965071c9546ccd8`. Tras el despliegue comparar estos mismos conteos e IDs; la migración de este lote solo crea dos tablas nuevas.
 
+### Despliegue y verificación posterior
+
+`main` publicó el commit `9196badbdb8f25f9f7be87b83f9d18d9cd5d8a0e`. El estado de `bs-autodeploy` terminó `deployed`, imagen `gaton-app:9196bad`; `https://gaton.bsolutions.dev/health/ready` devolvió HTTP 200 con MySQL listo. `002_sales_inventory` quedó disponible: páginas de ventas e historial de movimientos respondieron dentro de la sesión autenticada.
+
+Post-despliegue: dashboard conserva 15 productos, 6 categorías, 0 reseñas, 0 pedidos y 2 administradores; los 15 IDs de producto y 6 IDs de categoría registrados arriba compararon exactamente iguales. Inventario mostró los 15 productos con stock 12; historial sin movimientos. Descargas CSV/Excel/PDF de ventas e inventario se iniciaron correctamente en navegador. No se subió un archivo con existencias productivas ni se ejecutó una importación en producción. Ver matriz `PROD-01` a `PROD-05`.
+
+La interfaz disponible no expone los IDs de los dos administradores; se comprobó el conteo, no sus identificadores. El sistema no expone entidades de tienda separadas. Esto no cambia porque la migración crea exclusivamente las dos tablas de pago e inventario.
+
 **Recomendación pendiente de aprobación:** conservar el escaparate SSR, los slugs, los modelos como fuente de migración y los formularios que superen pruebas. Extraer gradualmente los servicios que comprometen dinero, inventario o diseños privados. La compra sencilla funciona en laboratorio. El flujo personalizado requiere garantías nuevas antes de admitir pedidos reales.
 
 ## Procedencia
