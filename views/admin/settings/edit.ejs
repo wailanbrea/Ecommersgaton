@@ -3,14 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Configuración | Admin</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="/css/app.css?v=ref10b1">
+  <title>Configuración | Admin</title>  <link rel="stylesheet" href="/css/app.css?v=ref10b1">
+  <link rel="stylesheet" href="/css/admin-utilities.css">
+  <link rel="stylesheet" href="/css/admin.css">
 </head>
-<body class="bg-stone-100 min-h-screen">
-  <%- include("../../partials/admin-header") %>
-
-  <main class="max-w-6xl mx-auto px-4 py-8">
+<body class="admin-shell-body">
+  <%- include("../../partials/admin-shell-start") %>
+<main class="max-w-6xl mx-auto px-4 py-8">
     <div class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
       <div>
         <h2 class="text-3xl font-semibold text-stone-900">Configuración visual y contenido</h2>
@@ -192,5 +191,6 @@
       wrap.appendChild(div);
     });
   </script>
+  <%- include("../../partials/admin-shell-end") %>
 </body>
 </html>

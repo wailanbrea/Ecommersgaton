@@ -7,13 +7,13 @@
     content="width=device-width,initial-scale=1"
   >
   <title>Personalización | Admin</title>
-  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="/css/admin-utilities.css">
+  <link rel="stylesheet" href="/css/admin.css">
 </head>
-<body class="bg-stone-100 min-h-screen">
-  <%- include("../../partials/admin-header") %>
-
-  <main class="max-w-7xl mx-auto px-4 py-8">
+<body class="admin-shell-body">
+  <%- include("../../partials/admin-shell-start") %>
+<main class="max-w-7xl mx-auto px-4 py-8">
     <div class="flex flex-wrap justify-between gap-4 mb-7">
       <div>
         <p
@@ -250,5 +250,6 @@
     src="/js/admin-product-personalization.js?v=3c1b"
     defer
   ></script>
+  <%- include("../../partials/admin-shell-end") %>
 </body>
 </html>

@@ -1241,4 +1241,6 @@ router.post("/settings", requireAdmin, upload.any(), async (req, res) => {
   }
 });
 
+router.use(requireAdmin, require("./admin-tools"));
+
 module.exports = router;

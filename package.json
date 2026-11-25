@@ -7,6 +7,7 @@
     "dev": "nodemon server.js",
     "start": "node server.js",
     "start:local": "node local-dev.js",
+    "build:admin-css": "tailwindcss -c tailwind.config.js -i ./src/styles/admin-tailwind.css -o ./public/css/admin-utilities.css --minify",
     "seed:local": "node scripts/seed-local.js",
     "mongo:local": "node scripts/mongo-local.js",
     "db:migrate": "node scripts/migrate-schema.js",
@@ -19,18 +20,23 @@
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.6.1",
     "ejs": "^3.1.10",
+    "exceljs": "^4.4.0",
     "express": "^4.19.2",
     "express-async-errors": "^3.1.1",
     "express-session": "^1.18.0",
-    "multer": "^1.4.5-lts.1",
-    "mysql2": "^3.24.6"
+    "multer": "^2.5.0",
+    "mysql2": "^3.24.6",
+    "pdf-parse": "^1.1.1",
+    "pdfkit": "^0.17.2"
   },
   "devDependencies": {
     "mongodb-memory-server-core": "^10.4.3",
     "mongoose": "^9.13.1",
-    "nodemon": "^3.1.4"
+    "nodemon": "^3.1.4",
+    "tailwindcss": "^3.4.17"
   },
   "overrides": {
-    "qs": "^6.16.2"
+    "qs": "^6.16.2",
+    "uuid": "^11.1.1"
   }
 }

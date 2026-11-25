@@ -3,32 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Productos | Admin</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="/css/app.css">
+  <title>Productos | Admin</title>  <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="/css/admin-utilities.css">
+  <link rel="stylesheet" href="/css/admin.css">
 </head>
-<body class="bg-stone-100 min-h-screen">
-  <header class="bg-white border-b border-stone-200">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-      <div>
-        <p class="text-xs uppercase tracking-[0.35em] text-stone-500">Panel Administrativo</p>
-        <h1 class="text-2xl font-semibold text-stone-900">GATON DO</h1>
-      </div>
-
-      <div class="flex items-center gap-4">
-        <span class="text-sm text-stone-600"><%= currentAdminEmail || "" %></span>
-        <form action="/admin/logout" method="post">
-          <button class="rounded-xl bg-stone-900 text-white px-4 py-2 text-sm hover:bg-stone-800">
-            Cerrar sesión
-          </button>
-        </form>
-      </div>
-    </div>
-  </header>
-
-  <main class="max-w-7xl mx-auto px-4 py-8">
+<body class="admin-shell-body">
+  <%- include("../../partials/admin-shell-start") %>
+<main class="max-w-7xl mx-auto px-4 py-8">
     <div class="mb-6 rounded-2xl bg-blue-50 border border-blue-200 text-blue-800 px-4 py-4 text-sm">
-      Aquí puedes administrar el catálogo.  
+      Aquí puedes administrar el catálogo.
       Para agregar un producto nuevo usa el botón <strong>“Nuevo producto”</strong> o entra directo a:
       <strong>/admin/products/new</strong>
     </div>
@@ -138,5 +121,6 @@
       </div>
     </div>
   </main>
+  <%- include("../../partials/admin-shell-end") %>
 </body>
 </html>

@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nueva categoría | Admin</title>
-  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="/css/admin-utilities.css">
+  <link rel="stylesheet" href="/css/admin.css">
 </head>
-<body class="bg-stone-100 min-h-screen">
-  <%- include("../../partials/admin-header") %>
-
-  <main class="max-w-4xl mx-auto px-4 py-8">
+<body class="admin-shell-body">
+  <%- include("../../partials/admin-shell-start") %>
+<main class="max-w-4xl mx-auto px-4 py-8">
     <div class="mb-8">
       <h2 class="text-3xl font-semibold text-stone-900">Nueva categoría</h2>
       <p class="text-stone-600 mt-2">Crea una categoría de producto. No crees géneros aquí; los géneros se eligen aparte en cada producto.</p>
@@ -95,5 +95,6 @@
       </div>
     </form>
   </main>
+  <%- include("../../partials/admin-shell-end") %>
 </body>
 </html>

@@ -1,5 +1,24 @@
 # Matriz de pruebas · F0
 
+## Panel e inventario · laboratorio local · 25 de noviembre de 2026
+
+| ID | Prueba / criterio | Resultado observado | Estado |
+|---|---|---|---|
+| ADM-01 | Compilación de templates administrativos | EJS compiló 30 plantillas; `node --check` de rutas y runner correcto | VERIFIED (compilación) |
+| ADM-02 | Rutas con sesión administrativa | 9 rutas: dashboard, productos, categorías, pedidos, reseñas, configuración, inventario, movimientos y ventas respondieron HTTP 200 | VERIFIED (HTTP/render) |
+| ADM-03 | Responsive sin overflow | Las 9 rutas a 320, 390, 768, 1024 y 1440 px: 45 mediciones, 0 desbordamientos horizontales | VERIFIED (ancho medido) |
+| INV-01 | Exportar inventario CSV/XLSX/PDF | HTTP 200 y tipos/bytes válidos para los 3 formatos | VERIFIED (descarga) |
+| INV-02 | Vista previa CSV/XLSX/PDF | Los 3 formatos generaron preview de 15 líneas; ningún stock cambió antes de confirmar | VERIFIED (preview) |
+| INV-03 | Aplicar/revertir importación | Stock local 12→13→12; dos movimientos guardados y no se alteraron otros registros | VERIFIED (laboratorio) |
+| INV-04 | Variante obsoleta, filas repetidas, fórmulas CSV y PDF no oficial | Validación implementada; esos rechazos no se ejecutaron individualmente | PENDING |
+| SAL-01 | Abono, límite de saldo, pago completo | Orden local sintético: RD$40 aceptados, exceso RD$61 rechazado, RD$60 aceptados; dashboard y CSV reconciliaron RD$100. Orden/pagos de prueba eliminados por ID específico al finalizar | VERIFIED (laboratorio) |
+| SAL-02 | Exportar ventas y comparar períodos/calendario | Export endpoints respondieron 200; range/presets implementados. Comparación gráfica, reconciliación de todos los intervalos y calendario extremo no se probaron | PARTIAL |
+| SAL-03 | Pedido no cobrado y costos desconocidos | El pedido existente sin pagos mostró RD$0; la vista explica que no infiere cobros y no calcula ganancia sin costo histórico | VERIFIED (observación local) |
+| SAL-04 | Acceso anónimo, CSRF, doble envío y permisos por rol | No probado integralmente; la app solo tiene el rol general de administrador | PENDING |
+| ADM-04 | Tailwind CDN del administrador | Reemplazado por CSS local compilado. El 404 de `/favicon.ico` local existente permanece | VERIFIED (código/render) |
+
+Comandos ejecutados: `npm test` (6/6); `npm run db:migrate` dos veces (segunda sin operaciones); `npm run build:admin-css`; `npm audit --omit=dev` (0 vulnerabilidades); compilación de 30 templates. No se han ejecutado pruebas de concurrencia, backup/restauración, carga o autorización por empleado. La evidencia acredita solo el entorno local.
+
 ## Verificación acotada · Menú móvil · 25 de noviembre de 2026
 
 `WEB-07` / escenario `T04` — Chromium local en viewport 390 × 844. Se abrió el menú y se comprobó que el panel quedara visible con `aria-expanded=true` y exactamente estos siete enlaces, en este orden: Inicio, Fragancias, Colección, Personalizados, Historia, Clientes y Contacto. No aparecen Catálogo completo, categorías adicionales ni Carrito dentro del panel; los iconos de búsqueda y carrito de la barra permanecen separados. Destinos observados: `/`, `/#fragancias`, `/#coleccion`, `/shop?category=personalizados`, `/#historia`, `/#clientes`, `/#contacto`.

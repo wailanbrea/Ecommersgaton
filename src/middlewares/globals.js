@@ -64,6 +64,19 @@ function formatCurrency(value = 0) {
 }
 
 module.exports = async function globals(req, res, next) {
+  const adminPath = String(req.originalUrl || req.path || "").split("?")[0];
+  const adminPageTitle = adminPath === "/admin/dashboard" ? "Dashboard"
+    : adminPath.startsWith("/admin/products") ? (adminPath.endsWith("/new") ? "Nuevo producto" : adminPath.includes("/edit") ? "Editar producto" : "Productos")
+    : adminPath.startsWith("/admin/categories") ? (adminPath.endsWith("/new") ? "Nueva categoría" : adminPath.includes("/edit") ? "Editar categoría" : "Categorías")
+    : adminPath.startsWith("/admin/orders") ? "Pedidos"
+    : adminPath.startsWith("/admin/sales") ? "Ventas y analítica"
+    : adminPath.startsWith("/admin/inventory") ? (adminPath.includes("movements") ? "Movimientos de inventario" : "Inventario")
+    : adminPath.startsWith("/admin/reviews") ? "Reseñas"
+    : adminPath.startsWith("/admin/settings") ? "Configuración"
+    : "Panel administrativo";
+  res.locals.adminCurrentPath = adminPath;
+  res.locals.adminPageTitle = adminPageTitle;
+
   try {
     const [settings, allCategories] = await Promise.all([
       SiteSettings.findOne().lean(),

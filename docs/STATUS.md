@@ -1,5 +1,25 @@
 # Gatón DO · Auditoría F0 del 24 de noviembre de 2026
 
+## Actualización · Panel, pagos, analítica e inventario · 25 de noviembre de 2026
+
+Trabajo realizado en `C:\xampp\php\www\EcommersGaton`. El servidor no se ha modificado durante la implementación local.
+
+- **Panel:** shell EJS compartido en las vistas administrativas, paleta solicitada, sidebar contraíble, búsqueda entre rutas existentes y estilos responsive; Tailwind administrativo compilado localmente, sin CDN. El sidebar enlaza solo pantallas existentes: dashboard, ventas/analítica, productos, inventario, categorías, pedidos, reseñas y configuración.
+- **Inventario:** exportación CSV/XLSX/PDF; importación CSV/XLSX y PDF estructurado GATÓN DO; validación por ID y variante, vista previa, token CSRF, revalidación transaccional y bitácora. Smoke local cambió stock 12→13→12 y dejó ambos movimientos en el historial de laboratorio.
+- **Ventas:** ledger de pagos confirmados manualmente; abonos limitados al saldo y fecha de confirmación UTC, con rango comercial Santo Domingo. Los ingresos suman solo pagos reales registrados; pedidos sin pago se excluyen. Smoke local verificó abono, rechazo del exceso, pago restante y reconciliación de RD$100; los registros sintéticos de prueba fueron eliminados por sus IDs específicos al finalizar.
+- **Pendiente del brief:** no hay datos de proveedor/pasarela, costo histórico por producto vendido, reembolsos, snapshot histórico de categoría, clientes normalizados ni permisos de rentabilidad por rol. No se presentan márgenes ni análisis de clientes/categorías. SAL-02 es parcial; SAL-03–05 e INV-02 siguen pendientes.
+- **Migración:** `002_sales_inventory` crea solo tablas aditivas. El runner recorre migraciones ordenadas no aplicadas; en local 002 se aplicó y se volvió a ejecutar idempotentemente. Falta despliegue, backup y verificación de datos en producción.
+- **Dependencias:** ExcelJS, PDFKit, pdf-parse y Multer 2. `npm audit --omit=dev`: cero vulnerabilidades. El árbol completo conserva dos moderadas de desarrollo; override uuid corrige advisory en dependencias de producción.
+- **Estados:** ADM-01, INV-01 y SAL-01 `IMPLEMENTED`; criterios de esta actualización en TEST_MATRIX están `VERIFIED` solo en laboratorio. `ACCEPTED` pendiente del propietario.
+
+### Línea base de producción inmediatamente antes del despliegue
+
+Leída en el dashboard autenticado de `https://gaton.bsolutions.dev/admin/dashboard` el 25-11-2026; Auto-Deploy indicaba `deployed`, SHA `3f4e3ff`. Conteos: productos 15, categorías 6, reseñas 0, pedidos 0, administradores 2. El sitio tiene marca GATON DO, sin entidad de tienda separada visible en el sistema. La pantalla disponible no expone IDs individuales de administradores, así que se registró el conteo, no sus IDs.
+
+IDs de productos observados en `/admin/products` (15): `6b063233d965071c9546cdfc`, `6b063233d965071c9546cdff`, `6b063233d965071c9546ce02`, `6b063233d965071c9546ce05`, `6b063233d965071c9546ce08`, `6b063233d965071c9546ce0b`, `6b063233d965071c9546ce0e`, `6b063233d965071c9546ce11`, `6b063233d965071c9546ce14`, `6b063233d965071c9546ce17`, `6b063233d965071c9546ce1a`, `6b063233d965071c9546ce1d`, `6b0632e5d965071c9546cf7f`, `6b0632e5d965071c9546cf89`, `6b0632e5d965071c9546cf93`.
+
+IDs de categorías observados en `/admin/categories` (6): `6b0621098d60e58ee82c9ed8`, `6b0621098d60e58ee82c9ed9`, `6b0621098d60e58ee82c9eda`, `6b0621098d60e58ee82c9edb`, `6b0621098d60e58ee82c9edc`, `6b06315bd965071c9546ccd8`. Tras el despliegue comparar estos mismos conteos e IDs; la migración de este lote solo crea dos tablas nuevas.
+
 **Recomendación pendiente de aprobación:** conservar el escaparate SSR, los slugs, los modelos como fuente de migración y los formularios que superen pruebas. Extraer gradualmente los servicios que comprometen dinero, inventario o diseños privados. La compra sencilla funciona en laboratorio. El flujo personalizado requiere garantías nuevas antes de admitir pedidos reales.
 
 ## Procedencia

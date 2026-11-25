@@ -3,130 +3,59 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard | GATON DO</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title><%= adminPageTitle || 'Dashboard' %> | GATÓN DO</title>
   <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="/css/admin-utilities.css">
+  <link rel="stylesheet" href="/css/admin.css">
 </head>
-<body class="bg-stone-100 min-h-screen">
-  <header class="bg-white border-b border-stone-200">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-      <div>
-        <p class="text-xs uppercase tracking-[0.35em] text-stone-500">Panel Administrativo</p>
-        <h1 class="text-2xl font-semibold text-stone-900">GATON DO</h1>
-      </div>
-
-      <div class="flex items-center gap-4">
-        <span class="text-sm text-stone-600"><%= currentAdminEmail || "" %></span>
-        <form action="/admin/logout" method="post">
-          <button class="rounded-xl bg-stone-900 text-white px-4 py-2 text-sm hover:bg-stone-800">
-            Cerrar sesión
-          </button>
-        </form>
-      </div>
-    </div>
-  </header>
-
-  <main class="max-w-7xl mx-auto px-4 py-8">
-    <section class="mb-8">
-      <h2 class="text-3xl font-semibold text-stone-900">Dashboard</h2>
-      <p class="text-stone-600 mt-2">
-        Desde aquí administras productos, pedidos, reseñas y configuración del sitio.
-      </p>
+<body class="admin-shell-body">
+  <%- include("../partials/admin-shell-start") %>
+  <main class="admin-dashboard-main">
+    <section class="admin-dashboard-heading">
+      <h2>Dashboard</h2>
+      <p>Desde aquí administras productos, pedidos, reseñas y configuración del sitio.</p>
     </section>
 
-    <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mb-8">
-      <div class="bg-white border border-stone-200 rounded-2xl p-5 shadow-sm">
-        <p class="text-sm text-stone-500">Productos</p>
-        <h3 class="text-3xl font-semibold text-stone-900 mt-2"><%= productCount %></h3>
-      </div>
+    <section class="admin-stat-grid" aria-label="Resumen de la tienda">
+      <a class="admin-stat-card" href="/admin/products"><span class="admin-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="M3 8v9l9 5 9-5V8M12 13v9"/></svg></span><span><span class="admin-stat-label">Productos</span><strong class="admin-stat-value"><%= productCount %></strong></span></a>
+      <a class="admin-stat-card" href="/admin/categories"><span class="admin-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span><span><span class="admin-stat-label">Categorías</span><strong class="admin-stat-value"><%= categoryCount %></strong></span></a>
+      <a class="admin-stat-card" href="/admin/reviews"><span class="admin-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9z"/></svg></span><span><span class="admin-stat-label">Reseñas</span><strong class="admin-stat-value"><%= reviewCount %></strong></span></a>
+      <a class="admin-stat-card" href="/admin/orders"><span class="admin-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 4h2l2.2 11.1a2 2 0 0 0 2 1.6h8.6a2 2 0 0 0 1.9-1.4L22 8H6"/><circle cx="10" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg></span><span><span class="admin-stat-label">Pedidos</span><strong class="admin-stat-value"><%= orderCount %></strong><small class="admin-stat-label"><%= pendingOrderCount %> pendientes</small></span></a>
+      <div class="admin-stat-card"><span class="admin-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg></span><span><span class="admin-stat-label">Administradores</span><strong class="admin-stat-value"><%= adminCount %></strong></span></div>
+    </section>
 
-      <div class="bg-white border border-stone-200 rounded-2xl p-5 shadow-sm">
-        <p class="text-sm text-stone-500">Categorías</p>
-        <h3 class="text-3xl font-semibold text-stone-900 mt-2"><%= categoryCount %></h3>
-      </div>
-
-      <div class="bg-white border border-stone-200 rounded-2xl p-5 shadow-sm">
-        <p class="text-sm text-stone-500">Reseñas</p>
-        <h3 class="text-3xl font-semibold text-stone-900 mt-2"><%= reviewCount %></h3>
-      </div>
-
-      <div class="bg-white border border-stone-200 rounded-2xl p-5 shadow-sm">
-        <p class="text-sm text-stone-500">Pedidos</p>
-        <h3 class="text-3xl font-semibold text-stone-900 mt-2"><%= orderCount %></h3>
-      </div>
-
-      <div class="bg-white border border-stone-200 rounded-2xl p-5 shadow-sm">
-        <p class="text-sm text-stone-500">Admins</p>
-        <h3 class="text-3xl font-semibold text-stone-900 mt-2"><%= adminCount %></h3>
+    <section class="admin-dashboard-card mb-6">
+      <h3><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m13 2-3 9h7L8 22l3-9H4z"/></svg>Accesos rápidos</h3>
+      <div class="admin-quick-grid">
+        <a class="admin-quick-link is-primary" href="/admin/products/new"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/><rect x="3" y="3" width="18" height="18" rx="4"/></svg>Agregar producto</a>
+        <a class="admin-quick-link" href="/admin/categories/new"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Agregar categoría</a>
+        <a class="admin-quick-link" href="/admin/products"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Ver productos</a>
+        <a class="admin-quick-link" href="/admin/orders"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.2 11.1a2 2 0 0 0 2 1.6h8.6a2 2 0 0 0 1.9-1.4L22 8H6"/><circle cx="10" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>Ver pedidos</a>
+        <a class="admin-quick-link" href="/admin/reviews"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9z"/></svg>Moderar reseñas</a>
+        <a class="admin-quick-link" href="/admin/settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19 13.5a7.5 7.5 0 0 0 0-3l2-1.5-2-3.5-2.4 1a7.5 7.5 0 0 0-2.6-1.5L13.5 2h-4L9 5a7.5 7.5 0 0 0-2.6 1.5L4 5.5 2 9l2 1.5a7.5 7.5 0 0 0 0 3L2 15l2 3.5 2.4-1A7.5 7.5 0 0 0 9 19l.5 3h4l.5-3a7.5 7.5 0 0 0 2.6-1.5l2.4 1 2-3.5z"/></svg>Configurar sitio</a>
       </div>
     </section>
 
-    <section class="bg-white border border-stone-200 rounded-2xl p-6 shadow-sm mb-8">
-      <h3 class="text-xl font-semibold text-stone-900 mb-5">Accesos rápidos</h3>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <a href="/admin/products/new" class="rounded-2xl bg-stone-900 text-white px-5 py-4 font-medium hover:bg-stone-800">
-          + Agregar producto
-        </a>
-
-        <a href="/admin/categories/new" class="rounded-2xl bg-white border border-stone-300 px-5 py-4 font-medium hover:bg-stone-50">
-          + Agregar categoría
-        </a>
-
-        <a href="/admin/products" class="rounded-2xl bg-white border border-stone-300 px-5 py-4 font-medium hover:bg-stone-50">
-          Ver productos
-        </a>
-
-        <a href="/admin/orders" class="rounded-2xl bg-white border border-stone-300 px-5 py-4 font-medium hover:bg-stone-50">
-          Ver pedidos
-        </a>
-
-        <a href="/admin/reviews" class="rounded-2xl bg-white border border-stone-300 px-5 py-4 font-medium hover:bg-stone-50">
-          Moderar reseñas
-        </a>
-
-        <a href="/admin/settings" class="rounded-2xl bg-white border border-stone-300 px-5 py-4 font-medium hover:bg-stone-50">
-          Configurar sitio
-        </a>
-      </div>
-    </section>
-
-    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div class="bg-white border border-stone-200 rounded-2xl p-6 shadow-sm">
-        <h3 class="text-xl font-semibold text-stone-900 mb-4">Información base del sitio</h3>
-
-        <div class="space-y-3 text-sm">
-          <div>
-            <span class="text-stone-500">Marca:</span>
-            <strong class="text-stone-900"><%= siteSettings?.brandName || "GATON DO" %></strong>
-          </div>
-          <div>
-            <span class="text-stone-500">Eslogan:</span>
-            <strong class="text-stone-900"><%= siteSettings?.slogan || "Joyas con intención" %></strong>
-          </div>
-          <div>
-            <span class="text-stone-500">Correo:</span>
-            <strong class="text-stone-900"><%= siteSettings?.email || "gatonaromaterapia@gmail.com" %></strong>
-          </div>
-          <div>
-            <span class="text-stone-500">WhatsApp:</span>
-            <strong class="text-stone-900"><%= siteSettings?.whatsapp || "+1 (849) 330-6269" %></strong>
-          </div>
+    <section class="admin-dashboard-lower grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <article class="admin-dashboard-card">
+        <h3><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg>Información del sitio</h3>
+        <dl class="admin-site-details">
+          <div><dt>Marca</dt><dd><%= siteSettings?.brandName || '—' %></dd></div>
+          <div><dt>Eslogan</dt><dd><%= siteSettings?.slogan || '—' %></dd></div>
+          <div><dt>Correo</dt><dd><%= siteSettings?.email || '—' %></dd></div>
+          <div><dt>WhatsApp</dt><dd><%= siteSettings?.whatsapp || '—' %></dd></div>
+        </dl>
+      </article>
+      <article class="admin-dashboard-card">
+        <h3><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>Revisión pendiente</h3>
+        <div class="admin-pending-list">
+          <a href="/admin/orders"><span>Pedidos por revisar</span><strong><%= pendingOrderCount %></strong></a>
+          <a href="/admin/reviews"><span>Reseñas por moderar</span><strong><%= pendingReviewCount %></strong></a>
         </div>
-      </div>
-
-      <div class="bg-white border border-stone-200 rounded-2xl p-6 shadow-sm">
-        <h3 class="text-xl font-semibold text-stone-900 mb-4">Rutas rápidas</h3>
-        <ul class="space-y-3 text-stone-700 text-sm list-disc pl-5">
-          <li><strong>Agregar producto:</strong> /admin/products/new</li>
-          <li><strong>Ver productos:</strong> /admin/products</li>
-          <li><strong>Agregar categoría:</strong> /admin/categories/new</li>
-          <li><strong>Ver pedidos:</strong> /admin/orders</li>
-          <li><strong>Reseñas:</strong> /admin/reviews</li>
-          <li><strong>Configuración:</strong> /admin/settings</li>
-        </ul>
-      </div>
+        <p class="admin-dashboard-note">Las cifras se actualizan con los registros actuales de la tienda.</p>
+      </article>
     </section>
   </main>
+  <%- include("../partials/admin-shell-end") %>
 </body>
 </html>

@@ -1,5 +1,19 @@
 # Matriz de requisitos
 
+## Requisitos del panel/analítica/inventario · 25 de noviembre de 2026
+
+| ID | Requisito | Estado local |
+|---|---|---|
+| ADM-01 | Layout EJS compartido, paleta premium, sidebar expandible y navegación responsive en las pantallas existentes | IMPLEMENTED; renderizado en pruebas |
+| ADM-02 | Mostrar solo navegación administrativa con rutas implementadas | PARTIAL; Dashboard, Ventas, Productos, Inventario, Categorías, Pedidos, Reseñas y Configuración |
+| INV-01 | Exportar existencias CSV, XLSX y PDF; importar esos formatos con vista previa, validación por ID/variante, transacción y bitácora | IMPLEMENTED; flujos probados en laboratorio |
+| INV-02 | Conciliar inventario con transacciones de venta, proteger sobreventa concurrente y gestionar devoluciones | PENDING; fuera del importador aislado |
+| SAL-01 | Mostrar ingresos por fecha de pago confirmado y distinguirlos de pedidos pendientes | IMPLEMENTED; confirmación manual, sin proveedor de pagos |
+| SAL-02 | Períodos/comparación, evolución diaria, pagos, ticket promedio, productos de pedidos pagados y exportar | PARTIAL; ver TEST_MATRIX |
+| SAL-03 | Costos históricos, margen/ganancia, reembolsos, categorías históricas, clientes/cohortes, mapa de calor y conversión | PENDING; el modelo fuente no contiene la evidencia necesaria |
+| SAL-04 | Permisos financieros separados por tipo de información/reporte | PENDING; la aplicación actual valida sesión de administrador general |
+| SAL-05 | Todas las páginas/indicadores del brief comercial y reportes conciliados a escala | PENDING; este lote no declara terminado el módulo integral |
+
 Fuente normativa íntegra en MASTER_PROMPT. Los 94 criterios se reproducen debajo de sus fichas. El estado de cada fila se refiere al requisito completo. «Parcial» indica una pieza local relevante; «pendiente» indica que falta evidencia de implementación del criterio. Los responsables son funciones propuestas. Evidencia de ejecución en TEST_MATRIX y fase0/baseline.txt, auditoría estática en STATUS y fase0/rutas.md.
 
 ## WEB-01 · IN_PROGRESS

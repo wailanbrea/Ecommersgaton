@@ -3,19 +3,24 @@ const fs = require("node:fs/promises");
 const path = require("node:path");
 const { pool, closeDB } = require("../src/config/db");
 
-const VERSION = "001_initial";
+const MIGRATIONS_DIR = path.join(__dirname, "..", "src", "db", "migrations");
 
 async function migrate() {
-  const schemaPath = path.join(__dirname, "..", "src", "db", "migrations", `${VERSION}.sql`);
-  const statements = (await fs.readFile(schemaPath, "utf8"))
-    .split(";")
-    .map((statement) => statement.trim())
-    .filter(Boolean);
-  for (const statement of statements) await pool.query(statement);
-  await pool.execute("INSERT IGNORE INTO schema_migrations (version, applied_at) VALUES (?, UTC_TIMESTAMP(3))", [VERSION]);
-  const [rows] = await pool.execute("SELECT version FROM schema_migrations WHERE version = ?", [VERSION]);
-  if (!rows.length) throw new Error(`La migración ${VERSION} no quedó registrada.`);
-  console.log(`Esquema MySQL listo: ${VERSION}`);
+  const names = (await fs.readdir(MIGRATIONS_DIR)).filter((name) => /^\d+_[a-z0-9_-]+\.sql$/i.test(name)).sort();
+  for (const name of names) {
+    const version = name.replace(/\.sql$/i, "");
+    const [applied] = await pool.execute("SELECT version FROM schema_migrations WHERE version = ?", [version]).catch((error) => {
+      if (error.code === "ER_NO_SUCH_TABLE") return [[], []];
+      throw error;
+    });
+    if (applied.length) continue;
+    const statements = (await fs.readFile(path.join(MIGRATIONS_DIR, name), "utf8")).split(";").map((sql) => sql.trim()).filter(Boolean);
+    for (const statement of statements) await pool.query(statement);
+    await pool.execute("INSERT IGNORE INTO schema_migrations (version, applied_at) VALUES (?, UTC_TIMESTAMP(3))", [version]);
+    console.log(`Esquema MySQL aplicado: ${version}`);
+  }
+  const [rows] = await pool.execute("SELECT version FROM schema_migrations ORDER BY version");
+  console.log(`Esquema MySQL listo: ${rows.map((row) => row.version).join(", ")}`);
 }
 
 migrate().catch((error) => {

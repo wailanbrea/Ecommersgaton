@@ -1,5 +1,17 @@
 # Decisiones y plan de implementación
 
+## ADR-004 · Shell compartido del administrador · Implementado en laboratorio
+
+**Fecha:** 25 de noviembre de 2026. **Autorización:** solicitud explícita del propietario para rediseñar el panel y preparar nuevos módulos. Se conserva Node/Express/EJS y modelos MySQL. Un partial EJS compartido sostiene la navegación y el shell; CSS/JS propios implementan identidad visual, colapso persistente y drawer móvil. Tailwind se compila en local. El sidebar enlaza solo pantallas existentes. No se modifica el escaparate. El rediseño no significa que todas las páginas comerciales del brief estén implementadas.
+
+## ADR-005 · Pagos confirmados e importación de inventario · Laboratorio
+
+**Fecha:** 25 de noviembre de 2026. Se añaden tablas aditivas `order_payments` e `inventory_movements`; el runner aplica únicamente migraciones versionadas pendientes, sin reiniciar ni sembrar. Ventas suma el ledger de pagos manuales por fecha de confirmación; abonos cuentan como cobros pero no como pedido totalmente pagado. Pedidos antiguos no se convierten en pagos. No hay costo histórico para calcular margen/ganancia, pasarela, reversos o permisos financieros específicos.
+
+Importación admite CSV, XLSX y PDF del formato estructurado exportado por GATÓN DO. Requiere ID de producto e índice/firma de variante; valida filas duplicadas, presenta preview, vuelve a comprobar el estado bajo transacción y audita cada diferencia. CSV neutraliza celdas de fórmula. PDF ajeno al formato se rechaza, sin inferir su artículo.
+
+**Límite:** el brief pide análisis por cliente/categoría, margen, reembolsos, descuentos/cargos, heatmap, conversión, controles por rol y comparativas completas. Se mantienen pendientes porque el esquema y las reglas actuales no suministran esa evidencia; no se inventan datos. La pantalla es una primera entrega parcial, no el módulo integral.
+
 ## ADR-001 · Propuesta de evolución modular · Pendiente del propietario
 
 Conservar Node/Express/EJS/Mongo y las URLs públicas. El recorrido de compra y el acceso administrativo funcionan sobre una réplica local. Reescribir todo repetiría catálogo, vistas y panel sin resolver por sí mismo pagos ni grabado. Eliminar la selección por índice y el checkout actual requiere una sustitución interna acotada. Mantener un único camino de compra activo en cada entorno.
