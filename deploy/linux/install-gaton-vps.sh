@@ -131,36 +131,49 @@ test "$CODE" = "200" || { echo "ERROR: El contenedor no respondió 200 en /healt
 echo "=== [6/7] Configurando Reverse Proxy Nginx para ${DOMAIN} ==="
 PROXY_CONTAINER=$(docker ps --format '{{.Names}}' | grep -iE 'nginx|proxy' | head -n1 || true)
 
-install -d -m 755 "$TLS_DIR"
-if [ ! -f "${TLS_DIR}/gaton.crt" ] || [ ! -f "${TLS_DIR}/gaton.key" ]; then
-  openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
-    -keyout "${TLS_DIR}/gaton.key" \
-    -out "${TLS_DIR}/gaton.crt" \
-    -subj "/CN=${DOMAIN}" >/dev/null 2>&1
-  chmod 600 "${TLS_DIR}/gaton.key"
-fi
-
 if [ -n "$PROXY_CONTAINER" ]; then
   echo "Reverse proxy en contenedor detectado: ${PROXY_CONTAINER}"
-  # Conectar el proxy a la red de gaton para resolver gaton-app-1:80 directamente
   docker network connect "${COMPOSE_PROJECT}_default" "$PROXY_CONTAINER" 2>/dev/null || true
-  docker exec "$PROXY_CONTAINER" mkdir -p /etc/nginx/ssl
-  docker cp "${TLS_DIR}/gaton.crt" "${PROXY_CONTAINER}:/etc/nginx/ssl/gaton.crt"
-  docker cp "${TLS_DIR}/gaton.key" "${PROXY_CONTAINER}:/etc/nginx/ssl/gaton.key"
 
-  cat <<'EOF_NGINX' > /tmp/gaton.bsolutions.dev.conf
+  # Reutilizar exactamente el Cloudflare Origin Certificate (*.bsolutions.dev) montado en el proxy
+  ORIG_CERT=$(docker exec "$PROXY_CONTAINER" sh -c "grep -h 'ssl_certificate ' /etc/nginx/conf.d/*.conf 2>/dev/null | grep -v gaton | head -n1 | awk '{print \$2}' | tr -d ';'" || true)
+  ORIG_KEY=$(docker exec "$PROXY_CONTAINER" sh -c "grep -h 'ssl_certificate_key ' /etc/nginx/conf.d/*.conf 2>/dev/null | grep -v gaton | head -n1 | awk '{print \$2}' | tr -d ';'" || true)
+
+  if [ -z "$ORIG_CERT" ] || [ -z "$ORIG_KEY" ]; then
+    install -d -m 755 "$TLS_DIR"
+    if [ ! -f "${TLS_DIR}/gaton.crt" ] || [ ! -f "${TLS_DIR}/gaton.key" ]; then
+      openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
+        -keyout "${TLS_DIR}/gaton.key" \
+        -out "${TLS_DIR}/gaton.crt" \
+        -subj "/CN=${DOMAIN}" >/dev/null 2>&1
+      chmod 600 "${TLS_DIR}/gaton.key"
+    fi
+    docker exec "$PROXY_CONTAINER" mkdir -p /etc/nginx/ssl
+    docker cp "${TLS_DIR}/gaton.crt" "${PROXY_CONTAINER}:/etc/nginx/ssl/gaton.crt"
+    docker cp "${TLS_DIR}/gaton.key" "${PROXY_CONTAINER}:/etc/nginx/ssl/gaton.key"
+    ORIG_CERT="/etc/nginx/ssl/gaton.crt"
+    ORIG_KEY="/etc/nginx/ssl/gaton.key"
+  fi
+
+  # Asegurar que el vhost existente de KeylaShop tenga server_name explícito
+  docker exec "$PROXY_CONTAINER" sh -c "for f in /etc/nginx/conf.d/*.conf; do [ \"\$(basename \"\$f\")\" = 'gaton.bsolutions.dev.conf' ] && continue; grep -q 'server_name _;' \"\$f\" && sed -i 's/server_name _;/server_name keylashop.bsolutions.dev;/g' \"\$f\"; done" || true
+
+  # Usar resolver DNS interno de Docker (127.0.0.11) para que al recrear gaton-app-1 no quede IP cacheada
+  cat <<EOF_NGINX > /tmp/gaton.bsolutions.dev.conf
 server {
     listen 80;
     server_name gaton.bsolutions.dev;
     client_max_body_size 30M;
+    resolver 127.0.0.11 valid=10s ipv6=off;
 
     location / {
-        proxy_pass http://gaton-app-1:80;
+        set \$gaton_upstream http://gaton-app-1:80;
+        proxy_pass \$gaton_upstream;
         proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
     }
 }
 
@@ -168,16 +181,18 @@ server {
     listen 443 ssl;
     server_name gaton.bsolutions.dev;
     client_max_body_size 30M;
+    resolver 127.0.0.11 valid=10s ipv6=off;
 
-    ssl_certificate /etc/nginx/ssl/gaton.crt;
-    ssl_certificate_key /etc/nginx/ssl/gaton.key;
+    ssl_certificate ${ORIG_CERT};
+    ssl_certificate_key ${ORIG_KEY};
 
     location / {
-        proxy_pass http://gaton-app-1:80;
+        set \$gaton_upstream http://gaton-app-1:80;
+        proxy_pass \$gaton_upstream;
         proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto https;
     }
 }
@@ -187,7 +202,7 @@ EOF_NGINX
   rm -f /tmp/gaton.bsolutions.dev.conf
   docker exec "$PROXY_CONTAINER" nginx -t
   docker exec "$PROXY_CONTAINER" nginx -s reload
-  echo "Nginx recargado con éxito para ${DOMAIN}."
+  echo "Nginx recargado con éxito para ${DOMAIN} usando certificado Cloudflare Origin (${ORIG_CERT})."
 fi
 
 echo "=== [7/7] Registrando /etc/bs-autodeploy/gaton.conf ==="
