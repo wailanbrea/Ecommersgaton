@@ -220,7 +220,7 @@ Contrato de plantilla: `templateVersionId`, `variantIds`, `sides[]` con backgrou
 
 Carga móvil/desktop con progreso, reemplazo y error recuperable. JPG/PNG/WebP inicialmente; HEIC solo tras prueba de decodificación o conversión local; advertir formato no admitido. Propuesta inicial configurable: 10 MB/archivo, 20 MP máximo, 3 archivos por zona solo si plantilla lo permite. Validar magic bytes/decodificación/dimensiones, límites de request, rechazar polyglots/archivos ejecutables, corregir orientación y eliminar EXIF de derivados, cuarentena y escaneo/normalización. Original privado solo si necesario para taller; no servir directamente por URL pública. Restricción de pertenencia al draft; no aceptar objectKey/URL ajena. Confirmar política de originales con taller. No impedir todo el flujo por fallo de preview: ofrecer reintento o modo asesorado explícito conservando especificaciones.
 
-- Cobertura: parcial. Evidencia de partida: Product, ficha, módulos JS de personalización.
+- Cobertura: parcial. Las cargas nuevas se guardan en `storage/customizations` y se sirven mediante sesión del comprador o permiso `orders.view`; los archivos legacy bajo `public/uploads/customizations` pasan por la misma autorización. No se ha probado validación por magic bytes/decodificación, limpieza EXIF, escaneo, límites de píxeles ni matriz completa de pertenencia.
 - Plan: F3. Depende de plantilla, sku y reglas de taller. Riesgo: diseño irreproducible o privado expuesto.
 - Responsable propuesto: Taller/ingeniería. Pruebas relacionadas: T05, T06, T07, T13.
 
@@ -276,7 +276,7 @@ Cada SKU físico tiene onHand, reserved, available; `onHand >= reserved >= 0`. T
 
 Al carrito NO descontar ni reservar por defecto. Checkout suma cantidades por SKU incluso si diseños diferentes. Una transacción verifica y crea order + reservas + cupón reservado + outbox; updates condicionales por disponibilidad. Propuesta reserva inicial 30 min para pago online, plazo específico para transferencia/manual (propuesta 24h, confirmación comercial); job de expiración libera solo reservas activas, nunca una consumida. No usar `Math.max(0, stock-qty)` para ocultar sobreventa. Retener stock mientras pago está en verificación solo mediante regla acotada y reconciliación.
 
-- Cobertura: parcial. Evidencia de partida: Product.stock y store.js.
+- Cobertura: parcial. El checkout ahora bloquea filas de producto y confirma en una sola transacción pedido, stock y `inventory_movements`; `checkout_key` única evita doble envío simultáneo. T09 reducido a dos solicitudes se ejecutó en laboratorio. No hay reservas temporales, outbox, vencimiento, consumo por confirmación de pago ni 20 solicitudes concurrentes; no satisface el flujo integral solicitado.
 - Plan: F4. Depende de identidad sku y transacciones. Riesgo: sobreventa o doble descuento.
 - Responsable propuesto: Inventario. Pruebas relacionadas: T06, T09, T10, T12.
 
@@ -348,7 +348,7 @@ Compra invitado: nombre, teléfono normalizado, correo recomendado (exigirlo si 
 
 Confirmación idempotente por token de intento/quote+cartVersion+owner (scope con unique constraint); duplicar click, recarga o retry devuelve mismo pedido. Si misma clave y payload distinto: conflicto. Crear orderNumber no adivinable para acceso; número comercial no es credencial. Enlace de consulta/aprobación con token aleatorio fuerte, hash en DB, propósito/expiración/revocación y autorización por recurso; no mostrar pedido por ObjectId público. Recuperación por OTP/enlace a canal verificado, rate limited, sin enumerar usuarios. Quitar ruta antigua insegura o exigir sesión/token.
 
-- Cobertura: pendiente. Evidencia de partida: Order y rutas de checkout/admin.
+- Cobertura: parcial. El checkout usa token aleatorio de sesión y clave idempotente persistida con índice único; confirmación y foto quedan ligadas a `recentOrderIds` de la sesión. Se probaron doble envío concurrente y acceso anónimo denegado en laboratorio. No compara payload distinto para una clave, no tiene orderNumber, recuperación OTP/enlace temporal ni flujo de consentimiento/propiedad completo.
 - Plan: F4. Depende de reserva y titular de pedido. Riesgo: orden duplicada o historial inconsistente.
 - Responsable propuesto: Comercio. Pruebas relacionadas: T08, T09, T12, T14, T22.
 
@@ -668,7 +668,7 @@ Revisar accesibilidad WCAG 2.2 AA como objetivo: teclado, lector pantalla, error
 
 Threat model: admin comprometido, IDOR/BOLA, CSRF, XSS, NoSQL injection, SSRF, enumeración, regex DoS, uploads maliciosos, webhooks falsos, doble cobro/overbooking, robo de tokens, fuga de fotos, exposición a terceros y proveedor caído. Aplicar validación de schemas (whitelist), consultas parametrizadas/operadores controlados, escape de regex o búsqueda indexada, paginación/límites, escapar EJS, sanitizar HTML CMS, allowlist de URLs, no fetch arbitrario desde URL usuario.
 
-- Cobertura: parcial. Evidencia de partida: Middleware, rutas, sesiones y dependencias.
+- Cobertura: parcial. Se corrigieron IDOR de `/order-success/:id`, exposición pública de fotos de personalización y descuento de stock fuera de transacción; se verificaron dos carreras e intentos anónimos en laboratorio. Quedan validaciones de esquema amplias, límites/rate limit, XSS/CMS, scans de carga y revisión integral SEC-08.
 - Plan: F1/F7. Depende de política, permisos y operaciones. Riesgo: exposición o pérdida de datos.
 - Responsable propuesto: Seguridad. Pruebas relacionadas: T07, T22, T24, T27.
 
@@ -676,7 +676,7 @@ Threat model: admin comprometido, IDOR/BOLA, CSRF, XSS, NoSQL injection, SSRF, e
 
 HTTPS extremo a extremo, proxy trust exacto, cookies Secure HttpOnly SameSite apropiado, CSRF en mutaciones de sesión (multipart incluido); webhooks exentos solo con firma válida y rutas aisladas. Regenerar sesión tras login, logout/revocación, expiración inactividad, rate limit por cuenta/IP y anti-bruteforce, hash bcrypt/Argon2 con parámetros actuales, MFA admin, recuperación segura, autorización por recurso, roles y auditoría. CORS cerrado, Helmet/CSP, límites request/timeouts, mensajes de error sin stack, 404/403 consistentes para evitar enumeración. No endpoints de debug en prod.
 
-- Cobertura: parcial. Evidencia de partida: Middleware, rutas, sesiones y dependencias.
+- Cobertura: parcial. Sesión mantiene `httpOnly`, `sameSite=lax`, `secure` en producción; el admin tiene CSRF y RBAC probados por unidad; token de checkout impredecible evita CSRF y doble envío del formulario. No se probó fixation/logout a nivel HTTP, rate limit, MFA, CSP/Helmet ni CSRF de todas las mutaciones públicas.
 - Plan: F1/F7. Depende de política, permisos y operaciones. Riesgo: exposición o pérdida de datos.
 - Responsable propuesto: Seguridad. Pruebas relacionadas: T07, T22, T24, T27.
 
@@ -692,7 +692,7 @@ Secrets manager o variables protegidas, `.env.example`, rotación, CI secret sca
 
 Privacidad: clasificar público/privado/sensible; minimizar datos, consentimiento, política de finalidad y retención aprobada, acceso/rectificación/supresión y obligaciones fiscales/contractuales aplicables (validar con asesor RD, incluida protección de datos). Proteger imágenes originales, bocetos, comprobantes y exportaciones; cifrado en tránsito/reposo, links expiran y se revocan por autorización; evitar PII en URLs/logs/analytics. Descargar assets mediante autorización por order/role/draft; logs redaccionados. Expiración de cache/backup y borrado coordinado, preservar evidencia legal bajo acceso limitado. No declarar cumplimiento legal sin revisión.
 
-- Cobertura: parcial. Evidencia de partida: Middleware, rutas, sesiones y dependencias.
+- Cobertura: parcial. Archivos nuevos privados y legacy custodiados por sesión de pedido o permiso de lectura de pedidos; GET anónimo retorna 404. Faltan enlaces expiran/revocación, prueba cruzada entre compradores, análisis de medios, retención aprobada y revisión legal.
 - Plan: F1/F7. Depende de política, permisos y operaciones. Riesgo: exposición o pérdida de datos.
 - Responsable propuesto: Seguridad. Pruebas relacionadas: T07, T22, T24, T27.
 

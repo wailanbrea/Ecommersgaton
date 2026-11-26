@@ -40,6 +40,16 @@ Conservar IDs y slugs históricos. Asignar SKU estable a cada combinación demos
 
 ## Decisiones comerciales
 
+## ADR-007 · Checkout transaccional, idempotencia y fotos privadas
+
+**Fecha:** 26 de noviembre de 2026 · **Alcance:** endurecimiento aditivo antes de avanzar el configurador y desplegar el lote autorizado.
+
+El pedido invitado continúa con COD y stock físico, pero la inserción del pedido, la disminución de existencias y el registro de `inventory_movements` ocurren en una transacción InnoDB. Los productos se bloquean por ID ordenado para evitar deadlocks previsibles. Si el stock o la variante cambió, se cancela la transacción; nunca se fuerza el saldo a cero. El formulario lleva token aleatorio vinculado a la sesión y la migración `004_checkout_idempotency` agrega una clave nullable única para que dos POST simultáneos del mismo intento reutilicen el pedido.
+
+La confirmación deja de aceptar solo el ObjectId: se limita a pedidos creados en la sesión actual. Fotos nuevas se escriben en el volumen persistente privado `storage/customizations`; los antiguos `/uploads/customizations/...` también pasan por control de acceso en lugar de escapar por `express.static`. El dueño requiere la sesión que tiene el archivo en el carrito o el pedido reciente; un administrador necesita cuenta activa y `orders.view`. No se agregan links públicos ni se almacena la clave de checkout en logs.
+
+**Prueba y límites:** dos checkouts simultáneos independientes con una unidad producen un pedido; doble envío con una clave produce el mismo ID y un solo descuento; consulta anónima a pedido/foto da 404. No prueba carga de 20 peticiones, ownership entre dos sesiones autenticadas, magic bytes/EXIF/antivirus ni una restauración real. Stock se consume en la creación de pedido COD; reserva temporal, expiración, cancelación/reposición, recuperación OTP y aprobación del taller quedan pendientes. Los cambios corrigen esos fallos acotados y no constituyen cierre de INV-02/ORD-02/SEC-08.
+
 ## ADR-006 · Menú administrativo de usuarios, roles y permisos
 
 **Fecha:** 26 de noviembre de 2026 · **Autorización:** instrucción explícita del propietario para crear el menú y subirlo al servidor · **Alcance:** Gatón DO, rama de producción `main`, despliegue automático Linux Docker.

@@ -1,5 +1,7 @@
 const fs = require("fs");
 const path = require("path");
+const crypto = require("node:crypto");
+const { pool } = require("../config/db");
 const express = require("express");
 const multer = require("multer");
 const Category = require("../models/Category");
@@ -19,7 +21,7 @@ const REVIEW_ALLOWED_UPLOAD_TYPES = new Set([
   "image/webp"
 ]);
 
-const CUSTOMIZATION_UPLOAD_ROOT = path.join(__dirname, "../../public/uploads/customizations");
+const CUSTOMIZATION_UPLOAD_ROOT = path.join(__dirname, "../../storage/customizations");
 const CUSTOMIZATION_UPLOAD_MAX_SIZE_MB = 15;
 const CUSTOMIZATION_ALLOWED_UPLOAD_TYPES = new Set([
   "image/jpeg",
@@ -140,7 +142,91 @@ const customizationUpload = multer({
 
 function uploadedCustomizationPhotoUrl(file) {
   if (!file || !file.filename) return "";
-  return `/uploads/customizations/${file.filename}`;
+  return `/customization-assets/${file.filename}`;
+}
+
+function findVariantIndex(product, item) {
+  if (!product.hasVariants || !Array.isArray(product.variants)) return -1;
+  return product.variants.findIndex((variant) => {
+    const displayLabel = getVariantLabel(variant);
+    const sameOptions = (variant.optionName || "") === (item.variantOptionName || "") &&
+      (variant.optionValue || "") === (item.variantOptionValue || "");
+    return sameOptions && ((variant.label || "") === (item.variantLabel || "") || displayLabel === (item.variantLabel || ""));
+  });
+}
+
+async function createOrderAndDecrementStock(orderData, cart, checkoutKey = null) {
+  const connection = await pool.getConnection();
+  const orderId = crypto.randomBytes(12).toString("hex");
+  const batchId = crypto.randomBytes(12).toString("hex");
+  const now = new Date();
+  try {
+    await connection.beginTransaction();
+    const productIds = [...new Set(cart.map((item) => String(item.productId)))].sort();
+    const products = new Map();
+    for (const productId of productIds) {
+      const [rows] = await connection.execute("SELECT id, name, stock, out_of_stock, payload FROM products WHERE id=? AND active=1 FOR UPDATE", [productId]);
+      if (!rows.length) throw new Error("Un producto del carrito ya no está disponible.");
+      let data = rows[0].payload;
+      if (typeof data === "string") data = JSON.parse(data || "{}");
+      products.set(productId, { row: rows[0], data: { ...data, stock: Number(rows[0].stock), outOfStock: Boolean(rows[0].out_of_stock) } });
+    }
+
+    const movementRows = [];
+    for (const item of cart) {
+      const record = products.get(String(item.productId));
+      const product = record?.data;
+      const quantity = Number(item.quantity || 0);
+      if (!product || !Number.isInteger(quantity) || quantity < 1) throw new Error("Cantidad de pedido inválida.");
+      if (product.hasVariants && Array.isArray(product.variants) && product.variants.length) {
+        const variantIndex = findVariantIndex(product, item);
+        if (variantIndex < 0) throw new Error("Una variante del carrito ya no existe.");
+        const variant = product.variants[variantIndex];
+        const before = Math.max(0, Number(variant.stock || 0));
+        if (variant.outOfStock || before < quantity) throw new Error("El inventario cambió. Revisa las cantidades en el carrito.");
+        variant.stock = before - quantity;
+        variant.outOfStock = variant.stock <= 0;
+        movementRows.push({ productId: String(item.productId), productName: product.name, variantIndex, before, after: variant.stock, delta: -quantity });
+      } else {
+        const before = Math.max(0, Number(product.stock || 0));
+        if (product.outOfStock || before < quantity) throw new Error("El inventario cambió. Revisa las cantidades en el carrito.");
+        product.stock = before - quantity;
+        product.outOfStock = product.stock <= 0;
+        movementRows.push({ productId: String(item.productId), productName: product.name, variantIndex: null, before, after: product.stock, delta: -quantity });
+      }
+    }
+
+    for (const productId of productIds) {
+      const record = products.get(productId);
+      const product = record.data;
+      await connection.execute("UPDATE products SET stock=?, out_of_stock=?, payload=?, updated_at=? WHERE id=?", [
+        Number(product.stock || 0), product.outOfStock ? 1 : 0, JSON.stringify(product), now, productId
+      ]);
+    }
+
+    const order = { _id: orderId, ...orderData, createdAt: now, updatedAt: now };
+    await connection.execute(
+      "INSERT INTO orders (id,checkout_key,customer_name,phone,email,notes,shipping_method,shipping_description,shipping_cost,subtotal,total,payment_method,status,created_at,updated_at,payload) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+      [orderId, checkoutKey, order.customerName, order.phone, order.email, order.notes, order.shippingMethod, order.shippingDescription, order.shippingCost, order.subtotal, order.total, order.paymentMethod, order.status, now, now, JSON.stringify(order)]
+    );
+    for (const movement of movementRows) {
+      await connection.execute(
+        "INSERT INTO inventory_movements (id,batch_id,product_id,variant_index,variant_signature,product_name,quantity_before,quantity_after,quantity_delta,action,actor_id,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+        [crypto.randomBytes(12).toString("hex"), batchId, movement.productId, movement.variantIndex, "", movement.productName, movement.before, movement.after, movement.delta, "checkout", "000000000000000000000000", now]
+      );
+    }
+    await connection.commit();
+    return orderId;
+  } catch (error) {
+    await connection.rollback().catch(() => {});
+    if (checkoutKey && error.code === "ER_DUP_ENTRY") {
+      const [rows] = await pool.execute("SELECT id FROM orders WHERE checkout_key=? LIMIT 1", [checkoutKey]);
+      if (rows[0]?.id) return String(rows[0].id);
+    }
+    throw error;
+  } finally {
+    connection.release();
+  }
 }
 
 const GENDER_OPTIONS = [
@@ -696,12 +782,19 @@ router.get("/checkout", async (req, res) => {
   res.render("store/checkout", {
     cart,
     subtotal,
-    shippingOptions: activeShippingOptions(siteSettings)
+    shippingOptions: activeShippingOptions(siteSettings),
+    checkoutToken: req.session.checkoutToken || (req.session.checkoutToken = crypto.randomBytes(32).toString("hex"))
   });
 });
 
 router.post("/checkout", async (req, res) => {
   try {
+    const submittedToken = String(req.body.checkoutToken || "");
+    const expectedToken = String(req.session.checkoutToken || "");
+    if (submittedToken.length !== 64 || expectedToken.length !== 64 || !crypto.timingSafeEqual(Buffer.from(submittedToken), Buffer.from(expectedToken))) {
+      return res.status(409).send("El checkout venció. Vuelve a revisar tu carrito.");
+    }
+    const checkoutKey = crypto.createHash("sha256").update(submittedToken).digest("hex");
     const cart = await enrichCartWithStock(getSessionCart(req));
     const siteSettings = await SiteSettings.findOne().lean();
 
@@ -737,27 +830,28 @@ router.post("/checkout", async (req, res) => {
     const shippingCost = Number(selectedShipping.price || 0);
     const total = subtotal + shippingCost;
 
-    const order = await Order.create({
+    const orderItems = cart.map((item) => ({
+      productId: item.productId,
+      productName: item.productName,
+      productSlug: item.productSlug,
+      imageUrl: item.imageUrl,
+      quantity: Number(item.quantity || 1),
+      unitPrice: Number(item.unitPrice || 0),
+      compareAtPrice: Number(item.compareAtPrice || 0),
+      lineTotal: Number(item.lineTotal || 0),
+      variantLabel: item.variantLabel || "",
+      variantOptionName: item.variantOptionName || "",
+      variantOptionValue: item.variantOptionValue || "",
+      customizationSummary: item.customizationSummary || "",
+      customizationPhotoUrl: item.customizationPhotoUrl || "",
+      fontName: item.fontName || ""
+    }));
+    const createdOrderId = await createOrderAndDecrementStock({
       customerName,
       phone,
       email,
       notes,
-      items: cart.map((item) => ({
-        productId: item.productId,
-        productName: item.productName,
-        productSlug: item.productSlug,
-        imageUrl: item.imageUrl,
-        quantity: Number(item.quantity || 1),
-        unitPrice: Number(item.unitPrice || 0),
-        compareAtPrice: Number(item.compareAtPrice || 0),
-        lineTotal: Number(item.lineTotal || 0),
-        variantLabel: item.variantLabel || "",
-        variantOptionName: item.variantOptionName || "",
-        variantOptionValue: item.variantOptionValue || "",
-        customizationSummary: item.customizationSummary || "",
-        customizationPhotoUrl: item.customizationPhotoUrl || "",
-        fontName: item.fontName || ""
-      })),
+      items: orderItems,
       shippingMethod: selectedShipping.name,
       shippingDescription: selectedShipping.description || "",
       shippingCost,
@@ -765,44 +859,13 @@ router.post("/checkout", async (req, res) => {
       total,
       paymentMethod: "cash_on_delivery",
       status: "pending"
-    });
-
-    for (const item of cart) {
-      const product = await Product.findById(item.productId);
-      if (!product) continue;
-
-      if (product.hasVariants && Array.isArray(product.variants) && product.variants.length) {
-        const variantIndex = product.variants.findIndex((variant) => {
-          const displayLabel = getVariantLabel(variant);
-          const rawLabel = variant.label || "";
-          return (
-            (rawLabel === (item.variantLabel || "") || displayLabel === (item.variantLabel || "")) &&
-            (variant.optionName || "") === (item.variantOptionName || "") &&
-            (variant.optionValue || "") === (item.variantOptionValue || "")
-          );
-        });
-
-        if (variantIndex >= 0) {
-          const currentStock = Math.max(0, Number(product.variants[variantIndex].stock || 0));
-          product.variants[variantIndex].stock = Math.max(0, currentStock - Number(item.quantity || 1));
-          if (product.variants[variantIndex].stock <= 0) {
-            product.variants[variantIndex].outOfStock = true;
-          }
-        }
-      } else {
-        const currentStock = Math.max(0, Number(product.stock || 0));
-        product.stock = Math.max(0, currentStock - Number(item.quantity || 1));
-        if (product.stock <= 0) {
-          product.outOfStock = true;
-        }
-      }
-
-      await product.save();
-    }
+    }, cart, checkoutKey);
 
     req.session.cart = [];
+    req.session.checkoutToken = crypto.randomBytes(32).toString("hex");
+    req.session.recentOrderIds = [...new Set([...(req.session.recentOrderIds || []), createdOrderId])].slice(-10);
 
-    return res.redirect(`/order-success/${order._id}`);
+    return res.redirect(`/order-success/${createdOrderId}`);
   } catch (error) {
     console.error("❌ Error creando pedido:", error);
     return res.redirect("/checkout");
@@ -810,6 +873,9 @@ router.post("/checkout", async (req, res) => {
 });
 
 router.get("/order-success/:id", async (req, res) => {
+  if (!(req.session.recentOrderIds || []).includes(String(req.params.id))) {
+    return res.status(404).send("Pedido no encontrado");
+  }
   const [order, siteSettings] = await Promise.all([
     Order.findById(req.params.id).lean(),
     SiteSettings.findOne().lean()
@@ -830,4 +896,5 @@ router.get("/order-success/:id", async (req, res) => {
   });
 });
 
+router.createOrderAndDecrementStock = createOrderAndDecrementStock;
 module.exports = router;

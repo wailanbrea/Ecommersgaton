@@ -1,5 +1,17 @@
 # Gatón DO · Auditoría F0 del 24 de noviembre de 2026
 
+## Avance técnico autorizado · 26 de noviembre de 2026
+
+Estado del checkout y custodia de fotos tras la auditoría del Master Prompt:
+
+- La creación del pedido, el decremento de stock y la bitácora de movimientos ahora comparten una transacción InnoDB con filas bloqueadas. Un checkout duplicado concurrente con la misma clave idempotente retorna el pedido existente. Se añadió `004_checkout_idempotency.sql` (columna nullable + índice único, sin alterar pedidos previos).
+- La confirmación del comprador requiere el ID guardado en su sesión; no revelar pedidos mediante un ID público. Fotos nuevas de grabado van a `/app/storage/customizations`, en el volumen persistente ya existente; tanto las nuevas como las URLs legacy se sirven solo al dueño de la sesión o a administradores activos con `orders.view`.
+- Se corrigió el bloque Contacto para leer `SiteSettings.locationText`, cuyo valor de laboratorio coincide con la dirección completa usada en el footer.
+- Verificación de laboratorio: `npm test` 12 aprobadas/0 fallidas (la prueba de mutación opt-in queda omitida en suite estándar); checkout simultáneo de stock 1 e idempotencia: 1/1; confirmación y foto anónimas: HTTP 404; migración 004 aplicada. Backup JSON de la base `gatondo_local_mysql` de 15 tablas verificado fuera del repositorio antes de migrar.
+- No se modificó producción todavía en este avance. Auto-Deploy respalda y aplica migraciones, pero la restauración de un backup no se ensayó. Falta validar el despliegue y preservar los IDs/conteos de producción antes y después.
+
+**Estado funcional real:** ORD-02, INV-02, SEC-01/02/04 y CUS-04 siguen `PARTIAL`; solo los subcriterios indicados tienen evidencia. No se completaron reservas/expiración, recuperación segura del pedido, escaneo/normalización de fotos, rotación/MFA, rate limit ni aprobación del taller. GC-08 quedó corregido en código local y espera verificación en producción; GC-04 sigue bloqueado hasta recibir los logos originales y su asignación.
+
 ## Administración de usuarios y permisos · 26 de noviembre de 2026
 
 Se añadió localmente el menú Usuarios y Roles y permisos al panel. Incluye alta de cuentas, asignación de roles, activación/desactivación protegida contra bloquear al último superadministrador, contraseña temporal con cambio obligatorio, cambio de contraseña propia, permisos de ruta aplicados en servidor, token CSRF en formularios administrativos y bitácora de cambios. Los permisos elevados (`users.manage`, `roles.manage`, `admin.access`) solo pueden asignarse a roles por un superadministrador. Migración aditiva e idempotente `003_admin_rbac` asigna el rol de continuidad a los administradores existentes sin alterar sus IDs, contraseñas ni sesiones.

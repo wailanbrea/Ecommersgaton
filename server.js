@@ -6,6 +6,9 @@ const express = require("express");
 const { connectDB, pool } = require("./src/config/db");
 const sessionMiddleware = require("./src/config/session");
 const globalsMiddleware = require("./src/middlewares/globals");
+const AdminUser = require("./src/models/AdminUser");
+const Order = require("./src/models/Order");
+const { loadPermissionCodes } = require("./src/services/adminAccess");
 const storeRoutes = require("./src/routes/store");
 const adminRoutes = require("./src/routes/admin");
 
@@ -15,8 +18,41 @@ app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
+const publicStatic = express.static(path.join(__dirname, "public"));
+app.use((req, res, next) => {
+  if (req.path.startsWith("/customization-assets/") || req.path.startsWith("/uploads/customizations/")) return next();
+  return publicStatic(req, res, next);
+});
 app.use(sessionMiddleware);
+app.get(["/customization-assets/:filename", "/uploads/customizations/:filename"], async (req, res) => {
+  const filename = String(req.params.filename || "");
+  if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,180}$/.test(filename) || filename.includes("..")) {
+    return res.status(404).send("Archivo no encontrado");
+  }
+  const assetUrl = req.path.startsWith("/uploads/") ? `/uploads/customizations/${filename}` : `/customization-assets/${filename}`;
+  let allowed = (req.session.cart || []).some((item) => item.customizationPhotoUrl === assetUrl);
+  if (!allowed && Array.isArray(req.session.recentOrderIds)) {
+    for (const orderId of req.session.recentOrderIds.slice(-10)) {
+      const order = await Order.findById(orderId).lean();
+      if ((order?.items || []).some((item) => item.customizationPhotoUrl === assetUrl)) { allowed = true; break; }
+    }
+  }
+  if (!allowed && req.session.adminId) {
+    const admin = await AdminUser.findById(req.session.adminId);
+    if (admin?.active && !admin.mustChangePassword) {
+      const permissions = await loadPermissionCodes(admin._id);
+      allowed = permissions.has("orders.view");
+    }
+  }
+  if (!allowed) return res.status(404).send("Archivo no encontrado");
+
+  const privateRoot = path.join(__dirname, "storage", "customizations");
+  const filePath = req.path.startsWith("/uploads/")
+    ? path.join(__dirname, "public", "uploads", "customizations", filename)
+    : path.join(privateRoot, filename);
+  res.set({ "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff", "Content-Disposition": "inline" });
+  return res.sendFile(filePath, (error) => { if (error && !res.headersSent) res.status(error.statusCode === 404 ? 404 : 500).end(); });
+});
 app.use(globalsMiddleware);
 app.get("/health/ready", async (_req, res) => {
   try {

@@ -1,5 +1,19 @@
 # Matriz de pruebas · F0
 
+## Checkout protegido · laboratorio MySQL · 26 de noviembre de 2026
+
+| ID | Criterio ejecutado | Resultado observado | Estado |
+|---|---|---|---|
+| ORD-02/SEC-01 | Dos checkouts simultáneos distintos con una sola unidad | Una transacción crea pedido y movimiento; la segunda rechaza por falta de stock; stock final 0 sin negativo | VERIFIED (escenario aislado) |
+| ORD-02/T09 | Doble envío simultáneo con la misma clave de checkout | Restricción única devuelve el mismo ID de pedido en ambas respuestas; una sola unidad descontada y un solo pedido | VERIFIED (escenario aislado) |
+| SEC-04/T07 | GET anónimo a confirmación de pedido y foto de personalización privada | Ambos responden 404; sin datos del pedido ni bytes de la foto | VERIFIED (negativo anónimo) |
+| GC-08 | Ubicación del bloque Contacto | La plantilla usa `locationText` y fallback completo: “Av. Independencia, Km. 11, Distrito Nacional, Santo Domingo, Rep. Dom.” | VERIFIED (código local; falta producción) |
+| DB-04 | Migración de clave idempotente | Respaldo local de 15 tablas serializado y verificado; `004_checkout_idempotency` aplicada en `gatondo_local_mysql` | VERIFIED (esquema local) |
+
+Pruebas ejecutadas: `RUN_DB_MUTATION_TESTS=1 node --test test/checkout-transaction.test.js` (1/1); `npm test` (12 aprobadas, 0 fallidas; 1 prueba de mutación se omite por seguridad salvo habilitación explícita); `node --check` para servidor/rutas; segunda ejecución de `npm run db:migrate` terminó sin operaciones pendientes. Los fixtures de concurrencia se limpian por IDs sintéticos concretos. El primer intento dejó un fixture porque falló su limpieza al cerrar el pool; se identificó y retiró de forma puntual en `gatondo_local_mysql`; la repetición pasó y dejó cero fixtures incompletos.
+
+Límites: son dos solicitudes simultáneas, no la carga de 20 solicitudes de T09. El archivo privado se comprobó contra acceso anónimo, no contra toda la matriz de pertenencia, revocación o roles de T07. El pedido de invitado queda ligado a la sesión del navegador; aún no existe enlace seguro de recuperación o aprobación por correo/OTP. Stock se consume al crear el pedido COD; reservas, vencimiento, cancelación/reposición, gates de fabricación y outbox no están implementados.
+
 ## Panel e inventario · laboratorio local · 25 de noviembre de 2026
 
 | ID | Prueba / criterio | Resultado observado | Estado |

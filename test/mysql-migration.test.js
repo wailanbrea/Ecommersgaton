@@ -15,6 +15,8 @@ test("MySQL y el esquema versionado están listos", async () => {
   assert.equal(rows.length, 1);
   const [rbac] = await pool.execute("SELECT version FROM schema_migrations WHERE version = ?", ["003_admin_rbac"]);
   assert.equal(rbac.length, 1);
+  const [checkout] = await pool.execute("SELECT version FROM schema_migrations WHERE version = ?", ["004_checkout_idempotency"]);
+  assert.equal(checkout.length, 1);
 });
 
 test("los administradores existentes reciben el rol de continuidad y acceso completo", async () => {
