@@ -1,5 +1,15 @@
 # Gatón DO · Auditoría F0 del 24 de noviembre de 2026
 
+## Administración de usuarios y permisos · 26 de noviembre de 2026
+
+Se añadió localmente el menú Usuarios y Roles y permisos al panel. Incluye alta de cuentas, asignación de roles, activación/desactivación protegida contra bloquear al último superadministrador, contraseña temporal con cambio obligatorio, cambio de contraseña propia, permisos de ruta aplicados en servidor, token CSRF en formularios administrativos y bitácora de cambios. Los permisos elevados (`users.manage`, `roles.manage`, `admin.access`) solo pueden asignarse a roles por un superadministrador. Migración aditiva e idempotente `003_admin_rbac` asigna el rol de continuidad a los administradores existentes sin alterar sus IDs, contraseñas ni sesiones.
+
+**Verificación local:** `npm test` 12/12; `npm run db:migrate` incluyó `003_admin_rbac`; comprobación sintáctica JS y compilación de EJS correctas. Ver `ADM-RBAC-01` y ADR-006. Un superadministrador puede establecer una clave temporal para otra cuenta desde el panel; la migración no altera contraseñas existentes.
+
+**Línea base productiva previa a este cambio:** dashboard autenticado en `https://gaton.bsolutions.dev/admin/dashboard`, 16 productos, 6 categorías, 0 reseñas, 0 pedidos y 2 administradores. El sistema no maneja una entidad de tienda separada. En la consulta administrativa previa se registraron los IDs de cuentas `b06451eccb2b8414763919d6` y `3d882d33bbd842f0b7879f47`; el dashboard visible reconfirma ahora el conteo de dos. El último estado Auto-Deploy leído antes del cambio es `deployed`, SHA `1313953`; health readiness 200. El despliegue debe crear solo las tablas RBAC y registrar los roles, conservando exactamente estas cuentas y el resto de los registros.
+
+**Estado:** implementación `IMPLEMENTED`; criterios locales de seguridad y comportamiento `VERIFIED` solo según `TEST_MATRIX.md`; producción queda `PENDING` hasta terminar push, migración automática y cotejo post-deploy. `ACCEPTED` pendiente de revisión del propietario en la nueva interfaz. La clave nueva se debe establecer dentro del formulario; mínimo 12 caracteres.
+
 ## Actualización · Panel, pagos, analítica e inventario · 25 de noviembre de 2026
 
 Trabajo realizado en `C:\xampp\php\www\EcommersGaton`. El servidor no se ha modificado durante la implementación local.

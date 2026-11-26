@@ -5,12 +5,28 @@ const { pool, connectDB, closeDB } = require("../src/config/db");
 const Category = require("../src/models/Category");
 const Product = require("../src/models/Product");
 const SiteSettings = require("../src/models/SiteSettings");
+const AdminUser = require("../src/models/AdminUser");
+const { loadPermissionCodes } = require("../src/services/adminAccess");
 const pkg = require("../package.json");
 
 test("MySQL y el esquema versionado están listos", async () => {
   await connectDB();
   const [rows] = await pool.execute("SELECT version FROM schema_migrations WHERE version = ?", ["001_initial"]);
   assert.equal(rows.length, 1);
+  const [rbac] = await pool.execute("SELECT version FROM schema_migrations WHERE version = ?", ["003_admin_rbac"]);
+  assert.equal(rbac.length, 1);
+});
+
+test("los administradores existentes reciben el rol de continuidad y acceso completo", async () => {
+  const users = await AdminUser.find().lean();
+  assert.ok(users.length >= 1);
+  for (const user of users) {
+    const permissions = await loadPermissionCodes(user._id);
+    assert.ok(permissions.has("dashboard.view"));
+    assert.ok(permissions.has("users.manage"));
+    assert.ok(permissions.has("roles.manage"));
+    assert.ok(permissions.has("account.password.change"));
+  }
 });
 
 test("los datos importados mantienen categorías, productos y configuraciones", async () => {

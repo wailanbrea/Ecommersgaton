@@ -73,6 +73,9 @@ module.exports = async function globals(req, res, next) {
     : adminPath.startsWith("/admin/inventory") ? (adminPath.includes("movements") ? "Movimientos de inventario" : "Inventario")
     : adminPath.startsWith("/admin/reviews") ? "Reseñas"
     : adminPath.startsWith("/admin/settings") ? "Configuración"
+    : adminPath.startsWith("/admin/users") ? (adminPath.endsWith("/new") ? "Nuevo usuario" : adminPath.includes("/password") ? "Cambiar contraseña" : "Usuarios")
+    : adminPath.startsWith("/admin/roles") ? (adminPath.endsWith("/new") ? "Nuevo rol" : adminPath.includes("/edit") ? "Editar rol" : "Roles y permisos")
+    : adminPath.startsWith("/admin/account/password") ? "Cambiar contraseña"
     : "Panel administrativo";
   res.locals.adminCurrentPath = adminPath;
   res.locals.adminPageTitle = adminPageTitle;

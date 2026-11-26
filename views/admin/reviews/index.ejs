@@ -92,6 +92,7 @@
                 <div class="bg-stone-50 rounded-2xl p-4 space-y-3">
                   <% if (!review.approved) { %>
                     <form action="/admin/reviews/<%= review._id %>/approve" method="post">
+                      <input type="hidden" name="_csrf" value="<%= adminCsrfToken %>">
                       <button type="submit" class="w-full rounded-xl bg-green-600 text-white px-4 py-3 text-sm font-medium hover:bg-green-700">
                         Aprobar
                       </button>
@@ -99,12 +100,14 @@
                   <% } %>
 
                   <form action="/admin/reviews/<%= review._id %>/toggle-visible" method="post">
+                    <input type="hidden" name="_csrf" value="<%= adminCsrfToken %>">
                     <button type="submit" class="w-full rounded-xl bg-white border border-stone-300 px-4 py-3 text-sm font-medium hover:bg-stone-50">
                       <%= review.visible ? "Ocultar" : "Mostrar" %>
                     </button>
                   </form>
 
                   <form action="/admin/reviews/<%= review._id %>/delete" method="post" onsubmit="return confirm('¿Eliminar esta reseña?');">
+                    <input type="hidden" name="_csrf" value="<%= adminCsrfToken %>">
                     <button type="submit" class="w-full rounded-xl bg-red-600 text-white px-4 py-3 text-sm font-medium hover:bg-red-700">
                       Eliminar
                     </button>

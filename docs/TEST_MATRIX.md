@@ -117,6 +117,14 @@ Windows, Node 24.4.0, npm 11.4.2, MongoDB 7.0.24 y MariaDB 11.4.12 en loopback. 
 | DB11 | Flujo de escritura de cada pantalla admin, variantes y carreras de inventario | No se cubrió en este lote | PENDING |
 | DB12 | Restauración de backup DB/storage, Docker y Auto-Deploy | No se ejecutó | PENDING |
 
+## Acceso administrativo · usuarios, roles y contraseña · 26 de noviembre de 2026
+
+| ID | Criterio ejecutado | Resultado observado | Estado |
+|---|---|---|---|
+| ADM-RBAC-01 | Tabla de permisos por método/ruta, política de contraseñas, CSRF, protección frente a auto concesión de privilegios, asignación de superadmin de continuidad, migración repetida | `npm test`: 12/12; cubre permisos GET/POST, mínimo 12 caracteres, rechazo sin CSRF, soporte multipart y bloqueo de concesión de `users.manage`, `roles.manage`, `admin.access` por roles delegados. `npm run db:migrate` repetida aplicó/leyó `001`, `002`, `003` sin error. Compilación de 37 vistas EJS y `node --check` JS correctas en la revisión local previa. | VERIFIED · laboratorio |
+| ADM-RBAC-02 | Alta/edición de roles, asignación de cuenta, cambio temporal, cambio propio, invalidación de sesión y auditoría desde navegador | Se implementó en rutas y formularios, pero no se efectuó un CRUD con cuentas sintéticas ni una prueba HTTP autenticada automatizada de cada mutación en este lote. | PENDING |
+| ADM-RBAC-03 | Migración y navegación productiva, cuentas existentes y autorización en panel desplegado | Requiere `git push`, estado `deployed`, lectura de `/admin/users`, `/admin/roles`, smoke de accesos y comparación posterior de las 2 cuentas baseline, 16 productos, 6 categorías, 0 reseñas y 0 pedidos. | PENDING |
+
 ## Preview de pulsera grabable · laboratorio local · 25 de noviembre de 2026
 
 | ID | Criterio ejecutado | Resultado observado | Estado |

@@ -10,6 +10,8 @@ const Review = require("../models/Review");
 const SiteSettings = require("../models/SiteSettings");
 const Order = require("../models/Order");
 const { requireAdmin, redirectIfLoggedIn } = require("../middlewares/auth");
+const { attachAdminAccess } = require("../middlewares/adminAuthorization");
+const adminCsrf = require("../middlewares/adminCsrf");
 const slugify = require("../utils/slugify");
 
 const router = express.Router();
@@ -559,13 +561,13 @@ function productFormDataFromBody(body = {}, req = null) {
   };
 }
 
-router.get("/login", redirectIfLoggedIn, (req, res) => {
+router.get("/login", redirectIfLoggedIn, adminCsrf, (req, res) => {
   res.render("admin/login", {
     error: null
   });
 });
 
-router.post("/login", redirectIfLoggedIn, async (req, res) => {
+router.post("/login", redirectIfLoggedIn, adminCsrf, async (req, res) => {
   const { email, password } = req.body;
 
   const admin = await AdminUser.findOne({
@@ -587,11 +589,19 @@ router.post("/login", redirectIfLoggedIn, async (req, res) => {
     });
   }
 
-  req.session.adminId = admin._id.toString();
-  req.session.adminEmail = admin.email;
-
-  return res.redirect("/admin/dashboard");
+  return req.session.regenerate((error) => {
+    if (error) return res.status(500).render("admin/login", { error: "No se pudo iniciar la sesión. Inténtalo de nuevo." });
+    req.session.adminId = admin._id.toString();
+    req.session.adminEmail = admin.email;
+    req.session.mustChangePassword = Boolean(admin.mustChangePassword);
+    return req.session.save((saveError) => {
+      if (saveError) return res.status(500).render("admin/login", { error: "No se pudo iniciar la sesión. Inténtalo de nuevo." });
+      return res.redirect(admin.mustChangePassword ? "/admin/account/password?required=1" : "/admin/dashboard");
+    });
+  });
 });
+
+router.use(requireAdmin, attachAdminAccess, adminCsrf);
 
 router.post("/logout", requireAdmin, (req, res) => {
   req.session.destroy(() => {
@@ -664,7 +674,7 @@ router.get("/categories/new", requireAdmin, async (req, res) => {
   });
 });
 
-router.post("/categories/new", requireAdmin, upload.any(), async (req, res) => {
+router.post("/categories/new", requireAdmin, upload.any(), adminCsrf, async (req, res) => {
   try {
     const {
       name,
@@ -754,7 +764,7 @@ router.get("/categories/:id/edit", requireAdmin, async (req, res) => {
   });
 });
 
-router.post("/categories/:id/edit", requireAdmin, upload.any(), async (req, res) => {
+router.post("/categories/:id/edit", requireAdmin, upload.any(), adminCsrf, async (req, res) => {
   try {
     const existingCategory = await Category.findById(req.params.id);
 
@@ -882,7 +892,7 @@ router.get("/products/new", requireAdmin, async (req, res) => {
   });
 });
 
-router.post("/products/new", requireAdmin, upload.any(), async (req, res) => {
+router.post("/products/new", requireAdmin, upload.any(), adminCsrf, async (req, res) => {
   try {
     const formData = productFormDataFromBody(req.body, req)
     const allCategories = await Category.find().sort({ sortOrder: 1, name: 1 }).lean();
@@ -1022,7 +1032,7 @@ router.get("/products/:id/edit", requireAdmin, async (req, res) => {
   });
 });
 
-router.post("/products/:id/edit", requireAdmin, upload.any(), async (req, res) => {
+router.post("/products/:id/edit", requireAdmin, upload.any(), adminCsrf, async (req, res) => {
   try {
     const existingProduct = await Product.findById(req.params.id);
     const allCategories = await Category.find().sort({ sortOrder: 1, name: 1 }).lean();
@@ -1209,7 +1219,7 @@ router.get("/settings", requireAdmin, async (req, res) => {
   });
 });
 
-router.post("/settings", requireAdmin, upload.any(), async (req, res) => {
+router.post("/settings", requireAdmin, upload.any(), adminCsrf, async (req, res) => {
   try {
     const formData = settingsFormDataFromBody(req.body, req);
 
@@ -1297,5 +1307,6 @@ router.post("/settings", requireAdmin, upload.any(), async (req, res) => {
 });
 
 router.use(requireAdmin, require("./admin-tools"));
+router.use(requireAdmin, require("./admin-access"));
 
 module.exports = router;

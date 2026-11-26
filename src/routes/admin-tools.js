@@ -7,6 +7,7 @@ const pdfParse = require("pdf-parse");
 const { pool } = require("../config/db");
 const Order = require("../models/Order");
 const Product = require("../models/Product");
+const adminCsrf = require("../middlewares/adminCsrf");
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024, files: 1 } });
@@ -15,17 +16,7 @@ const pad2 = (n) => String(n).padStart(2, "0");
 const dayString = (date) => `${date.getUTCFullYear()}-${pad2(date.getUTCMonth() + 1)}-${pad2(date.getUTCDate())}`;
 const id = () => crypto.randomBytes(12).toString("hex");
 const toCents = (value) => Math.round(Number(value || 0) * 100);
-function csrf(req, res, next) {
-  if (!req.session.csrfToken) req.session.csrfToken = crypto.randomBytes(32).toString("hex");
-  if (req.method === "POST") {
-    const supplied = String(req.body?._csrf || "");
-    const expected = String(req.session.csrfToken || "");
-    if (supplied.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(supplied), Buffer.from(expected))) return res.status(403).send("La sesión del formulario expiró. Recarga la página e inténtalo de nuevo.");
-  }
-  res.locals.adminCsrfToken = req.session.csrfToken;
-  next();
-}
-router.use((req, res, next) => req.method === "POST" ? next() : csrf(req, res, next));
+router.use(adminCsrf);
 const cleanCell = (value) => {
   const text = String(value ?? "");
   return /^[=+@\-\t\r]/.test(text) ? `'${text}` : text;
@@ -142,7 +133,7 @@ router.get("/inventory/export.xlsx", async (_req, res) => {
   res.type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet").set("Content-Disposition", 'attachment; filename="gaton-inventario.xlsx"').send(Buffer.from(buf));
 });
 router.get("/inventory/export.pdf", async (_req, res) => { const products = await Product.find({ active: true }).sort({ name: 1 }).lean(); return sendPdf(res, inventoryRows(products), "Exportación / formato importable"); });
-router.post("/inventory/import/preview", upload.single("inventoryFile"), csrf, async (req, res) => {
+router.post("/inventory/import/preview", upload.single("inventoryFile"), adminCsrf, async (req, res) => {
   try {
     if (!req.file) throw new Error("Selecciona un archivo CSV, Excel o PDF.");
     const rows = await parseUpload(req.file);
@@ -165,7 +156,7 @@ router.post("/inventory/import/preview", upload.single("inventoryFile"), csrf, a
     res.status(400).render("admin/inventory/index", { rows: [], importResult: false, error: error.message });
   }
 });
-router.post("/inventory/import/apply", csrf, async (req, res) => {
+router.post("/inventory/import/apply", adminCsrf, async (req, res) => {
   const pending = req.session.inventoryPreview;
   if (!pending || pending.token !== req.body.token || Date.now() - pending.createdAt > 30 * 60 * 1000) return res.status(400).send("La vista previa expiró. Vuelve a cargar el archivo.");
   const conn = await pool.getConnection(); const batchId = id();
@@ -228,7 +219,7 @@ router.get("/sales", async (req, res) => {
   const topProducts = [...top].map(([name, units]) => ({ name, units })).sort((a, b) => b.units - a.units).slice(0, 10);
   res.render("admin/sales/index", { start, end, preset, revenue, paymentCount: payments.length, paidOrderCount: fullyPaid.length, orderCount: orders.length, averageOrder: fullyPaid.length ? fullyPaidOrderValue / fullyPaid.length : 0, delta, difference: Math.round((revenue - priorRevenue) * 100) / 100, paymentSaved: req.query.payment === "recorded", trend: [...trend].map(([date, amount]) => ({ date, amount })), topProducts, payments, pendingOrders: orders.filter((o) => o.status !== "cancelled").slice(0, 80), paidByOrder: Object.fromEntries(paidByOrder.map((p) => [p.order_id, Number(p.paid)])), priorRevenue });
 });
-router.post("/sales/orders/:id/payments", csrf, async (req, res) => {
+router.post("/sales/orders/:id/payments", adminCsrf, async (req, res) => {
   const amountText = String(req.body.amount || "").trim(); const amountCents = /^\d{1,10}(\.\d{1,2})?$/.test(amountText) ? toCents(amountText) : 0; const amount = amountCents / 100;
   const method = String(req.body.method || "").trim().slice(0, 80); const reference = String(req.body.reference || "").trim().slice(0, 191);
   if (!amountCents || !method) return res.status(400).send("Indica un monto positivo, con hasta dos decimales, y el método de pago.");

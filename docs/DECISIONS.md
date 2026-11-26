@@ -40,6 +40,27 @@ Conservar IDs y slugs históricos. Asignar SKU estable a cada combinación demos
 
 ## Decisiones comerciales
 
+## ADR-006 · Menú administrativo de usuarios, roles y permisos
+
+**Fecha:** 26 de noviembre de 2026 · **Autorización:** instrucción explícita del propietario para crear el menú y subirlo al servidor · **Alcance:** Gatón DO, rama de producción `main`, despliegue automático Linux Docker.
+
+### Decisión
+
+Agregar gestión de cuentas, roles y permisos por recurso. El control se ejecuta en middleware del servidor y los enlaces se ocultan según el permiso efectivo. Mantener las cuentas actuales: migración SQL aditiva e idempotente `003_admin_rbac` crea roles/permisos/auditoría y asigna a cada cuenta existente un rol `Superadministrador` de continuidad sin cambiar IDs, hashes ni estados. Los roles delegados no pueden conceder permisos globales o de administración de roles/usuarios. El último superadministrador no se puede desactivar o remover. La persona con contraseña temporal debe cambiarla al iniciar sesión; la clave propia exige la actual, mínimo 12 caracteres y revoca las demás sesiones. Las mutaciones se registran en `admin_audit_logs`; no se guardan claves en la bitácora.
+
+Se añadió validación CSRF en formularios admin y regeneración de sesión en login/cambio de clave. Los administradores actuales recibirán permisos completos para conservar continuidad operativa; el propietario podrá crear roles limitados después del despliegue.
+
+### Riesgos y límites
+
+- La migración y controles se verificaron localmente; falta ejecutar el Auto-Deploy y recorrer en producción cada pantalla. No afirmar comportamiento completo hasta cerrar ADM-RBAC-02/03.
+- Todavía no hay MFA, recuperación por correo, expiración de claves ni gestión de sesiones activas en UI; no deben anunciarse como capacidades.
+- Una contraseña temporal elegida por administrador debe entregarse por un canal controlado fuera del sistema; no se envía por correo automáticamente.
+- Antes de migrar en producción, Auto-Deploy debe generar un respaldo SQL legible/no vacío; después comparar los 2 usuarios, 16 productos, 6 categorías, 0 reseñas y 0 pedidos de la línea base.
+
+### Criterios de cierre
+
+Ejecutar backup previo con verificación, push no forzado a `main`, esperar `deployed` con SHA exacto y health 200. En navegador autenticado comprobar Usuarios, Roles/permisos y Mi contraseña, comparar los IDs de ambas cuentas y conteos de negocio, y mantener fallos o rutas no ejercitadas como `PENDING` en `TEST_MATRIX.md`.
+
 Responsables propuestos en espera de designación nominal: propietario para identidad visual, URLs/contactos, ubicación/retiro, políticas, COD, pasarela y costes; taller para máquinas, zonas y revisión de diseños; logística para cobertura, tarifas y restricciones de fragancias; contabilidad para impuestos y comprobantes; responsable técnico para capacidad, SLA, backup y retención con asesoría legal. Pendientes las titularidades de dominio, Google y Meta y el alcance de roles. El listado completo y los defaults de desarrollo se mantienen en MASTER_PROMPT §18. Cada aprobación debe registrar fecha, responsable, evidencia y requisitos afectados.
 
 ## ADR-003 · MySQL en laboratorio y MongoDB de consulta · APROBADO localmente

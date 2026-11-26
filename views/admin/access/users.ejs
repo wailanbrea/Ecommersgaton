@@ -1,0 +1,17 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Usuarios | GATÓN DO</title><link rel="stylesheet" href="/css/app.css"><link rel="stylesheet" href="/css/admin-utilities.css"><link rel="stylesheet" href="/css/admin.css"></head><body class="admin-shell-body"><%- include("../../partials/admin-shell-start") %>
+<main class="admin-tool-page admin-access-page">
+  <header class="admin-tool-heading"><div><span class="admin-eyebrow">ACCESO Y SEGURIDAD</span><h2>Usuarios</h2><p>Crea cuentas, asigna roles y administra el acceso al panel.</p></div><a class="admin-tool-button primary" href="/admin/users/new">Agregar usuario</a></header>
+  <% if (error) { %><div class="admin-alert error"><%= error %></div><% } %>
+  <% if (message || queryMessage) { %><div class="admin-alert success"><%= message || queryMessage %></div><% } %>
+  <section class="admin-tool-card"><div class="admin-access-intro"><div><h3>Acceso actual</h3><p>El usuario recibe solo los permisos incluidos en sus roles. Las rutas del servidor validan cada operación.</p></div><a class="admin-tool-button secondary" href="/admin/roles">Administrar roles y permisos</a></div>
+    <div class="admin-table-wrap"><table class="admin-data-table"><thead><tr><th>Usuario</th><th>Roles asignados</th><th>Estado</th><th>Acceso</th></tr></thead><tbody>
+      <% users.forEach((user) => { const assigned = user.roles.map((r) => r.id); %><tr>
+        <td><strong><%= user.name %></strong><br><span class="admin-muted"><%= user.email %></span><% if (user.id === currentAdminId) { %><br><span class="admin-status-pill">Tu sesión</span><% } %></td>
+        <td><form class="admin-inline-access-form" method="post" action="/admin/users/<%= user.id %>/roles"><input type="hidden" name="_csrf" value="<%= adminCsrfToken %>"><select name="roleIds" multiple size="<%= Math.min(4, Math.max(2, roles.length)) %>" aria-label="Roles de <%= user.email %>"><% roles.forEach((role) => { %><option value="<%= role.id %>" <%= assigned.includes(role.id) ? 'selected' : '' %>><%= role.name %></option><% }) %></select><button type="submit" class="admin-tool-button">Guardar roles</button></form></td>
+        <td><span class="admin-status-pill <%= user.active ? 'is-active' : 'is-inactive' %>"><%= user.active ? 'Activo' : 'Desactivado' %></span><% if (user.mustChangePassword) { %><br><span class="admin-muted">Debe cambiar su clave al entrar</span><% } %></td>
+        <td class="admin-access-actions"><a class="admin-tool-button" href="/admin/users/<%= user.id %>/password">Cambiar contraseña</a><form method="post" action="/admin/users/<%= user.id %>/status"><input type="hidden" name="_csrf" value="<%= adminCsrfToken %>"><input type="hidden" name="active" value="<%= user.active ? '0' : '1' %>"><button class="admin-tool-button <%= user.active ? 'danger' : '' %>" type="submit" <%= user.id === currentAdminId ? 'disabled title="No puedes desactivar tu propia cuenta"' : '' %>><%= user.active ? 'Desactivar' : 'Activar' %></button></form></td>
+      </tr><% }) %>
+      <% if (!users.length) { %><tr><td colspan="4">No hay usuarios creados.</td></tr><% } %>
+    </tbody></table></div>
+  </section>
+</main><%- include("../../partials/admin-shell-end") %></body></html>
