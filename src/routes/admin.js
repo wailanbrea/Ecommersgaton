@@ -940,6 +940,61 @@ router.post("/products/new", requireAdmin, upload.any(), async (req, res) => {
   }
 });
 
+function productAdvancedConfig(product) {
+  const config = product?.advancedConfig && typeof product.advancedConfig === "object"
+    ? product.advancedConfig
+    : {};
+  return {
+    ...config,
+    engravingPreviewEnabled: Boolean(config.engravingPreviewEnabled),
+    customizationUploadEnabled: Boolean(config.customizationUploadEnabled),
+    customizationUploadRequired: Boolean(config.customizationUploadRequired),
+    customizationUploadLabel: config.customizationUploadLabel || "Añadir fotografía",
+    customizationUploadMaxSizeMB: Number(config.customizationUploadMaxSizeMB) || 20,
+    customizationUploadHelp: config.customizationUploadHelp || "",
+    choiceGroups: Array.isArray(config.choiceGroups) ? config.choiceGroups : [],
+    customizationFields: Array.isArray(config.customizationFields) ? config.customizationFields : [],
+    fontOptions: Array.isArray(config.fontOptions) ? config.fontOptions : [],
+    gallery: Array.isArray(config.gallery) ? config.gallery : []
+  };
+}
+
+router.get("/products/:id/personalization", requireAdmin, async (req, res) => {
+  const product = await Product.findById(req.params.id).lean();
+  if (!product) return res.status(404).send("Producto no encontrado");
+
+  return res.render("admin/products/personalization", {
+    product,
+    advancedConfig: productAdvancedConfig(product),
+    saved: req.query.saved === "1",
+    error: null
+  });
+});
+
+router.post("/products/:id/personalization", requireAdmin, async (req, res) => {
+  const product = await Product.findById(req.params.id);
+  if (!product) return res.status(404).send("Producto no encontrado");
+
+  let advancedConfig;
+  try {
+    advancedConfig = JSON.parse(String(req.body.advancedConfigJson || "{}"));
+    if (!advancedConfig || typeof advancedConfig !== "object" || Array.isArray(advancedConfig)) {
+      throw new Error("La configuración debe ser un objeto JSON.");
+    }
+  } catch {
+    return res.status(400).render("admin/products/personalization", {
+      product,
+      advancedConfig: productAdvancedConfig(product),
+      saved: false,
+      error: "No se pudo leer la configuración. Revisa los campos e inténtalo de nuevo."
+    });
+  }
+
+  product.advancedConfig = advancedConfig;
+  await product.save();
+  return res.redirect(`/admin/products/${encodeURIComponent(product._id)}/personalization?saved=1`);
+});
+
 router.get("/products/:id/edit", requireAdmin, async (req, res) => {
   const [product, categories] = await Promise.all([
     Product.findById(req.params.id).lean(),

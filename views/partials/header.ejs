@@ -45,6 +45,7 @@
 
   const ref10CartCount = typeof cartCount !== "undefined" ? cartCount : (typeof cartItemCount !== "undefined" ? cartItemCount : 0);
   const ref10Logo = siteSettings?.logoUrl || "/images/logo-gatondo-color.png";
+  const ref10MobileLogo = siteSettings?.logoUrl || "/images/logo-gatondo-header.png";
 %>
 
 <header class="ref10-header" id="top">
@@ -86,7 +87,7 @@
     </button>
 
     <a href="/" class="ref10-mobile-logo" aria-label="GATON DO inicio">
-      <img src="<%= ref10Logo %>" alt="<%= ref10Text(siteSettings?.brandName, 'GATON DO') %>">
+      <img src="<%= ref10MobileLogo %>" alt="<%= ref10Text(siteSettings?.brandName, 'GATON DO') %>">
     </a>
 
     <div class="ref10-mobile-actions">

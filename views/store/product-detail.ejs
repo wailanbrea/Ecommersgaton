@@ -5,23 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= product.name %> | <%= siteSettings?.brandName || "GATON DO" %></title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="/css/app.css?v=ref10c-mobilefit">
+  <link rel="stylesheet" href="/css/app.css?v=product-customizer-20261125k">
 </head>
 <body class="ref10-body ref10-product-page">
   <%- include("../partials/header") %>
 
   <main class="ref10-detail-main section-shell py-10">
-    <div class="text-sm text-stone-500 mb-6">
-      <a href="/" class="hover:underline">Inicio</a>
-      <span class="mx-2">/</span>
-      <a href="/shop" class="hover:underline">Catálogo</a>
-      <% if (category) { %>
-        <span class="mx-2">/</span>
-        <a href="/shop?category=<%= category.slug %>" class="hover:underline"><%= category.name %></a>
-      <% } %>
-      <span class="mx-2">/</span>
-      <span><%= product.name %></span>
-    </div>
+    <% const isCustomizable = Boolean(product.hasCustomization); %>
+    <% const hasSampleEngravingPreview = isCustomizable && product.mainImageUrl === '/images/muestras-carrito/personalizados-1.webp'; %>
+    <nav class="product-detail-breadcrumb" aria-label="Ruta de navegación">
+      <a href="/">Inicio</a><span aria-hidden="true">/</span>
+      <a href="/shop">Joyería</a>
+      <% if (category) { %><span aria-hidden="true">/</span><a href="/shop?category=<%= category.slug %>"><%= category.name %></a><% } %>
+      <% if (isCustomizable && (!category || category.slug !== 'personalizados')) { %><span aria-hidden="true">/</span><a href="/shop?category=personalizados">Personalizados</a><% } %>
+      <span aria-hidden="true">/</span><span aria-current="page"><%= product.name %></span>
+    </nav>
 
     <% if (cartAdded) { %>
       <div class="mb-6 rounded-xl bg-green-50 border border-green-200 text-green-700 px-4 py-3 text-sm">
@@ -41,198 +39,191 @@
       </div>
     <% } %>
 
-    <section class="detail-grid">
-      <div>
-        <div class="lux-card p-4">
-          <div class="aspect-square rounded-[1.5rem] overflow-hidden bg-[#efe6da]">
+    <% if (isCustomizable) { %>
+      <ol class="product-customization-steps" aria-label="Etapas de compra">
+        <li class="is-current"><span>1</span><strong>Personaliza</strong></li><i aria-hidden="true"></i>
+        <li><span>2</span><strong>Revisa</strong></li><i aria-hidden="true"></i>
+        <li><span>3</span><strong>Compra</strong></li>
+      </ol>
+    <% } %>
+
+    <section class="product-detail-grid <%= isCustomizable ? 'is-customizable' : '' %>">
+      <div class="product-detail-gallery-column">
+        <div class="product-gallery-frame">
+          <div class="product-gallery-stage">
             <% if (defaultImage) { %>
-              <img id="mainProductImage" src="<%= defaultImage %>" alt="<%= product.name %>" class="w-full h-full object-cover">
+              <img id="mainProductImage" src="<%= defaultImage %>" alt="<%= product.name %>" class="product-gallery-image">
+              <button type="button" class="product-gallery-expand" data-open-product-image aria-label="Ampliar imagen del producto">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m13-5v3a2 2 0 0 1-2 2h-3M9 9l-6-6m12 0 6-6M3 21l6-6m12 6-6-6"/></svg>
+              </button>
+              <% if (hasSampleEngravingPreview) { %>
+                <div class="product-engraving-preview" aria-label="Vista previa ilustrativa del grabado"><span id="engravingPreviewText" aria-live="polite"></span></div>
+                <span class="product-gallery-caption">Vista previa ilustrativa</span>
+              <% } else { %>
+                <span class="product-gallery-caption">Galería del producto</span>
+              <% } %>
             <% } else { %>
-              <div id="mainProductImagePlaceholder" class="w-full h-full flex items-center justify-center text-stone-400">
-                Sin imagen
-              </div>
+              <div id="mainProductImagePlaceholder" class="product-gallery-placeholder">Imagen del producto no disponible</div>
             <% } %>
           </div>
         </div>
 
-        <% if ((product.gallery && product.gallery.length) || product.mainImageUrl) { %>
-          <div class="grid grid-cols-4 gap-3 mt-4">
-            <% if (product.mainImageUrl) { %>
-              <button type="button" class="thumb-btn bg-white border border-stone-200 rounded-2xl overflow-hidden aspect-square" data-image="<%= product.mainImageUrl %>">
-                <img src="<%= product.mainImageUrl %>" alt="<%= product.name %>" class="w-full h-full object-cover">
+        <% if ((product.gallery && product.gallery.some(function(item) { return item.type === 'image'; })) || defaultImage) { %>
+          <div class="product-gallery-thumbnails" aria-label="Imágenes del producto">
+            <% if (defaultImage) { %>
+              <button type="button" class="thumb-btn is-active" data-image="<%= defaultImage %>" aria-label="Ver imagen principal" aria-pressed="true">
+                <img src="<%= defaultImage %>" alt="<%= product.name %>">
+                <% if (hasSampleEngravingPreview) { %><span class="product-thumb-engraving-preview" data-engraving-thumb aria-hidden="true"></span><% } %>
               </button>
             <% } %>
-
-            <% (product.gallery || []).forEach(function(item) { %>
+            <% (product.gallery || []).forEach(function(item, index) { %>
               <% if (item.type === "image") { %>
-                <button type="button" class="thumb-btn bg-white border border-stone-200 rounded-2xl overflow-hidden aspect-square" data-image="<%= item.url %>">
-                  <img src="<%= item.url %>" alt="<%= item.altText || product.name %>" class="w-full h-full object-cover">
+                <button type="button" class="thumb-btn" data-image="<%= item.url %>" aria-label="Ver imagen <%= index + 2 %> de <%= product.name %>" aria-pressed="false">
+                  <img src="<%= item.url %>" alt="<%= item.altText || product.name %>">
+                  <% if (hasSampleEngravingPreview) { %><span class="product-thumb-engraving-preview" data-engraving-thumb aria-hidden="true"></span><% } %>
                 </button>
               <% } %>
             <% }) %>
           </div>
         <% } %>
 
+        <% if (isCustomizable) { %>
+          <div class="product-reassurance-grid">
+            <div><span aria-hidden="true">♧</span><p><strong>Envíos a toda RD</strong><small>Recibe tu pedido en cualquier provincia del país.</small></p></div>
+            <div><span aria-hidden="true">◇</span><p><strong>Hecho para ti</strong><small>Personaliza esta pieza con las opciones disponibles.</small></p></div>
+          </div>
+        <% } %>
+
         <% if (product.videoUrl) { %>
           <div class="lux-card p-4 mt-6">
             <div class="moon-title mb-3">Video del producto</div>
-            <video controls class="w-full rounded-[1.25rem] bg-black">
-              <source src="<%= product.videoUrl %>">
-            </video>
+            <video controls class="w-full rounded-[1.25rem] bg-black"><source src="<%= product.videoUrl %>"></video>
           </div>
         <% } %>
       </div>
 
-      <div>
-        <div class="lux-card p-7 md:p-8">
-          <div class="flex flex-wrap gap-2 mb-5">
-            <% if (productUnavailable) { %>
-              <span class="badge-chip badge-danger">Agotado</span>
-            <% } %>
-            <% if (product.hasVariants) { %>
-              <span class="badge-chip badge-soft">Variantes</span>
-            <% } %>
-            <% if (product.hasCustomization) { %>
-              <span class="badge-chip badge-gold">Personalizable</span>
-            <% } %>
-          </div>
-
-          <div class="moon-title">Producto</div>
-          <h1 class="brand-serif text-4xl md:text-5xl mt-3 text-stone-900"><%= product.name %></h1>
-
-          <% if (product.shortDescription) { %>
-            <p class="text-stone-600 mt-5 text-lg leading-8"><%= product.shortDescription %></p>
+      <div class="product-detail-info-column">
+        <div class="product-personalization-card <%= isCustomizable ? 'is-customizable' : '' %>">
+          <% if (isCustomizable) { %>
+            <div class="product-personalization-kicker"><span aria-hidden="true">✎</span> Personaliza tu joya</div>
+          <% } else { %>
+            <div class="product-personalization-kicker">Detalle del producto</div>
           <% } %>
+          <% if (productUnavailable) { %><span class="badge-chip badge-danger">Agotado</span><% } %>
+          <h1 class="product-detail-title"><%= product.name %></h1>
+          <% if (product.shortDescription) { %><p class="product-detail-short-description"><%= product.shortDescription %></p><% } %>
 
-          <div class="mt-6 flex items-center gap-3 flex-wrap">
-            <span id="productPrice" class="text-3xl font-semibold text-stone-900">
-              RD$ <%= Number(defaultPrice || 0).toFixed(2) %>
-            </span>
-
-            <span
-              id="productCompareAt"
-              class="text-lg text-stone-400 line-through <%= defaultCompareAt && defaultCompareAt > defaultPrice ? '' : 'hidden' %>">
-              RD$ <%= Number(defaultCompareAt || 0).toFixed(2) %>
-            </span>
+          <div class="product-detail-price-row">
+            <span id="productPrice" class="product-detail-price">RD$ <%= Number(defaultPrice || 0).toLocaleString('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
+            <span id="productCompareAt" class="product-detail-compare <%= defaultCompareAt && defaultCompareAt > defaultPrice ? '' : 'hidden' %>">RD$ <%= Number(defaultCompareAt || 0).toLocaleString('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
+          </div>
+          <div class="product-detail-stock <%= productUnavailable ? 'is-unavailable' : '' %>" id="stockState">
+            <% if (productUnavailable) { %>Este producto está agotado.<% } else { %>Disponible: <%= defaultStock %><% } %>
           </div>
 
-          <div class="mt-3 text-sm <%= productUnavailable ? 'text-red-600 font-medium' : 'text-stone-500' %>" id="stockState">
-            <% if (productUnavailable) { %>
-              Este producto está agotado.
-            <% } else { %>
-              Disponible: <%= defaultStock %>
-            <% } %>
-          </div>
-
-          <% if (product.hasVariants && product.variants && product.variants.length) { %>
-            <div class="mt-8">
-              <h3 class="text-lg font-semibold mb-3">Opciones disponibles</h3>
-              <div class="flex flex-wrap gap-3" id="variantOptions">
-                <% product.variants.forEach(function(variant, index) { %>
-                  <% const variantUnavailable = isVariantUnavailable(variant); %>
-                  <button
-                    type="button"
-                    class="variant-btn rounded-full border border-stone-300 px-4 py-2 text-sm hover:bg-stone-50 <%= variantUnavailable ? 'variant-unavailable opacity-60 cursor-not-allowed' : '' %>"
-                    data-index="<%= index %>"
-                    data-stock="<%= getVariantStock(variant) %>"
-                    data-unavailable="<%= variantUnavailable ? 'true' : 'false' %>">
-                    <%= variant.label || variant.optionValue || ("Variante " + (index + 1)) %>
-                    <% if (variantUnavailable) { %> - Agotado <% } %>
-                  </button>
-                <% }) %>
-              </div>
-            </div>
-          <% } %>
-
-          <form action="/product/<%= product.slug %>/add-to-cart" method="post" enctype="multipart/form-data" id="addToCartForm" class="mt-8 space-y-6">
+          <form action="/product/<%= product.slug %>/add-to-cart" method="post" enctype="multipart/form-data" id="addToCartForm" class="product-personalization-form">
             <input type="hidden" name="variantIndex" id="variantIndexInput" value="<%= (defaultVariantIndex !== null && defaultVariantIndex >= 0) ? defaultVariantIndex : '' %>">
             <input type="hidden" name="customizationSummary" id="customizationSummaryInput" value="">
             <input type="hidden" name="fontName" id="fontNameInput" value="">
 
-            <% if (product.hasCustomization && product.customizationFields && product.customizationFields.length) { %>
-              <div>
-                <h3 class="text-lg font-semibold mb-3">Personalización</h3>
-                <div class="space-y-4">
-                  <% product.customizationFields.forEach(function(field) { %>
-                    <div>
-                      <label class="block text-sm font-medium text-stone-700 mb-2">
-                        <%= field.label %> <%= field.required ? "*" : "" %>
-                      </label>
-                      <input
-                        type="text"
-                        class="customization-input w-full rounded-xl border border-stone-300 px-4 py-3"
-                        data-label="<%= field.label %>"
-                        data-required="<%= field.required ? 'true' : 'false' %>"
-                        placeholder="<%= field.placeholder || '' %>"
-                        maxlength="<%= field.maxLength || 100 %>">
-                    </div>
+            <% if (product.hasVariants && product.variants && product.variants.length) { %>
+              <fieldset class="product-customization-group">
+                <legend>Opciones disponibles</legend>
+                <div class="product-variant-options" id="variantOptions">
+                  <% product.variants.forEach(function(variant, index) { %>
+                    <% const variantUnavailable = isVariantUnavailable(variant); %>
+                    <button type="button" class="variant-btn <%= variantUnavailable ? 'variant-unavailable' : '' %>" data-index="<%= index %>" data-stock="<%= getVariantStock(variant) %>" data-unavailable="<%= variantUnavailable ? 'true' : 'false' %>" <%= variantUnavailable ? 'disabled' : '' %>>
+                      <%= variant.label || variant.optionValue || ("Variante " + (index + 1)) %><% if (variantUnavailable) { %> · Agotado<% } %>
+                    </button>
                   <% }) %>
                 </div>
-              </div>
+              </fieldset>
             <% } %>
 
-
-            <% if (product.hasCustomization && product.allowPhotoCustomization) { %>
-              <div class="rounded-2xl border border-dashed border-stone-300 bg-stone-50 p-4">
-                <label class="block text-sm font-semibold text-stone-800 mb-2">Foto para fotograbado / referencia visual</label>
-                <input type="file" name="customizationPhoto" accept="image/jpeg,image/png,image/webp" class="w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-sm">
-                <p class="text-xs text-stone-500 mt-2">Opcional. La imagen quedará guardada en el pedido y GATON DO la revisará desde el panel.</p>
-              </div>
+            <% if (isCustomizable && product.customizationFields && product.customizationFields.length) { %>
+              <fieldset class="product-customization-group">
+                <legend>Personalización</legend>
+                <% product.customizationFields.forEach(function(field, index) { %>
+                  <% const fieldId = 'custom-field-' + index; const limit = Number(field.maxLength || 100); %>
+                  <div class="product-customization-field">
+                    <label for="<%= fieldId %>"><%= field.label %><% if (field.required) { %><span class="required-mark"> *</span><% } %></label>
+                    <div class="product-customization-input-wrap">
+                      <input id="<%= fieldId %>" type="text" class="customization-input" data-label="<%= field.label %>" data-required="<%= field.required ? 'true' : 'false' %>" placeholder="<%= field.placeholder || '' %>" maxlength="<%= limit %>" <% if (field.required) { %>required<% } %> aria-describedby="<%= fieldId %>-count">
+                      <span class="product-character-count" id="<%= fieldId %>-count" data-character-count="<%= fieldId %>">0/<%= limit %></span>
+                    </div>
+                  </div>
+                <% }) %>
+              </fieldset>
             <% } %>
 
-            <% if (product.fontOptions && product.fontOptions.length) { %>
-              <div>
-                <h3 class="text-lg font-semibold mb-3">Tipo de letra</h3>
-                <div class="font-picker" id="fontPicker">
+            <% if (isCustomizable && product.fontOptions && product.fontOptions.length) { %>
+              <fieldset class="product-customization-group">
+                <legend>Tipografía <span class="required-mark">*</span></legend>
+                <div class="product-font-options" id="fontPicker">
                   <% product.fontOptions.forEach(function(font, index) { %>
-                    <label class="font-choice">
-                      <input type="radio" name="fontOptionVisual" value="<%= font.name %>" class="font-option" <%= index === 0 ? "checked" : "" %>>
-                      <% if (font.previewImageUrl) { %>
-                        <img src="<%= font.previewImageUrl %>" alt="<%= font.name %>" class="font-choice-img">
-                      <% } else { %>
-                        <span class="font-choice-preview"><%= font.previewText || "Aa" %></span>
-                      <% } %>
-                      <span class="font-choice-name"><%= font.name %></span>
+                    <label class="product-font-option">
+                      <input type="radio" name="fontOptionVisual" value="<%= font.name %>" class="font-option" <%= index === 0 ? 'checked' : '' %>>
+                      <% if (font.previewImageUrl) { %><img src="<%= font.previewImageUrl %>" alt=""><% } else { %><span class="product-font-sample"><%= font.previewText || 'Aa' %></span><% } %>
+                      <span><%= font.name %></span>
                     </label>
                   <% }) %>
                 </div>
-                <div class="font-selected-preview" id="fontSelectedPreview"></div>
+                <div class="font-selected-preview" id="fontSelectedPreview" aria-live="polite"></div>
+              </fieldset>
+            <% } %>
+
+            <% if (isCustomizable && product.allowPhotoCustomization) { %>
+              <div class="product-customization-field product-photo-upload">
+                <label for="customizationPhoto">Añadir fotografía <span>(opcional)</span></label>
+                <input id="customizationPhoto" type="file" name="customizationPhoto" accept="image/jpeg,image/png,image/webp">
+                <small>JPG, PNG o WEBP · Máximo 15 MB</small>
+                <small>La imagen se adjuntará al pedido para revisión.</small>
               </div>
             <% } %>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
-              <div>
-                <label class="block text-sm font-medium text-stone-700 mb-2">Cantidad</label>
-                <input type="number" name="quantity" id="quantityInput" min="1" max="<%= defaultStock || 1 %>" value="1" <%= productUnavailable ? "disabled" : "" %> class="w-full rounded-xl border border-stone-300 px-4 py-3">
+            <% if (isCustomizable) { %>
+              <div class="product-customization-field">
+                <label for="workshopNotes">Notas para el taller <span>(opcional)</span></label>
+                <textarea id="workshopNotes" class="workshop-notes" rows="2" placeholder="Ej. estilo de grabado o detalles adicionales"></textarea>
               </div>
+            <% } %>
 
-              <div class="flex flex-wrap gap-3">
-                <button type="submit" id="addToCartButton" class="lux-btn lux-btn-primary" <%= productUnavailable ? "disabled" : "" %>>
-                  <%= productUnavailable ? "Agotado" : "Agregar al carrito" %>
-                </button>
-
-                <a id="whatsappButton" href="<%= initialWhatsAppUrl %>" target="_blank" class="lux-btn" style="background:#1f8f5f;color:#fff;">
-                  Pedir por WhatsApp
-                </a>
+            <div class="product-purchase-row">
+              <div class="product-quantity-block">
+                <label for="quantityInput">Cantidad</label>
+                <div class="product-quantity-stepper">
+                  <button type="button" data-quantity-step="-1" aria-label="Reducir cantidad" <%= productUnavailable ? 'disabled' : '' %>>−</button>
+                  <input type="number" name="quantity" id="quantityInput" min="1" max="<%= defaultStock || 1 %>" value="1" <%= productUnavailable ? 'disabled' : '' %> aria-label="Cantidad">
+                  <button type="button" data-quantity-step="1" aria-label="Aumentar cantidad" <%= productUnavailable ? 'disabled' : '' %>>+</button>
+                </div>
               </div>
+              <p class="product-line-total"><span>Total:</span> <strong id="productLineTotal">RD$ <%= Number(defaultPrice || 0).toLocaleString('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></strong></p>
             </div>
+
+            <button type="submit" id="addToCartButton" class="product-add-to-cart" <%= productUnavailable ? 'disabled' : '' %>>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h2l2.4 12.1a2 2 0 0 0 2 1.6h8.9a2 2 0 0 0 2-1.6L22 8H7M10 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm8 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/></svg>
+              <span><%= productUnavailable ? 'Agotado' : 'Agregar al carrito' %></span>
+            </button>
+            <a id="whatsappButton" href="<%= initialWhatsAppUrl %>" target="_blank" rel="noopener" class="product-whatsapp-link">Consultar por WhatsApp</a>
+            <% if (isCustomizable) { %><p class="product-customization-note">La personalización seleccionada se adjuntará al pedido.</p><% } %>
           </form>
 
-          <div class="mt-6">
-            <a href="/shop" class="lux-btn lux-btn-secondary">
-              Volver al catálogo
-            </a>
-          </div>
-
           <% if (product.description) { %>
-            <div class="mt-10 pt-8 border-t border-stone-200">
-              <h3 class="text-xl font-semibold mb-3">Descripción</h3>
-              <p class="text-stone-700 leading-8 whitespace-pre-line"><%= product.description %></p>
-            </div>
+            <div class="product-detail-description"><h2>Detalles del producto</h2><p><%= product.description %></p></div>
           <% } %>
         </div>
       </div>
     </section>
+
+    <% if (defaultImage) { %>
+      <dialog class="product-image-dialog" id="productImageDialog" aria-label="Imagen ampliada de <%= product.name %>">
+        <button type="button" data-close-product-image aria-label="Cerrar imagen ampliada">×</button>
+        <div class="product-image-dialog-stage">
+          <img src="<%= defaultImage %>" id="expandedProductImage" alt="<%= product.name %>">
+          <% if (hasSampleEngravingPreview) { %><div class="product-engraving-preview" aria-hidden="true"><span id="expandedEngravingPreviewText"></span></div><% } %>
+        </div>
+      </dialog>
+    <% } %>
 
     <section class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-14">
       <div class="lux-card p-6">
@@ -365,6 +356,10 @@
       const priceEl = document.getElementById("productPrice");
       const compareEl = document.getElementById("productCompareAt");
       const mainImage = document.getElementById("mainProductImage");
+      const expandedImage = document.getElementById("expandedProductImage");
+      const imageDialog = document.getElementById("productImageDialog");
+      const engravingPreviewText = document.getElementById("engravingPreviewText");
+      const expandedEngravingPreviewText = document.getElementById("expandedEngravingPreviewText");
       const stockState = document.getElementById("stockState");
       const whatsappButton = document.getElementById("whatsappButton");
       const variantButtons = document.querySelectorAll(".variant-btn");
@@ -375,6 +370,9 @@
       const fontNameInput = document.getElementById("fontNameInput");
       const quantityInput = document.getElementById("quantityInput");
       const addToCartButton = document.getElementById("addToCartButton");
+      const addToCartLabel = addToCartButton && addToCartButton.querySelector("span");
+      const lineTotalEl = document.getElementById("productLineTotal");
+      const workshopNotes = document.getElementById("workshopNotes");
       const fontSelectedPreview = document.getElementById("fontSelectedPreview");
       const form = document.getElementById("addToCartForm");
 
@@ -427,7 +425,42 @@
           parts.push("Tipografía: " + font);
         }
 
+        if (workshopNotes && workshopNotes.value.trim()) {
+          parts.push("Notas para el taller: " + workshopNotes.value.trim());
+        }
+
         return parts.join(" | ");
+      }
+
+      function updateLineTotal() {
+        if (!lineTotalEl) return;
+        const unitPrice = Number(selectedVariant?.price ?? basePrice ?? 0);
+        const quantity = Math.max(1, Number(quantityInput?.value || 1));
+        lineTotalEl.textContent = formatPrice(unitPrice * quantity);
+      }
+
+      function updateCharacterCount(input) {
+        const counter = input.id ? document.getElementById(input.id + "-count") : null;
+        if (!counter) return;
+        counter.textContent = `${(input.value || "").length}/${input.maxLength || 100}`;
+      }
+
+      function updateEngravingPreview() {
+        if (!engravingPreviewText) return;
+        const engraving = Array.from(customizationInputs)
+          .map(function (input) { return (input.value || "").trim(); })
+          .filter(Boolean)
+          .join(" ");
+        engravingPreviewText.textContent = engraving;
+        engravingPreviewText.parentElement.classList.toggle("has-engraving", Boolean(engraving));
+        if (expandedEngravingPreviewText) {
+          expandedEngravingPreviewText.textContent = engraving;
+          expandedEngravingPreviewText.parentElement.classList.toggle("has-engraving", Boolean(engraving));
+        }
+        document.querySelectorAll("[data-engraving-thumb]").forEach(function (thumbPreview) {
+          thumbPreview.textContent = engraving;
+          thumbPreview.classList.toggle("has-engraving", Boolean(engraving));
+        });
       }
 
       function updateHiddenInputs() {
@@ -452,7 +485,7 @@
         if (variantLabel) message += " | Variante: " + variantLabel;
         if (customization) message += " | " + customization;
 
-        whatsappButton.href = "https://wa.me/" + basePhone + "?text=" + encodeURIComponent(message);
+        if (whatsappButton) whatsappButton.href = "https://wa.me/" + basePhone + "?text=" + encodeURIComponent(message);
         updateHiddenInputs();
       }
 
@@ -470,15 +503,14 @@
 
         if (addToCartButton) {
           addToCartButton.disabled = isUnavailable;
-          addToCartButton.textContent = isUnavailable ? "Agotado" : "Agregar al carrito";
+          if (addToCartLabel) addToCartLabel.textContent = isUnavailable ? "Agotado" : "Agregar al carrito";
         }
 
         if (stockState) {
           stockState.textContent = isUnavailable ? "Agotado" : "Disponible: " + safeStock;
-          stockState.classList.toggle("text-red-600", isUnavailable);
-          stockState.classList.toggle("font-medium", isUnavailable);
-          stockState.classList.toggle("text-stone-500", !isUnavailable);
+          stockState.classList.toggle("is-unavailable", isUnavailable);
         }
+        updateLineTotal();
       }
 
       function applyVariant(variant, clickedButton, index) {
@@ -505,6 +537,7 @@
 
         if (variant.imageUrl && mainImage) {
           mainImage.src = variant.imageUrl;
+          if (expandedImage) expandedImage.src = variant.imageUrl;
         }
 
         updateBuyState(unavailable, stock);
@@ -525,14 +558,27 @@
           const image = this.dataset.image;
           if (image && mainImage) {
             mainImage.src = image;
+            if (expandedImage) expandedImage.src = image;
           }
 
           document.querySelectorAll(".thumb-btn").forEach(function (btn) {
-            btn.classList.remove("active-thumb");
+            btn.classList.remove("active-thumb", "is-active");
+            btn.setAttribute("aria-pressed", "false");
           });
-          this.classList.add("active-thumb");
+          this.classList.add("active-thumb", "is-active");
+          this.setAttribute("aria-pressed", "true");
         });
       });
+
+      const openImageButton = document.querySelector("[data-open-product-image]");
+      const closeImageButton = document.querySelector("[data-close-product-image]");
+      if (openImageButton && imageDialog) openImageButton.addEventListener("click", function () { imageDialog.showModal(); });
+      if (closeImageButton && imageDialog) closeImageButton.addEventListener("click", function () { imageDialog.close(); });
+      if (imageDialog) {
+        imageDialog.addEventListener("click", function (event) {
+          if (event.target === imageDialog) imageDialog.close();
+        });
+      }
 
       variantButtons.forEach(function (button) {
         button.addEventListener("click", function () {
@@ -544,8 +590,15 @@
       });
 
       customizationInputs.forEach(function (input) {
-        input.addEventListener("input", updateWhatsAppLink);
+        updateCharacterCount(input);
+        input.addEventListener("input", function () {
+          updateCharacterCount(input);
+          updateEngravingPreview();
+          updateWhatsAppLink();
+        });
       });
+
+      if (workshopNotes) workshopNotes.addEventListener("input", updateWhatsAppLink);
 
       fontOptions.forEach(function (radio) {
         radio.addEventListener("change", function () {
@@ -559,8 +612,21 @@
           const max = Math.max(1, Number(quantityInput.max || 1));
           const value = Math.max(1, Number(quantityInput.value || 1));
           if (value > max) quantityInput.value = max.toString();
+          if (Number(quantityInput.value) < 1) quantityInput.value = "1";
+          updateLineTotal();
         });
       }
+
+      document.querySelectorAll("[data-quantity-step]").forEach(function (button) {
+        button.addEventListener("click", function () {
+          if (!quantityInput || quantityInput.disabled) return;
+          const min = Math.max(1, Number(quantityInput.min || 1));
+          const max = Math.max(min, Number(quantityInput.max || 1));
+          const next = Number(quantityInput.value || 1) + Number(button.dataset.quantityStep || 0);
+          quantityInput.value = String(Math.min(max, Math.max(min, next)));
+          updateLineTotal();
+        });
+      });
 
       if (form) {
         form.addEventListener("submit", function (event) {
@@ -584,6 +650,8 @@
       }
 
       refreshFontPreview();
+      updateEngravingPreview();
+      updateLineTotal();
     })();
   </script>
 </body>
