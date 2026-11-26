@@ -2,7 +2,11 @@
 
 ## Fuentes de personalización · 26 de noviembre de 2026
 
-La ficha de la pulsera configurada con el trío genérico Elegante/Clásica/Moderna ahora usa las diez opciones nombradas en el selector de la referencia: Black Jack, Dancing Script, Great Vibes, Baskerville, Alex Brush, Lobster, Life Savers, Courier New, Impact y Rockwell. El backend valida los nombres de la misma lista que muestra el formulario; las muestras se renderizan como texto y los nombres configurados por producto que no sean el trío genérico se conservan. La pantalla administrativa comparte la normalización para que sus opciones coincidan con la tienda. Evidencia y límites visuales en `TEST_MATRIX.md` bajo CUS-01-FONTS; el despliegue y la verificación productiva siguen pendientes.
+La ficha de la pulsera configurada con el trío genérico Elegante/Clásica/Moderna ahora usa las diez opciones nombradas en el selector de la referencia: Black Jack, Dancing Script, Great Vibes, Baskerville, Alex Brush, Lobster, Life Savers, Courier New, Impact y Rockwell. El backend valida los nombres de la misma lista que muestra el formulario; las muestras se renderizan como texto y los nombres configurados por producto que no sean el trío genérico se conservan. La pantalla administrativa comparte la normalización para que sus opciones coincidan con la tienda. Producción y evidencia en `TEST_MATRIX.md` bajo CUS-01-FONTS.
+
+## Tipografías publicadas en producción · 26 de noviembre de 2026
+
+`9234b7c1fcdad4084cb30018fda012fc0ac284e6` quedó `deployed` como `gaton-app:9234b7c`. El auto-deploy registró el respaldo previo `/root/gaton-backups/pre-9234b7c-20261126-172909.sql.gz` (4.0K); `/health/ready`, `/` y la ficha de la pulsera respondieron 200. En la ficha productiva y en Editar producto aparecen las diez tipografías. La selección Dancing Script habilitó el carrito y actualizó WhatsApp; no se creó ningún pedido. El dashboard antes/después mostró 16 productos, 6 categorías, 0 reseñas, 0 pedidos y 2 administradores. Se conservaron los mismos IDs de administradores: `b06451eccb2b8414763919d6` y `3d882d33bbd842f0b7879f47`. No se ejecutaron migraciones ni se modificaron registros de catálogo, stock, usuarios o pedidos. El laboratorio local sigue devolviendo 500 para la ficha `borrador-local-pulsera-placa-grabable`; el flujo se comprobó en producción y no se atribuye ese 500 a este cambio.
 
 ## Avance técnico autorizado · 26 de noviembre de 2026
 

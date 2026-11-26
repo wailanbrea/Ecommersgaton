@@ -14,9 +14,9 @@ La evidencia se limita al formulario de grabado y a la custodia del adjunto en e
 
 | ID | Criterio | Evidencia | Estado |
 |---|---|---|---|
-| CUS-01-FONTS | Selección validada y muestra visual de las diez fuentes de la página de referencia | El navegador encontró ambas listas en el selector de Moon Charm: Black Jack, Dancing Script, Great Vibes, Baskerville, Alex Brush, Lobster, Life Savers, Courier New, Impact y Rockwell. El conjunto legado Elegante/Clásica/Moderna se expande a esas diez; la selección sigue validada y persistida por nombre. | PENDING hasta correr pruebas y revisar render |
+| CUS-01-FONTS | Selección validada y muestra visual de las diez fuentes de la página de referencia | `npm test`: 14 aprobadas, 0 fallidas y 2 pruebas opt-in de DB omitidas. Producción en `9234b7c`: tienda y formulario admin muestran los diez nombres; Google Font faces se cargaron; “Dancing Script” quedó seleccionado, activó Agregar al carrito y apareció en WhatsApp. Sin enviar pedido. A 375 px y 1265 px no hubo desbordamiento horizontal. | VERIFIED (criterio de este selector) |
 
-La fuente Black Jack se muestra con un sustituto visual Satisfy; Baskerville, Impact y Rockwell usan Libre Baskerville, Anton y Roboto Slab cuando la fuente del sistema no existe. Las etiquetas conservan los nombres exactos de las opciones de referencia. No se copian las imágenes/archivos de fuentes del sitio externo.
+La fuente Black Jack se muestra con un sustituto visual Satisfy; Baskerville, Impact y Rockwell usan Libre Baskerville, Anton y Roboto Slab cuando la fuente del sistema no existe. Las etiquetas conservan los nombres exactos de las opciones de referencia. No se copian las imágenes/archivos de fuentes del sitio externo. En laboratorio, `/shop` responde 200, pero la ficha local `borrador-local-pulsera-placa-grabable` responde 500; no se pudo atribuir ese error a este cambio. Se verificó la ficha productiva equivalente.
 
 ## Checkout protegido · laboratorio MySQL · 26 de noviembre de 2026
 
