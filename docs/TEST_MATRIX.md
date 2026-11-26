@@ -9,10 +9,21 @@
 | SEC-04/T07 | GET anónimo a confirmación de pedido y foto de personalización privada | Ambos responden 404; sin datos del pedido ni bytes de la foto | VERIFIED (negativo anónimo) |
 | GC-08 | Ubicación del bloque Contacto | La plantilla usa `locationText` y fallback completo: “Av. Independencia, Km. 11, Distrito Nacional, Santo Domingo, Rep. Dom.” | VERIFIED (código local; falta producción) |
 | DB-04 | Migración de clave idempotente | Respaldo local de 15 tablas serializado y verificado; `004_checkout_idempotency` aplicada en `gatondo_local_mysql` | VERIFIED (esquema local) |
+| DB-05 | Restauración aislada del snapshot local | Las 15 tablas y 101 filas se insertaron y cotejaron en tablas temporales del laboratorio; al cerrar la conexión desaparecieron | VERIFIED (round-trip temporal, no restauración completa del VPS) |
 
 Pruebas ejecutadas: `RUN_DB_MUTATION_TESTS=1 node --test test/checkout-transaction.test.js` (1/1); `npm test` (12 aprobadas, 0 fallidas; 1 prueba de mutación se omite por seguridad salvo habilitación explícita); `node --check` para servidor/rutas; segunda ejecución de `npm run db:migrate` terminó sin operaciones pendientes. Los fixtures de concurrencia se limpian por IDs sintéticos concretos. El primer intento dejó un fixture porque falló su limpieza al cerrar el pool; se identificó y retiró de forma puntual en `gatondo_local_mysql`; la repetición pasó y dejó cero fixtures incompletos.
 
 Límites: son dos solicitudes simultáneas, no la carga de 20 solicitudes de T09. El archivo privado se comprobó contra acceso anónimo, no contra toda la matriz de pertenencia, revocación o roles de T07. El pedido de invitado queda ligado a la sesión del navegador; aún no existe enlace seguro de recuperación o aprobación por correo/OTP. Stock se consume al crear el pedido COD; reservas, vencimiento, cancelación/reposición, gates de fabricación y outbox no están implementados.
+
+## Producción · verificación de `8257182` · 26 de noviembre de 2026
+
+| ID | Criterio | Resultado posterior al despliegue | Estado |
+|---|---|---|---|
+| PROD-07 | Auto-Deploy y migración | Estado `deployed`, `active_sha=8257182`; log confirma `004_checkout_idempotency`, `/health/ready` 200 (`database=mysql`) y `/` 200 | VERIFIED |
+| PROD-08 | Contacto y acceso anónimo a datos/fotos | Contacto muestra la dirección completa; un ID de pedido inexistente y una ruta de foto inexistente responden 404 genérico | VERIFIED (comprobación negativa, sin pedido real) |
+| PROD-09 | Panel admin y continuidad de datos | Dashboard, ventas, productos, inventario, categorías, pedidos, reseñas, configuración, usuarios y roles cargaron; conteos 16/6/0/0/2 y los dos IDs de usuario permanecen iguales | VERIFIED (lectura/renderizado) |
+
+El backup automático previo quedó registrado como `pre-8257182-20261126-071303.sql.gz` (4.0K). No se tuvo acceso para validar su contenido ni restaurarlo; solo el snapshot local se rehidrató en tablas temporales. No se mutaron datos productivos, no se hizo checkout, pago, upload ni importación en producción.
 
 ## Panel e inventario · laboratorio local · 25 de noviembre de 2026
 

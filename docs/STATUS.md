@@ -12,6 +12,14 @@ Estado del checkout y custodia de fotos tras la auditoría del Master Prompt:
 
 **Estado funcional real:** ORD-02, INV-02, SEC-01/02/04 y CUS-04 siguen `PARTIAL`; solo los subcriterios indicados tienen evidencia. No se completaron reservas/expiración, recuperación segura del pedido, escaneo/normalización de fotos, rotación/MFA, rate limit ni aprobación del taller. GC-08 quedó corregido en código local y espera verificación en producción; GC-04 sigue bloqueado hasta recibir los logos originales y su asignación.
 
+## Cierre de despliegue autorizado · 26 de noviembre de 2026
+
+Se publicó `8257182eb94b2f3ad6bb7043fc236f9216f70d95` en `main`; `bs-autodeploy` quedó `deployed`, imagen `gaton-app:8257182`. La secuencia del servidor registró backup previo `pre-8257182-20261126-071303.sql.gz` (4.0K), recreación del contenedor y `004_checkout_idempotency`; readiness `/health/ready` y portada respondieron 200. La línea del log no acredita restaurabilidad de ese backup; `bsdeploy` no tiene permisos para leer `/root/gaton-backups` y no se usó Cockpit/root.
+
+En el navegador autenticado cargaron Dashboard, Ventas, Productos, Inventario, Categorías, Pedidos, Reseñas, Configuración, Usuarios y Roles. Dashboard posterior: 16 productos, 6 categorías, 0 reseñas, 0 pedidos y 2 administradores. Los usuarios siguen siendo `admin@gatondo.com` (`b06451eccb2b8414763919d6`) y `wailandkey@gmail.com` (`3d882d33bbd842f0b7879f47`). No hay entidad de tienda independiente. La portada pública muestra el contacto `+1 (849) 330-6269` y la ubicación completa en la sección Contacto y en el pie. Sin sesión, ruta de pedido no existente y foto no existente respondieron 404 genérico.
+
+No se hizo checkout/pago/upload/importación en producción y no se tocaron productos, usuarios ni pedidos. El snapshot de laboratorio se restauró temporalmente en 15 tablas/101 filas y se cotejó, pero esto no sustituye un ensayo de restauración del backup de VPS. `tmp/` preexistente sigue sin seguimiento e intacto. `ACCEPTED` permanece pendiente del propietario; GC-04 continúa parcial por falta de los logos originales y el mapa de asignación. La matriz registra exactamente los checks ejecutados.
+
 ## Administración de usuarios y permisos · 26 de noviembre de 2026
 
 Se añadió localmente el menú Usuarios y Roles y permisos al panel. Incluye alta de cuentas, asignación de roles, activación/desactivación protegida contra bloquear al último superadministrador, contraseña temporal con cambio obligatorio, cambio de contraseña propia, permisos de ruta aplicados en servidor, token CSRF en formularios administrativos y bitácora de cambios. Los permisos elevados (`users.manage`, `roles.manage`, `admin.access`) solo pueden asignarse a roles por un superadministrador. Migración aditiva e idempotente `003_admin_rbac` asigna el rol de continuidad a los administradores existentes sin alterar sus IDs, contraseñas ni sesiones.

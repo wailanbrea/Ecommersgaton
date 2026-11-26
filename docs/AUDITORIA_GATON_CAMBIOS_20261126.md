@@ -22,15 +22,19 @@
 | GC-05 | [x] **VERIFIED** | En la portada desplegada, el orden relativo es Colección → Fragancias → Historia → Clientes → Contacto. El bloque “Tu pedido en 3 pasos” está entre Historia y Clientes, sin invertir los apartados solicitados. | Ninguno para el orden relativo solicitado. |
 | GC-06 | [x] **VERIFIED** | La página desplegada muestra `+1 (849) 330-6269`; el enlace de WhatsApp usa `wa.me/18493306269`. | Ninguno observado. |
 | GC-07 | [x] **VERIFIED** | En producción, al abrir el carrito, aparece el panel lateral con “Tu carrito”, botón de cierre, logo y estado vacío, como en la referencia del PDF. La prueba local `DB04` de `docs/TEST_MATRIX.md` ya verificó miniatura, subtotal, total y persistencia de sesión con un carrito con artículos. | No agregué un artículo a la sesión productiva para esta auditoría; la comprobación con artículos corresponde al laboratorio local. |
-| GC-08 | [ ] **PARTIAL** | El footer desplegado muestra `Av. Independencia, Km. 11, Distrito Nacional, Santo Domingo, Rep. Dom.`. En el avance local, el bloque Contacto ahora muestra el `locationText` persistido, con el mismo texto completo en el laboratorio. | Pendiente comprobar la sección de Contacto en la versión productiva tras el despliegue. |
+| GC-08 | [x] **VERIFIED** | Tras desplegar `8257182`, la portada productiva muestra `Av. Independencia, Km. 11, Distrito Nacional, Santo Domingo, Rep. Dom.` tanto en Contacto como en el footer. Se cotejó en el navegador productivo. | Ninguno observado para el texto/destino del bloque. |
 | GC-09 | [x] **VERIFIED** | Las tarjetas de productos muestran el precio vigente y, cuando hay oferta, el precio anterior tachado fuera de la ficha. En producción, la tarjeta de Ámbar muestra RD$900 y RD$1,200 en `/shop?category=fragancias`; también se ve en la portada. | Ninguno observado para las tarjetas. |
 
 ## Resultado
 
-**7 puntos verificados y 2 parciales.** GC-01 ya estaba implementado en el enlace del menú y quedó verificado; la CTA separada `Explorar Fragancias` conserva su destino al catálogo. GC-02 se desplegó como `755cff6` y se comprobó en producción. GC-04 depende de los logos originales y su mapa; GC-08 requiere aplicar la dirección precisa al bloque Contacto además del footer.
+**8 puntos verificados y 1 parcial.** GC-01 ya estaba implementado en el enlace del menú y quedó verificado; la CTA separada `Explorar Fragancias` conserva su destino al catálogo. GC-02 se desplegó como `755cff6` y se comprobó en producción. GC-04 depende de los logos originales y su mapa.
 
 Las verificaciones de producción fueron de lectura: portada, catálogo de Fragancias, menú, tarjetas de precios, apertura del carrito vacío y verificación posterior de `755cff6`. No se crearon pedidos, no se agregaron productos a una sesión productiva y no se alteró inventario ni configuración productiva.
 
 ## Cierre del avance local · 26 de noviembre de 2026
 
 GC-08 está corregido en la plantilla del bloque Contacto usando el valor de configuración ya aprobado `locationText`, sin sobrescribir configuración. La prueba local de render coincide con la dirección exacta. Hasta verificar la nueva versión en el host, GC-08 queda parcial en producción.
+
+### Verificación posterior
+
+El commit `8257182eb94b2f3ad6bb7043fc236f9216f70d95` quedó activo en `gaton.bsolutions.dev`; la portada mostró la ubicación correcta en Contacto y footer. GC-08 pasa a VERIFIED. No se alteraron datos de tienda. GC-04 sigue PARTIAL por falta de fuentes originales del logo y su mapa de ubicación.
