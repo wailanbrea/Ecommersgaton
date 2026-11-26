@@ -4,7 +4,7 @@
 
 La auditoría puntual encontró campos configurables por producto y lado, pero sin precio por campo. Administración persiste campos con clave/etiqueta/ejemplo/obligatoriedad/límite; el servidor valida el texto, calcula el precio solo desde variante o base y luego conserva ese precio en carrito y pedido. El payload JSON permite agregar `priceDeltaMinor` sin migración relacional, sujeto a verificar persistencia. La ficha ya consume una galería del producto; `brazaletes-7-reverso-liso.png` está disponible en el árbol local pero aún no asociado al producto borrador. La consulta de ese producto no pudo ejecutarse porque en esta copia falta la dependencia instalada `mysql2`.
 
-**Estado:** implementado y verificado en laboratorio, desplegado a producción en `5e2635c` (26 nov 2026). Importe del borrador local: base RD$1,290; reverso vacío RD$1,290; reverso con texto RD$1,490. El despliegue solo publicó código y muestras; no cambió productos, pedidos ni cuentas.
+**Estado:** implementado y verificado en laboratorio, desplegado a producción (código activo `4282cc7`, 26 nov 2026) y aplicado a la ficha de la pulsera. Precio base RD$1,290; reverso vacío RD$1,290; reverso con texto RD$1,490. La actualización de catálogo fue acotada a esta ficha; no cambió pedidos ni cuentas.
 
 ## Vista previa tipográfica por cara · laboratorio aislado · 26 de noviembre de 2026
 
