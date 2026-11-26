@@ -107,7 +107,11 @@ router.get("/users", async (req, res) => {
 });
 
 router.get("/users/new", async (_req, res) => {
-  res.render("admin/access/user-new", { roles: await getRoleRows(), error: null });
+  res.render("admin/access/user-new", {
+    roles: await getRoleRows(),
+    formData: { name: "", email: "", roleIds: [] },
+    error: null
+  });
 });
 
 router.post("/users/new", async (req, res) => {
