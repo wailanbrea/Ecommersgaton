@@ -176,6 +176,10 @@ Windows, Node 24.4.0, npm 11.4.2, MongoDB 7.0.24 y MariaDB 11.4.12 en loopback. 
 
 | CUS-01-PRICE-FONTS | Grabado frontal incluido y trasero opcional +RD$200; fuentes independientes por cara; precio y selector trasero condicionales; validación servidor y snapshot pedido | `npm test` con MySQL local opt-in: 18 aprobadas, 0 fallidas, 0 omitidas. Integración cubrió precio RD$1,290 sin reverso, RD$1,490 al completar reverso, manipulación de recargo ignorada y fuentes separadas conservadas en pedido. En navegador local: selector frontal visible; selector trasero aparece al escribir y permite otra fuente; al borrar texto desaparece selector y el precio vuelve a RD$1,290. | VERIFIED · criterios de este caso en laboratorio |
 
+| CUS-01-PROD | Despliegue de campos/lados con recargo configurable e imagen opcional por producto; preservar catálogo y cuentas | Auto-Deploy `deployed`, `active_sha=5e2635c`. `/`, `/health/ready`, ficha de pulsera y ambas imágenes de muestra responden 200. En el editor de un producto real se agregó un segundo campo y se activó temporalmente la casilla de imagen; no se guardó. Tras recargar: catálogo conserva 15 productos; usuarios activos sin cambios: `b06451eccb2b8414763919d6` (`admin@gatondo.com`) y `3d882d33bbd842f0b7879f47` (`wailandkey@gmail.com`), ambos Superadministrador. La pulsera `87920f57494b0eb89f5104eb` conserva precio RD$1,000, stock 10, un campo, y grabado de imagen desactivado. | VERIFIED · despliegue y controles; configuración comercial sin alterar |
+
+Auto-Deploy registró backup SQL previo para `5e2635c` en `/root/gaton-backups/pre-5e2635c-20261127-003827.sql.gz` (4.0K). La cuenta de despliegue no tiene acceso de lectura a `/root`, así que el archivo fue confirmado por el registro del motor y no se validó su contenido por separado. No se ejecutó migración de esquema ni se subieron imágenes de clientes.
+
 El caso no verifica el configurador integral CUS-01 ni el editor Canvas/SVG CUS-02. Los valores costo/venta/stock son exclusivamente locales y no se cargaron a producción; no hubo pedido ni comunicación externa.
 
 ### Límites del resultado

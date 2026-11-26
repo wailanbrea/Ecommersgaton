@@ -4,13 +4,13 @@
 
 La auditoría puntual encontró campos configurables por producto y lado, pero sin precio por campo. Administración persiste campos con clave/etiqueta/ejemplo/obligatoriedad/límite; el servidor valida el texto, calcula el precio solo desde variante o base y luego conserva ese precio en carrito y pedido. El payload JSON permite agregar `priceDeltaMinor` sin migración relacional, sujeto a verificar persistencia. La ficha ya consume una galería del producto; `brazaletes-7-reverso-liso.png` está disponible en el árbol local pero aún no asociado al producto borrador. La consulta de ese producto no pudo ejecutarse porque en esta copia falta la dependencia instalada `mysql2`.
 
-**Estado:** implementado y verificado en laboratorio local; nunca desplegado a producción. ADR-009 fue aprobado. Importe del borrador local: base RD$1,290; reverso vacío RD$1,290; reverso con texto RD$1,490. Configuración, cambios de catálogo y datos de prueba están limitados al entorno local.
+**Estado:** implementado y verificado en laboratorio, desplegado a producción en `5e2635c` (26 nov 2026). Importe del borrador local: base RD$1,290; reverso vacío RD$1,290; reverso con texto RD$1,490. El despliegue solo publicó código y muestras; no cambió productos, pedidos ni cuentas.
 
 ## Vista previa tipográfica por cara · laboratorio aislado · 26 de noviembre de 2026
 
 En `C:\xampp\php\www\EcommersGaton-preview-lab`, rama `codex/live-engraving-preview`, se implementó una muestra viva debajo de cada campo de grabado. El texto de cada campo se actualiza al escribir; cambiar la tipografía aplica la muestra CSS correspondiente a cada cara. Se añadieron instrucciones al formulario de alta/edición para configurar un campo y etiqueta por cara. Reutiliza el payload actual, sin migración SQL.
 
-**Estado previo:** IMPLEMENTED, pendiente de verificar. Verificación actual añadida en `TEST_MATRIX.md` como `CUS-01-PRICE-FONTS`: tipografía separada por cara, selector trasero condicional, cambio en precio, y guardado por campo en la prueba de integración. Producción y el remoto no fueron modificados. `tmp/` sin seguimiento de la copia original se dejó intacto y no se incluyó en el worktree.
+Verificación actual añadida en `TEST_MATRIX.md` como `CUS-01-PRICE-FONTS` y `CUS-01-PROD`: tipografía separada por cara, selector trasero condicional, precio dinámico, pantalla administrativa para agregar lados y configurar recargos, y casilla de grabado de imagen. `tmp/` sin seguimiento de la copia original se dejó intacto y no se incluyó en el worktree.
 
 ## Fuentes de personalización · 26 de noviembre de 2026
 

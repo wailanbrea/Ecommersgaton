@@ -1,8 +1,8 @@
 # Decisiones y plan de implementación
 
-## ADR-009 · Precio configurable y tipografía independiente por campo · Aprobada en laboratorio
+## ADR-009 · Precio configurable y tipografía independiente por campo · Desplegada
 
-**Fecha:** 26 de noviembre de 2026. **Solicitud:** permitir que cada campo del configurador sea obligatorio u opcional y gratuito o de pago; ejemplo: pulsera a RD$1,290, grabado frontal incluido y grabado trasero opcional con recargo de RD$200. Cada cara conserva su selección tipográfica; el selector trasero aparece solo cuando se introduce texto trasero. **Estado:** aprobada por el usuario e implementada en el laboratorio local. Sin despliegue a producción.
+**Fecha:** 26 de noviembre de 2026. **Solicitud:** permitir que cada campo del configurador sea obligatorio u opcional y gratuito o de pago; ejemplo: pulsera a RD$1,290, grabado frontal incluido y grabado trasero opcional con recargo de RD$200. Cada cara conserva su selección tipográfica; el selector trasero aparece solo cuando se introduce texto trasero. **Estado:** aprobada por el usuario, implementada y desplegada a producción en `5e2635c`.
 
 ### Auditoría actual
 
