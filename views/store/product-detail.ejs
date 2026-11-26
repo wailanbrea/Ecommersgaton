@@ -5,16 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= product.name %> | <%= siteSettings?.brandName || "GATON DO" %></title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="/css/app.css?v=product-customizer-20261125k">
+  <link rel="stylesheet" href="/css/app.css?v=grabado-sencillo-1">
 </head>
 <body class="ref10-body ref10-product-page">
   <%- include("../partials/header") %>
 
   <main class="ref10-detail-main section-shell py-10">
     <% const isCustomizable = Boolean(product.hasCustomization); %>
-    <% const hasSampleEngravingPreview = isCustomizable && product.mainImageUrl === '/images/muestras-carrito/personalizados-1.webp'; %>
-    <% const isBraceletPlatePreview = isCustomizable && product.mainImageUrl === '/images/muestras-carrito/brazaletes-4.jpeg'; %>
-    <% const hasEngravingPreview = hasSampleEngravingPreview || isBraceletPlatePreview; %>
+    <% const isBraceletPlateImage = isCustomizable && product.mainImageUrl === '/images/muestras-carrito/brazaletes-4.jpeg'; %>
     <nav class="product-detail-breadcrumb" aria-label="Ruta de navegación">
       <a href="/">Inicio</a><span aria-hidden="true">/</span>
       <a href="/shop">Joyería</a>
@@ -52,18 +50,12 @@
     <section class="product-detail-grid <%= isCustomizable ? 'is-customizable' : '' %>">
       <div class="product-detail-gallery-column">
         <div class="product-gallery-frame">
-          <div class="product-gallery-stage <%= isBraceletPlatePreview ? 'product-gallery-stage--bracelet-plate' : '' %>">
+          <div class="product-gallery-stage <%= isBraceletPlateImage ? 'product-gallery-stage--bracelet-plate' : '' %>">
             <% if (defaultImage) { %>
-              <img id="mainProductImage" src="<%= defaultImage %>" alt="<%= product.name %>" class="product-gallery-image <%= isBraceletPlatePreview ? 'product-gallery-image--bracelet-plate' : '' %>">
+              <img id="mainProductImage" src="<%= defaultImage %>" alt="<%= product.name %>" class="product-gallery-image <%= isBraceletPlateImage ? 'product-gallery-image--bracelet-plate' : '' %>">
               <button type="button" class="product-gallery-expand" data-open-product-image aria-label="Ampliar imagen del producto">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m13-5v3a2 2 0 0 1-2 2h-3M9 9l-6-6m12 0 6-6M3 21l6-6m12 6-6-6"/></svg>
               </button>
-              <% if (hasEngravingPreview) { %>
-                <div class="product-engraving-preview <%= isBraceletPlatePreview ? 'product-engraving-preview--bracelet-plate' : '' %>" aria-label="Vista previa ilustrativa del grabado"><span id="engravingPreviewText" aria-live="polite"></span></div>
-                <span class="product-gallery-caption">Vista previa ilustrativa</span>
-              <% } else { %>
-                <span class="product-gallery-caption">Galería del producto</span>
-              <% } %>
             <% } else { %>
               <div id="mainProductImagePlaceholder" class="product-gallery-placeholder">Imagen del producto no disponible</div>
             <% } %>
@@ -75,14 +67,12 @@
             <% if (defaultImage) { %>
               <button type="button" class="thumb-btn is-active" data-image="<%= defaultImage %>" aria-label="Ver imagen principal" aria-pressed="true">
                 <img src="<%= defaultImage %>" alt="<%= product.name %>">
-                <% if (hasSampleEngravingPreview) { %><span class="product-thumb-engraving-preview" data-engraving-thumb aria-hidden="true"></span><% } %>
               </button>
             <% } %>
             <% (product.gallery || []).forEach(function(item, index) { %>
               <% if (item.type === "image") { %>
                 <button type="button" class="thumb-btn" data-image="<%= item.url %>" aria-label="Ver imagen <%= index + 2 %> de <%= product.name %>" aria-pressed="false">
                   <img src="<%= item.url %>" alt="<%= item.altText || product.name %>">
-                  <% if (hasSampleEngravingPreview) { %><span class="product-thumb-engraving-preview" data-engraving-thumb aria-hidden="true"></span><% } %>
                 </button>
               <% } %>
             <% }) %>
@@ -125,8 +115,6 @@
 
           <form action="/product/<%= product.slug %>/add-to-cart" method="post" enctype="multipart/form-data" id="addToCartForm" class="product-personalization-form">
             <input type="hidden" name="variantIndex" id="variantIndexInput" value="<%= (defaultVariantIndex !== null && defaultVariantIndex >= 0) ? defaultVariantIndex : '' %>">
-            <input type="hidden" name="customizationSummary" id="customizationSummaryInput" value="">
-            <input type="hidden" name="fontName" id="fontNameInput" value="">
 
             <% if (product.hasVariants && product.variants && product.variants.length) { %>
               <fieldset class="product-customization-group">
@@ -142,15 +130,15 @@
               </fieldset>
             <% } %>
 
-            <% if (isCustomizable && product.customizationFields && product.customizationFields.length) { %>
+            <% if (engraving.fields.length) { %>
               <fieldset class="product-customization-group">
                 <legend>Personalización</legend>
-                <% product.customizationFields.forEach(function(field, index) { %>
-                  <% const fieldId = 'custom-field-' + index; const limit = Number(field.maxLength || 100); %>
+                <% engraving.fields.forEach(function(field, index) { %>
+                  <% const fieldId = 'custom-field-' + index; const limit = field.maxLength; %>
                   <div class="product-customization-field">
                     <label for="<%= fieldId %>"><%= field.label %><% if (field.required) { %><span class="required-mark"> *</span><% } %></label>
                     <div class="product-customization-input-wrap">
-                      <input id="<%= fieldId %>" type="text" class="customization-input" data-label="<%= field.label %>" data-required="<%= field.required ? 'true' : 'false' %>" placeholder="<%= field.placeholder || '' %>" maxlength="<%= limit %>" <% if (field.required) { %>required<% } %> aria-describedby="<%= fieldId %>-count">
+                      <input id="<%= fieldId %>" type="text" name="<%= field.inputName %>" class="customization-input" data-label="<%= field.label %>" data-required="<%= field.required ? 'true' : 'false' %>" placeholder="<%= field.placeholder || '' %>" maxlength="<%= limit %>" <% if (field.required) { %>required<% } %> aria-describedby="<%= fieldId %>-count">
                       <span class="product-character-count" id="<%= fieldId %>-count" data-character-count="<%= fieldId %>">0/<%= limit %></span>
                     </div>
                   </div>
@@ -158,35 +146,27 @@
               </fieldset>
             <% } %>
 
-            <% if (isCustomizable && product.fontOptions && product.fontOptions.length) { %>
+            <% if (engraving.fields.length && engraving.fonts.length) { %>
               <fieldset class="product-customization-group">
                 <legend>Tipografía <span class="required-mark">*</span></legend>
                 <div class="product-font-options" id="fontPicker">
-                  <% product.fontOptions.forEach(function(font, index) { %>
+                  <% engraving.fonts.forEach(function(font) { %>
                     <label class="product-font-option">
-                      <input type="radio" name="fontOptionVisual" value="<%= font.name %>" class="font-option" <%= index === 0 ? 'checked' : '' %>>
-                      <% if (font.previewImageUrl) { %><img src="<%= font.previewImageUrl %>" alt=""><% } else { %><span class="product-font-sample"><%= font.previewText || 'Aa' %></span><% } %>
+                      <input type="radio" name="engravingFont" value="<%= font.name %>" class="font-option" required>
+                      <% if (font.previewImageUrl) { %><img src="<%= font.previewImageUrl %>" alt=""><% } else { %><span class="product-font-sample product-font-sample--<%= font.sampleStyle %>" aria-hidden="true"><%= font.previewText || 'Aa' %></span><% } %>
                       <span><%= font.name %></span>
                     </label>
                   <% }) %>
                 </div>
-                <div class="font-selected-preview" id="fontSelectedPreview" aria-live="polite"></div>
               </fieldset>
             <% } %>
 
-            <% if (isCustomizable && product.allowPhotoCustomization) { %>
+            <% if (engraving.photo) { %>
               <div class="product-customization-field product-photo-upload">
                 <label for="customizationPhoto">Añadir fotografía <span>(opcional)</span></label>
                 <input id="customizationPhoto" type="file" name="customizationPhoto" accept="image/jpeg,image/png,image/webp">
                 <small>JPG, PNG o WEBP · Máximo 15 MB</small>
                 <small>La imagen se adjuntará al pedido para revisión.</small>
-              </div>
-            <% } %>
-
-            <% if (isCustomizable) { %>
-              <div class="product-customization-field">
-                <label for="workshopNotes">Notas para el taller <span>(opcional)</span></label>
-                <textarea id="workshopNotes" class="workshop-notes" rows="2" placeholder="Ej. estilo de grabado o detalles adicionales"></textarea>
               </div>
             <% } %>
 
@@ -202,9 +182,12 @@
               <p class="product-line-total"><span>Total:</span> <strong id="productLineTotal">RD$ <%= Number(defaultPrice || 0).toLocaleString('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></strong></p>
             </div>
 
-            <button type="submit" id="addToCartButton" class="product-add-to-cart" <%= productUnavailable ? 'disabled' : '' %>>
+            <% if (engraving.unavailable) { %><p role="status">La configuración del grabado no está disponible. Consulta por WhatsApp.</p><% } %>
+            <% if (engravingInvalid) { %><p role="alert">Revisa el texto, el límite de caracteres y la tipografía antes de continuar.</p><% } %>
+            <% if (engravingUploadInvalid) { %><p role="alert">Selecciona una sola imagen JPG, PNG o WEBP de hasta 15 MB.</p><% } %>
+            <button type="submit" id="addToCartButton" class="product-add-to-cart" <%= (productUnavailable || engraving.unavailable) ? 'disabled' : '' %>>
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h2l2.4 12.1a2 2 0 0 0 2 1.6h8.9a2 2 0 0 0 2-1.6L22 8H7M10 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm8 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/></svg>
-              <span><%= productUnavailable ? 'Agotado' : 'Agregar al carrito' %></span>
+              <span><%= productUnavailable ? 'Agotado' : engraving.unavailable ? 'Grabado no disponible' : 'Agregar al carrito' %></span>
             </button>
             <a id="whatsappButton" href="<%= initialWhatsAppUrl %>" target="_blank" rel="noopener" class="product-whatsapp-link">Consultar por WhatsApp</a>
             <% if (isCustomizable) { %><p class="product-customization-note">La personalización seleccionada se adjuntará al pedido.</p><% } %>
@@ -218,11 +201,10 @@
     </section>
 
     <% if (defaultImage) { %>
-      <dialog class="product-image-dialog <%= isBraceletPlatePreview ? 'product-image-dialog--bracelet-plate' : '' %>" id="productImageDialog" aria-label="Imagen ampliada de <%= product.name %>">
+      <dialog class="product-image-dialog <%= isBraceletPlateImage ? 'product-image-dialog--bracelet-plate' : '' %>" id="productImageDialog" aria-label="Imagen ampliada de <%= product.name %>">
         <button type="button" data-close-product-image aria-label="Cerrar imagen ampliada">×</button>
-        <div class="product-image-dialog-stage <%= isBraceletPlatePreview ? 'product-image-dialog-stage--bracelet-plate' : '' %>">
-          <img src="<%= defaultImage %>" id="expandedProductImage" alt="<%= product.name %>" <%= isBraceletPlatePreview ? 'class="product-image-dialog-image--bracelet-plate"' : '' %>>
-          <% if (hasEngravingPreview) { %><div class="product-engraving-preview <%= isBraceletPlatePreview ? 'product-engraving-preview--bracelet-plate' : '' %>" aria-hidden="true"><span id="expandedEngravingPreviewText"></span></div><% } %>
+        <div class="product-image-dialog-stage <%= isBraceletPlateImage ? 'product-image-dialog-stage--bracelet-plate' : '' %>">
+          <img src="<%= defaultImage %>" id="expandedProductImage" alt="<%= product.name %>" <%= isBraceletPlateImage ? 'class="product-image-dialog-image--bracelet-plate"' : '' %>>
         </div>
       </dialog>
     <% } %>
@@ -352,6 +334,7 @@
       const variants = <%- JSON.stringify(product.variants || []) %>;
       const defaultVariantIndex = <%- JSON.stringify((defaultVariantIndex !== null && defaultVariantIndex >= 0) ? defaultVariantIndex : null) %>;
       const productUnavailable = <%- JSON.stringify(Boolean(productUnavailable)) %>;
+      const engravingUnavailable = <%- JSON.stringify(engraving.unavailable) %>;
       const productStock = <%- JSON.stringify(Number(defaultStock || 0)) %>;
       const basePrice = <%- JSON.stringify(Number(product.basePrice || 0)) %>;
       const baseCompareAt = <%- JSON.stringify(Number(product.compareAtPrice || 0)) %>;
@@ -360,24 +343,16 @@
       const mainImage = document.getElementById("mainProductImage");
       const expandedImage = document.getElementById("expandedProductImage");
       const imageDialog = document.getElementById("productImageDialog");
-      const engravingPreviewText = document.getElementById("engravingPreviewText");
-      const expandedEngravingPreviewText = document.getElementById("expandedEngravingPreviewText");
-      const isBraceletPlatePreview = <%- JSON.stringify(Boolean(isBraceletPlatePreview)) %>;
       const stockState = document.getElementById("stockState");
       const whatsappButton = document.getElementById("whatsappButton");
       const variantButtons = document.querySelectorAll(".variant-btn");
       const customizationInputs = document.querySelectorAll(".customization-input");
       const fontOptions = document.querySelectorAll(".font-option");
       const variantIndexInput = document.getElementById("variantIndexInput");
-      const customizationSummaryInput = document.getElementById("customizationSummaryInput");
-      const fontNameInput = document.getElementById("fontNameInput");
       const quantityInput = document.getElementById("quantityInput");
       const addToCartButton = document.getElementById("addToCartButton");
       const addToCartLabel = addToCartButton && addToCartButton.querySelector("span");
       const lineTotalEl = document.getElementById("productLineTotal");
-      const workshopNotes = document.getElementById("workshopNotes");
-      const fontSelectedPreview = document.getElementById("fontSelectedPreview");
-      const form = document.getElementById("addToCartForm");
 
       let selectedVariantIndex = variants.length ? (defaultVariantIndex !== null ? defaultVariantIndex : 0) : null;
       let selectedVariant = selectedVariantIndex !== null ? variants[selectedVariantIndex] : null;
@@ -402,16 +377,6 @@
         return checked ? checked.value : "";
       }
 
-      function refreshFontPreview() {
-        if (!fontSelectedPreview) return;
-        const checked = document.querySelector(".font-option:checked");
-        if (!checked) {
-          fontSelectedPreview.textContent = "";
-          return;
-        }
-        fontSelectedPreview.textContent = "Fuente seleccionada: " + checked.value;
-      }
-
       function getCustomizationText() {
         const parts = [];
 
@@ -426,10 +391,6 @@
         const font = getSelectedFont();
         if (font) {
           parts.push("Tipografía: " + font);
-        }
-
-        if (workshopNotes && workshopNotes.value.trim()) {
-          parts.push("Notas para el taller: " + workshopNotes.value.trim());
         }
 
         return parts.join(" | ");
@@ -448,55 +409,9 @@
         counter.textContent = `${(input.value || "").length}/${input.maxLength || 100}`;
       }
 
-      function updateEngravingPreview() {
-        if (!engravingPreviewText) return;
-        const engraving = Array.from(customizationInputs)
-          .map(function (input) { return (input.value || "").trim(); })
-          .filter(Boolean)
-          .join(" ");
-        engravingPreviewText.textContent = engraving;
-        engravingPreviewText.parentElement.classList.toggle("has-engraving", Boolean(engraving));
-        if (expandedEngravingPreviewText) {
-          expandedEngravingPreviewText.textContent = engraving;
-          expandedEngravingPreviewText.parentElement.classList.toggle("has-engraving", Boolean(engraving));
-        }
-        if (isBraceletPlatePreview) {
-          const selectedFont = getSelectedFont().toLowerCase();
-          const fontFamily = selectedFont.includes("eleg")
-            ? "'Segoe Script','Brush Script MT',cursive"
-            : selectedFont.includes("modern")
-              ? "Arial,Helvetica,sans-serif"
-              : "Georgia,'Times New Roman',serif";
-          [engravingPreviewText, expandedEngravingPreviewText].filter(Boolean).forEach(function (preview) {
-            preview.style.fontFamily = fontFamily;
-            preview.style.fontSize = "";
-            if (!engraving) return;
-            const width = preview.parentElement.clientWidth * 0.94;
-            const baseSize = parseFloat(getComputedStyle(preview).fontSize) || 16;
-            const estimatedSize = width / Math.max(1, engraving.length) * 1.3;
-            preview.style.fontSize = Math.max(5.5, Math.min(baseSize, estimatedSize)) + "px";
-            const renderedWidth = preview.scrollWidth;
-            if (renderedWidth > width) {
-              const fittedSize = parseFloat(preview.style.fontSize) * width / renderedWidth;
-              preview.style.fontSize = Math.max(5.5, fittedSize) + "px";
-            }
-          });
-        }
-        document.querySelectorAll("[data-engraving-thumb]").forEach(function (thumbPreview) {
-          thumbPreview.textContent = engraving;
-          thumbPreview.classList.toggle("has-engraving", Boolean(engraving));
-        });
-      }
-
       function updateHiddenInputs() {
         if (variantIndexInput) {
           variantIndexInput.value = selectedVariantIndex !== null ? selectedVariantIndex : "";
-        }
-        if (customizationSummaryInput) {
-          customizationSummaryInput.value = getCustomizationText();
-        }
-        if (fontNameInput) {
-          fontNameInput.value = getSelectedFont();
         }
       }
 
@@ -527,8 +442,8 @@
         }
 
         if (addToCartButton) {
-          addToCartButton.disabled = isUnavailable;
-          if (addToCartLabel) addToCartLabel.textContent = isUnavailable ? "Agotado" : "Agregar al carrito";
+          addToCartButton.disabled = isUnavailable || engravingUnavailable;
+          if (addToCartLabel) addToCartLabel.textContent = isUnavailable ? "Agotado" : engravingUnavailable ? "Grabado no disponible" : "Agregar al carrito";
         }
 
         if (stockState) {
@@ -599,7 +514,6 @@
       const closeImageButton = document.querySelector("[data-close-product-image]");
       if (openImageButton && imageDialog) openImageButton.addEventListener("click", function () {
         imageDialog.showModal();
-        updateEngravingPreview();
       });
       if (closeImageButton && imageDialog) closeImageButton.addEventListener("click", function () { imageDialog.close(); });
       if (imageDialog) {
@@ -621,17 +535,13 @@
         updateCharacterCount(input);
         input.addEventListener("input", function () {
           updateCharacterCount(input);
-          updateEngravingPreview();
           updateWhatsAppLink();
         });
       });
 
-      if (workshopNotes) workshopNotes.addEventListener("input", updateWhatsAppLink);
 
       fontOptions.forEach(function (radio) {
         radio.addEventListener("change", function () {
-          refreshFontPreview();
-          updateEngravingPreview();
           updateWhatsAppLink();
         });
       });
@@ -657,17 +567,6 @@
         });
       });
 
-      if (form) {
-        form.addEventListener("submit", function (event) {
-          const disabled = addToCartButton && addToCartButton.disabled;
-          if (disabled) {
-            event.preventDefault();
-            return;
-          }
-          updateHiddenInputs();
-        });
-      }
-
       if (variantButtons.length && variants.length) {
         const initialButton = selectedVariantIndex !== null ? variantButtons[selectedVariantIndex] : variantButtons[0];
         applyVariant(selectedVariant || variants[0], initialButton, selectedVariantIndex !== null ? selectedVariantIndex : 0);
@@ -678,8 +577,6 @@
         updateWhatsAppLink();
       }
 
-      refreshFontPreview();
-      updateEngravingPreview();
       updateLineTotal();
     })();
   </script>

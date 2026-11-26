@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const crypto = require("node:crypto");
+const { engravingOptions, readEngraving } = require("../services/engraving");
 const { pool } = require("../config/db");
 const express = require("express");
 const multer = require("multer");
@@ -92,18 +93,6 @@ function uploadedReviewPhotoUrl(file) {
   return `/uploads/reviews/${file.filename}`;
 }
 
-function safeCustomizationFilename(originalName = "fotograbado") {
-  const parsed = path.parse(originalName);
-  const base = String(parsed.name || "fotograbado")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60) || "fotograbado";
-  return base;
-}
-
 function extensionFromCustomizationMime(mimeType = "") {
   const map = {
     "image/jpeg": ".jpg",
@@ -113,24 +102,13 @@ function extensionFromCustomizationMime(mimeType = "") {
   return map[mimeType] || "";
 }
 
-const customizationUploadStorage = multer.diskStorage({
-  destination(req, file, cb) {
-    fs.mkdirSync(CUSTOMIZATION_UPLOAD_ROOT, { recursive: true });
-    cb(null, CUSTOMIZATION_UPLOAD_ROOT);
-  },
-  filename(req, file, cb) {
-    const ext = path.extname(file.originalname || "") || extensionFromCustomizationMime(file.mimetype);
-    const name = safeCustomizationFilename(file.originalname);
-    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, `${name}-${unique}${ext}`);
-  }
-});
-
 const customizationUpload = multer({
-  storage: customizationUploadStorage,
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: CUSTOMIZATION_UPLOAD_MAX_SIZE_MB * 1024 * 1024,
-    files: 1
+    files: 1,
+    fields: 100,
+    fieldSize: 8192
   },
   fileFilter(req, file, cb) {
     if (!CUSTOMIZATION_ALLOWED_UPLOAD_TYPES.has(file.mimetype)) {
@@ -140,10 +118,7 @@ const customizationUpload = multer({
   }
 });
 
-function uploadedCustomizationPhotoUrl(file) {
-  if (!file || !file.filename) return "";
-  return `/customization-assets/${file.filename}`;
-}
+const parseCustomization = customizationUpload.single("customizationPhoto");
 
 function findVariantIndex(product, item) {
   if (!product.hasVariants || !Array.isArray(product.variants)) return -1;
@@ -554,6 +529,9 @@ router.get("/product/:slug", async (req, res) => {
     defaultStock,
     defaultVariantUnavailable,
     productUnavailable,
+    engraving: engravingOptions(product),
+    engravingInvalid: req.query.engraving === "invalid",
+    engravingUploadInvalid: req.query.engraving === "photo",
     initialWhatsAppUrl,
     reviewSubmitted: req.query.review === "submitted",
     reviewInvalid: req.query.review === "invalid",
@@ -606,7 +584,12 @@ router.post("/product/:slug/reviews", reviewUpload.single("reviewPhoto"), async 
   }
 });
 
-router.post("/product/:slug/add-to-cart", customizationUpload.single("customizationPhoto"), async (req, res) => {
+router.post("/product/:slug/add-to-cart", (req, res, next) => {
+  parseCustomization(req, res, (error) => {
+    if (error) return res.redirect(`/product/${encodeURIComponent(req.params.slug)}?engraving=photo`);
+    next();
+  });
+}, async (req, res) => {
   try {
     const product = await Product.findOne({
       slug: req.params.slug,
@@ -615,6 +598,12 @@ router.post("/product/:slug/add-to-cart", customizationUpload.single("customizat
 
     if (!product) {
       return res.status(404).send("Producto no encontrado");
+    }
+
+    const options = engravingOptions(product);
+    const engraving = readEngraving(options, req.body);
+    if (options.unavailable || !engraving || (req.file && !options.photo)) {
+      return res.redirect(`/product/${product.slug}?engraving=invalid`);
     }
 
     const requestedQuantity = toPositiveInteger(req.body.quantity || 1);
@@ -657,18 +646,22 @@ router.post("/product/:slug/add-to-cart", customizationUpload.single("customizat
       product.mainImageUrl ||
       (product.gallery && product.gallery[0] ? product.gallery[0].url : "");
 
-    const customizationSummary = String(req.body.customizationSummary || "").trim();
-    const fontName = String(req.body.fontName || "").trim();
-    const customizationPhotoUrl = product.allowPhotoCustomization ? uploadedCustomizationPhotoUrl(req.file) : "";
+    const customizationSummary = engraving.summary;
+    const fontName = engraving.fontName;
+    const photoFilename = req.file
+      ? crypto.randomUUID() + extensionFromCustomizationMime(req.file.mimetype)
+      : "";
+    const customizationPhotoUrl = photoFilename ? `/customization-assets/${photoFilename}` : "";
 
     const cart = getSessionCart(req);
 
     const cartKey = [
       String(product._id),
       selectedVariant?.label || selectedVariant?.optionValue || "",
-      customizationSummary,
-      fontName,
-      customizationPhotoUrl
+      product.hasCustomization ? crypto.createHash("sha256")
+        .update(JSON.stringify([product.variants?.indexOf(selectedVariant), engraving.fields, fontName, customizationPhotoUrl])).digest("hex") : "",
+      "",
+      ""
     ].join("__");
 
     const existingIndex = cart.findIndex((item) => item.cartKey === cartKey);
@@ -677,6 +670,10 @@ router.post("/product/:slug/add-to-cart", customizationUpload.single("customizat
 
     if (finalQuantityToAdd <= 0) {
       return res.redirect(`/product/${product.slug}?stock=limited`);
+    }
+
+    if (photoFilename) {
+      await fs.promises.writeFile(path.join(CUSTOMIZATION_UPLOAD_ROOT, photoFilename), req.file.buffer, { flag: "wx", mode: 0o600 });
     }
 
     if (existingIndex >= 0) {
@@ -702,6 +699,7 @@ router.post("/product/:slug/add-to-cart", customizationUpload.single("customizat
         variantOptionName: selectedVariant?.optionName || "",
         variantOptionValue: selectedVariant?.optionValue || "",
         customizationSummary,
+        engravingFields: engraving.fields,
         customizationPhotoUrl,
         fontName
       });
@@ -843,6 +841,7 @@ router.post("/checkout", async (req, res) => {
       variantOptionName: item.variantOptionName || "",
       variantOptionValue: item.variantOptionValue || "",
       customizationSummary: item.customizationSummary || "",
+      engravingFields: item.engravingFields || [],
       customizationPhotoUrl: item.customizationPhotoUrl || "",
       fontName: item.fontName || ""
     }));

@@ -1,5 +1,15 @@
 # Matriz de pruebas · F0
 
+## Grabado sin vista previa
+
+| ID | Prueba ejecutada | Resultado |
+|---|---|---|
+| CUS-01-FORM | Pulsera de texto, ficha sintética de fotograbado y producto normal en Chromium a 390 y 1280 px | En los seis casos la galería se amplió sin desbordamiento. La pulsera mostró tres fuentes y el contador llegó a 9/20 al escribir «Valentina». La imagen quedó sin texto superpuesto. Solo la ficha de fotograbado ofreció el adjunto. |
+| CUS-05-FORM | Campo vacío, límite excedido, valor duplicado, tipografía inválida y configuración sin fuentes | La validación de servidor rechazó las entradas inválidas. Una ficha de texto sin fuentes muestra el aviso y deshabilita la compra. |
+| CUS-06-FORM / CUS-04 | Pedido de laboratorio con dos textos distintos para la misma pieza y un fotograbado | Ana y Eva quedaron en líneas distintas con sus fuentes en carrito, confirmación y panel de pedidos. La foto se abrió desde la sesión compradora y el panel autorizado. Otra sesión recibió HTTP 404. |
+
+La evidencia se limita al formulario de grabado y a la custodia del adjunto en el flujo existente. CUS-01-PREVIEW, abajo, queda como prueba histórica del diseño anterior.
+
 ## Checkout protegido · laboratorio MySQL · 26 de noviembre de 2026
 
 | ID | Criterio ejecutado | Resultado observado | Estado |
