@@ -40,6 +40,12 @@ La prueba de ventas pagadas y los imports son evidencia de laboratorio, no pagos
 
 Después de publicar `f458b29`, Auto-Deploy informó `deployed` con imagen `gaton-app:f458b29`. En el sitio público, `/` y `/shop` respondieron 200; Playwright volvió a abrir el menú en 390 × 844 y encontró exactamente los mismos siete enlaces y destinos, con el panel visible y `aria-expanded=true`. La consola registró un 404 de `/favicon.ico`, hallazgo previo y ajeno a este cambio.
 
+## Auditoría PDF · navegación Fragancias y filtros del catálogo · 26 de noviembre de 2026
+
+Cambios locales en `views/store/home.ejs`, `views/store/shop.ejs` y la configuración administrativa: el enlace/CTA de Fragancias usa `/#fragancias`; el destino se muestra fijo en administración. Se quitaron del catálogo el filtro selector, las chips y la etiqueta de género en las tarjetas, manteniendo intactos los datos de género y su captura administrativa.
+
+Verificación local: `npm test` 6/6; compilación EJS 3/3; Chromium 127.0.0.1:8081, inicio 200 y catálogo 200. Al pulsar el enlace principal Fragancias, URL `/#fragancias`, `scrollY=3897`, sección destino `top=91.6px`. En catálogo: búsqueda y categoría presentes, controles/valores de género ausentes, 15 tarjetas renderizadas. No desplegado ni verificado en producción.
+
 ## Ejecutado el 24 de noviembre de 2026
 
 Windows, Node 24.4.0, npm 11.4.2, MongoDB 7.0.24/WiredTiger real en replica set de un miembro, loopback y datos sintéticos. Comandos en [DEPLOYMENT](DEPLOYMENT.md), registro de salida en [baseline.txt](fase0/baseline.txt). Cada aserción detiene la prueba ante fallo.

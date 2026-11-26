@@ -16,10 +16,6 @@
     function categoryLabel(product) {
       return categoryMap && categoryMap[product.categoryId] ? categoryMap[product.categoryId].name : "Joyería";
     }
-    function genderLabel(value) {
-      const found = (genderOptions || []).find((option) => option.value === value);
-      return found ? found.label : "";
-    }
   %>
 
   <%- include("../partials/header") %>
@@ -48,16 +44,6 @@
           </select>
         </div>
 
-        <div class="ref10-filter-field">
-          <label>Género</label>
-          <select name="gender">
-            <option value="">Todos</option>
-            <% (genderOptions || []).forEach(option => { %>
-              <option value="<%= option.value %>" <%= currentGender === option.value ? "selected" : "" %>><%= option.label %></option>
-            <% }) %>
-          </select>
-        </div>
-
         <div class="ref10-filter-actions">
           <button type="submit"><%= siteSettings?.filterLabel || "Filtrar" %></button>
           <a href="/shop"><%= siteSettings?.clearLabel || "Limpiar" %></a>
@@ -69,12 +55,6 @@
       <a href="/shop" class="<%= !currentCategorySlug && !currentGender ? 'active' : '' %>">Todo</a>
       <% (categories || []).forEach(category => { %>
         <a href="/shop?category=<%= category.slug %>" class="<%= currentCategorySlug === category.slug ? 'active' : '' %>"><%= t(category.name) %></a>
-      <% }) %>
-    </section>
-
-    <section class="ref10-shop-gender-chips">
-      <% (genderOptions || []).forEach(option => { %>
-        <a href="/shop?<%= currentCategorySlug ? ('category=' + encodeURIComponent(currentCategorySlug) + '&') : '' %>gender=<%= option.value %>" class="<%= currentGender === option.value ? 'active' : '' %>"><%= option.label %></a>
       <% }) %>
     </section>
 
@@ -95,7 +75,7 @@
                 <% } %>
               </div>
               <div class="ref10-product-copy">
-                <small><%= t(categoryLabel(product)) %><% if (product.gender) { %> · <%= genderLabel(product.gender) %><% } %></small>
+                <small><%= t(categoryLabel(product)) %></small>
                 <h3><%= t(product.name) %></h3>
                 <% if (product.shortDescription) { %><p><%= t(product.shortDescription) %></p><% } %>
                 <div class="ref10-product-bottom">

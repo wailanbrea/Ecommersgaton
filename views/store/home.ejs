@@ -161,7 +161,7 @@
           <p><%= t(siteSettings?.fragranceText, "Aromas envolventes que complementan tu estilo. Edición limitada, embotellados con intención.") %></p>
         </div>
 
-        <p style="text-align:center"><a class="ref10-btn" href="<%= siteSettings?.fragranceButtonUrl || '/shop?category=fragancias' %>"><%= t(siteSettings?.fragranceButtonText, "Explorar Fragancias") %></a></p>
+        <p style="text-align:center"><a class="ref10-btn" href="/#fragancias"><%= t(siteSettings?.fragranceButtonText, "Explorar Fragancias") %></a></p>
         <div class="ref10-product-grid ref10-dark-product-grid">
           <% fragranceList.forEach((product, index) => { %>
             <a href="/product/<%= product.slug %>" class="ref10-product-card ref10-dark-product-card">

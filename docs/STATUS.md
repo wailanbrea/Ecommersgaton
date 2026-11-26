@@ -77,3 +77,7 @@ El propietario configuró el registro DNS `gaton.bsolutions.dev` (`A` → `147.9
 
 - Se crearon `deploy/linux/Dockerfile`, `deploy/linux/docker-compose.yml`, `deploy/linux/entrypoint.sh`, `deploy/linux/Dockerfile.dockerignore`, `deploy/linux/initial-catalog.json` (6 categorías, 15 productos, 1 configuración sin secretos), `scripts/bootstrap-catalog.js` y `deploy/linux/install-gaton-vps.sh`.
 - El instalador `install-gaton-vps.sh` fue copiado a `/home/bsdeploy/install-gaton-vps.sh` en `147.93.5.21` listo para ejecutarse como `root`.
+
+## Auditoría de GATON CAMBIOS .pdf · 26 de noviembre de 2026
+
+Se revisaron íntegramente las 2 páginas y se cotejaron los 9 puntos contra `main` (`40d0e61`) y producción (`40d0e61`). La primera clasificación se corrigió: el CTA de Fragancias estaba mal interpretado y el catálogo conservaba filtros de género no deseados. Ambos cambios están implementados y verificados localmente (Chromium, pruebas automáticas 6/6 y EJS 3/3); aún no se desplegaron ni se comprobaron en producción. No se tocaron datos productivos. Detalle por ID en [AUDITORIA_GATON_CAMBIOS_20261126.md](AUDITORIA_GATON_CAMBIOS_20261126.md) y evidencia en [TEST_MATRIX.md](TEST_MATRIX.md). Pendientes: desplegar/verificar GC-01 y GC-02, obtener logos originales y su asignación por ubicación, y sustituir la ubicación genérica del bloque Contacto por la dirección precisa.
