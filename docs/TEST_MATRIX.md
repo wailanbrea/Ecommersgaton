@@ -44,7 +44,9 @@ Después de publicar `f458b29`, Auto-Deploy informó `deployed` con imagen `gato
 
 Cambios locales en `views/store/home.ejs`, `views/store/shop.ejs` y la configuración administrativa: el enlace/CTA de Fragancias usa `/#fragancias`; el destino se muestra fijo en administración. Se quitaron del catálogo el filtro selector, las chips y la etiqueta de género en las tarjetas, manteniendo intactos los datos de género y su captura administrativa.
 
-Verificación local: `npm test` 6/6; compilación EJS 3/3; Chromium 127.0.0.1:8081, inicio 200 y catálogo 200. Al pulsar el enlace principal Fragancias, URL `/#fragancias`, `scrollY=3897`, sección destino `top=91.6px`. En catálogo: búsqueda y categoría presentes, controles/valores de género ausentes, 15 tarjetas renderizadas. No desplegado ni verificado en producción.
+Verificación local: `npm test` 6/6; compilación EJS 3/3; Chromium 127.0.0.1:8081, inicio 200 y catálogo 200. Al pulsar el enlace principal Fragancias, URL `/#fragancias`, `scrollY=3897`, sección destino `top=91.6px`. En catálogo: búsqueda y categoría presentes, controles/valores de género ausentes, 15 tarjetas renderizadas.
+
+Despliegue `0364187`: Auto-Deploy informó `deployed`, imagen y SHA activos `gaton-app:0364187`. `https://gaton.bsolutions.dev/health/ready`, `/` y `/shop` respondieron 200. La portada sirve el enlace y CTA `/#fragancias` y contiene `id=fragancias`; el catálogo no renderiza controles ni opciones de género, conserva búsqueda/categoría y muestra 15 tarjetas. Verificación de lectura, sin cambios de datos comerciales.
 
 ## Ejecutado el 24 de noviembre de 2026
 
