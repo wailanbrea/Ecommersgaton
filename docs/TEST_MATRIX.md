@@ -10,6 +10,14 @@
 
 La evidencia se limita al formulario de grabado y a la custodia del adjunto en el flujo existente. CUS-01-PREVIEW, abajo, queda como prueba histórica del diseño anterior.
 
+## Tipografías del personalizador de referencia · 26 de noviembre de 2026
+
+| ID | Criterio | Evidencia | Estado |
+|---|---|---|---|
+| CUS-01-FONTS | Selección validada y muestra visual de las diez fuentes de la página de referencia | El navegador encontró ambas listas en el selector de Moon Charm: Black Jack, Dancing Script, Great Vibes, Baskerville, Alex Brush, Lobster, Life Savers, Courier New, Impact y Rockwell. El conjunto legado Elegante/Clásica/Moderna se expande a esas diez; la selección sigue validada y persistida por nombre. | PENDING hasta correr pruebas y revisar render |
+
+La fuente Black Jack se muestra con un sustituto visual Satisfy; Baskerville, Impact y Rockwell usan Libre Baskerville, Anton y Roboto Slab cuando la fuente del sistema no existe. Las etiquetas conservan los nombres exactos de las opciones de referencia. No se copian las imágenes/archivos de fuentes del sitio externo.
+
 ## Checkout protegido · laboratorio MySQL · 26 de noviembre de 2026
 
 | ID | Criterio ejecutado | Resultado observado | Estado |

@@ -4,7 +4,7 @@ const { randomBytes, createHmac } = require("node:crypto");
 const fs = require("node:fs/promises");
 const path = require("node:path");
 const { after, test } = require("node:test");
-const { engravingOptions, readEngraving } = require("../src/services/engraving");
+const { MOON_CHARM_FONT_PRESET, engravingOptions, readEngraving } = require("../src/services/engraving");
 let closeDatabase;
 after(async () => { if (closeDatabase) await closeDatabase(); });
 
@@ -25,6 +25,20 @@ test("solo se guardan campos configurados y tipografías válidas", () => {
   assert.equal(engravingOptions({ ...textConfig, fontOptions: [] }).unavailable, true);
   assert.equal(engravingOptions({ hasCustomization: true, allowPhotoCustomization: true }).unavailable, false);
   assert.equal(engravingOptions({ allowPhotoCustomization: true }).photo, false);
+});
+
+test("expande el conjunto genérico existente a las diez tipografías de referencia", () => {
+  const legacyFonts = ["Elegante", "Clásica", "Moderna"].map((name) => ({ name }));
+  const options = engravingOptions({ ...textConfig, fontOptions: legacyFonts });
+  assert.deepEqual(options.fonts.map((font) => font.name), [
+    "Black Jack", "Dancing Script", "Great Vibes", "Baskerville", "Alex Brush",
+    "Lobster", "Life Savers", "Courier New", "Impact", "Rockwell"
+  ]);
+  assert.equal(options.fonts.length, MOON_CHARM_FONT_PRESET.length);
+  assert.equal(options.fonts.find((font) => font.name === "Great Vibes").sampleStyle, "great-vibes");
+  assert.equal(readEngraving(options, { engraving_0: "Ana", engravingFont: "Black Jack" }).fontName, "Black Jack");
+  assert.equal(readEngraving(options, { engraving_0: "Ana", engravingFont: "No existe" }), null);
+  assert.deepEqual(engravingOptions({ ...textConfig, fontOptions: [{ name: "Mis letras" }] }).fonts.map((font) => font.name), ["Mis letras"]);
 });
 
 test("grabados distintos y fotograbado privado llegan al pedido", {

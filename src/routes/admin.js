@@ -13,6 +13,7 @@ const { requireAdmin, redirectIfLoggedIn } = require("../middlewares/auth");
 const { attachAdminAccess } = require("../middlewares/adminAuthorization");
 const adminCsrf = require("../middlewares/adminCsrf");
 const slugify = require("../utils/slugify");
+const { normalizeFontOptions } = require("../services/engraving");
 
 const router = express.Router();
 
@@ -964,7 +965,7 @@ function productAdvancedConfig(product) {
     customizationUploadHelp: config.customizationUploadHelp || "",
     choiceGroups: Array.isArray(config.choiceGroups) ? config.choiceGroups : [],
     customizationFields: Array.isArray(config.customizationFields) ? config.customizationFields : [],
-    fontOptions: Array.isArray(config.fontOptions) ? config.fontOptions : [],
+    fontOptions: normalizeFontOptions(config.fontOptions),
     gallery: Array.isArray(config.gallery) ? config.gallery : []
   };
 }
@@ -1026,7 +1027,7 @@ router.get("/products/:id/edit", requireAdmin, async (req, res) => {
       tags: Array.isArray(product.tags) ? product.tags.join(", ") : "",
       variants: product.variants || [],
       customizationFields: product.customizationFields || [],
-      fontOptions: product.fontOptions || [],
+      fontOptions: normalizeFontOptions(product.fontOptions),
       gallery: product.gallery || []
     }
   });

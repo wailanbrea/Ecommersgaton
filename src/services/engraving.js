@@ -1,3 +1,33 @@
+const MOON_CHARM_FONT_PRESET = [
+  { name: "Black Jack", previewText: "Aa", sampleStyle: "black-jack" },
+  { name: "Dancing Script", previewText: "Aa", sampleStyle: "dancing-script" },
+  { name: "Great Vibes", previewText: "Aa", sampleStyle: "great-vibes" },
+  { name: "Baskerville", previewText: "Aa", sampleStyle: "baskerville" },
+  { name: "Alex Brush", previewText: "Aa", sampleStyle: "alex-brush" },
+  { name: "Lobster", previewText: "Aa", sampleStyle: "lobster" },
+  { name: "Life Savers", previewText: "Aa", sampleStyle: "life-savers" },
+  { name: "Courier New", previewText: "Aa", sampleStyle: "courier-new" },
+  { name: "Impact", previewText: "Aa", sampleStyle: "impact" },
+  { name: "Rockwell", previewText: "Aa", sampleStyle: "rockwell" }
+];
+
+function normalizeFontOptions(fontOptions) {
+  const fonts = Array.isArray(fontOptions)
+    ? fontOptions.filter((font) => typeof font?.name === "string" && font.name.trim())
+    : [];
+  const names = fonts.map((font) => font.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase()).sort();
+  if (names.length === 3 && names.join("|") === ["clasica", "elegante", "moderna"].sort().join("|")) {
+    return MOON_CHARM_FONT_PRESET.map((font) => ({ ...font }));
+  }
+  return fonts;
+}
+
+const FONT_SAMPLE_STYLES = new Map([
+  ["black jack", "black-jack"], ["dancing script", "dancing-script"], ["great vibes", "great-vibes"],
+  ["baskerville", "baskerville"], ["alex brush", "alex-brush"], ["lobster", "lobster"],
+  ["life savers", "life-savers"], ["courier new", "courier-new"], ["impact", "impact"], ["rockwell", "rockwell"]
+]);
+
 function engravingOptions(product) {
   const enabled = Boolean(product.hasCustomization);
   const photo = enabled && Boolean(product.allowPhotoCustomization);
@@ -9,11 +39,10 @@ function engravingOptions(product) {
       maxLength: Math.min(500, Math.max(1, Math.trunc(Number(field?.maxLength) || 100)))
     }))
     .filter((field) => field.label);
-  const fonts = (enabled && Array.isArray(product.fontOptions) ? product.fontOptions : [])
-    .filter((font) => typeof font?.name === "string" && font.name.trim())
+  const fonts = (enabled ? normalizeFontOptions(product.fontOptions) : [])
     .map((font) => {
-      const name = font.name.toLowerCase();
-      const sampleStyle = name.includes("eleg") ? "script" : name.includes("modern") ? "sans" : "serif";
+      const name = font.name.trim().toLowerCase();
+      const sampleStyle = font.sampleStyle || FONT_SAMPLE_STYLES.get(name) || (name.includes("eleg") ? "script" : name.includes("modern") ? "sans" : "serif");
       return { ...font, sampleStyle };
     });
   return {
@@ -43,4 +72,4 @@ function readEngraving(options, body) {
   return { fields, fontName, summary: summary.join(" | ") };
 }
 
-module.exports = { engravingOptions, readEngraving };
+module.exports = { MOON_CHARM_FONT_PRESET, normalizeFontOptions, engravingOptions, readEngraving };

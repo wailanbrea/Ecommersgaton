@@ -1,5 +1,9 @@
 # Gatón DO · Auditoría F0 del 24 de noviembre de 2026
 
+## Fuentes de personalización · 26 de noviembre de 2026
+
+La ficha de la pulsera configurada con el trío genérico Elegante/Clásica/Moderna ahora usa las diez opciones nombradas en el selector de la referencia: Black Jack, Dancing Script, Great Vibes, Baskerville, Alex Brush, Lobster, Life Savers, Courier New, Impact y Rockwell. El backend valida los nombres de la misma lista que muestra el formulario; las muestras se renderizan como texto y los nombres configurados por producto que no sean el trío genérico se conservan. La pantalla administrativa comparte la normalización para que sus opciones coincidan con la tienda. Evidencia y límites visuales en `TEST_MATRIX.md` bajo CUS-01-FONTS; el despliegue y la verificación productiva siguen pendientes.
+
 ## Avance técnico autorizado · 26 de noviembre de 2026
 
 Estado del checkout y custodia de fotos tras la auditoría del Master Prompt:
