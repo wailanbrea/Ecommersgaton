@@ -146,6 +146,15 @@ function toNumber(value, fallback = 0) {
   return Number.isNaN(parsed) ? fallback : parsed;
 }
 
+function parseCustomizationPriceDeltaMinor(value) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return 0;
+  if (!/^\d+(?:\.\d{1,2})?$/.test(raw)) return null;
+  const [whole, fraction = ""] = raw.split(".");
+  const minor = Number(whole) * 100 + Number(fraction.padEnd(2, "0"));
+  return Number.isSafeInteger(minor) && minor <= 100_000_000 ? minor : null;
+}
+
 function normalizeGender(value = "") {
   return String(value || "").trim().toLowerCase();
 }
@@ -231,6 +240,7 @@ function buildCustomizationFieldsFromBody(body) {
   const placeholders = ensureArray(body.customPlaceholder);
   const requireds = ensureArray(body.customRequired);
   const maxLengths = ensureArray(body.customMaxLength);
+  const priceDeltas = ensureArray(body.customPriceDelta);
 
   const maxLength = Math.max(
     keys.length,
@@ -238,9 +248,11 @@ function buildCustomizationFieldsFromBody(body) {
     placeholders.length,
     requireds.length,
     maxLengths.length
+    ,priceDeltas.length
   );
 
   const fields = [];
+  let requiredIndex = 0;
 
   for (let i = 0; i < maxLength; i++) {
     const key = String(keys[i] || "").trim();
@@ -249,12 +261,21 @@ function buildCustomizationFieldsFromBody(body) {
 
     if (!key && !label && !placeholder) continue;
 
+    const requiredValue = String(requireds[requiredIndex] || "");
+    let required = requiredValue === "true";
+    requiredIndex += 1;
+    if (requiredValue === "false" && String(requireds[requiredIndex] || "") === "true") {
+      required = true;
+      requiredIndex += 1;
+    }
+
     fields.push({
       key,
       label,
       placeholder,
-      required: String(requireds[i] || "") === "true",
-      maxLength: toNumber(maxLengths[i], 100)
+      required,
+      maxLength: toNumber(maxLengths[i], 100),
+      priceDeltaMinor: parseCustomizationPriceDeltaMinor(priceDeltas[i])
     });
   }
 
@@ -909,6 +930,15 @@ router.post("/products/new", requireAdmin, upload.any(), adminCsrf, async (req, 
       });
     }
 
+    if (formData.customizationFields.some((field) => field.priceDeltaMinor === null)) {
+      return res.status(400).render("admin/products/new", {
+        categories,
+        genderOptions: GENDER_OPTIONS,
+        error: "El costo adicional de cada personalización debe ser un monto no negativo con hasta dos decimales.",
+        formData
+      });
+    }
+
     const exists = await Product.findOne({ slug: finalSlug });
     if (exists) {
       return res.status(400).render("admin/products/new", {
@@ -1045,6 +1075,15 @@ router.post("/products/:id/edit", requireAdmin, upload.any(), adminCsrf, async (
 
     const formData = productFormDataFromBody(req.body, req)
     const finalSlug = slugify(formData.slug || formData.name || "");
+
+    if (formData.customizationFields.some((field) => field.priceDeltaMinor === null)) {
+      return res.status(400).render("admin/products/edit", {
+        categories,
+        genderOptions: GENDER_OPTIONS,
+        error: "El costo adicional de cada personalización debe ser un monto no negativo con hasta dos decimales.",
+        formData: { ...formData, _id: existingProduct._id }
+      });
+    }
 
     const duplicated = await Product.findOne({
       slug: finalSlug,
@@ -1310,4 +1349,5 @@ router.post("/settings", requireAdmin, upload.any(), adminCsrf, async (req, res)
 router.use(requireAdmin, require("./admin-tools"));
 router.use(requireAdmin, require("./admin-access"));
 
+router.buildCustomizationFieldsFromBody = buildCustomizationFieldsFromBody;
 module.exports = router;

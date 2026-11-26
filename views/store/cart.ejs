@@ -29,6 +29,12 @@
           Algunos productos cambiaron de disponibilidad. Revisa las cantidades antes de continuar.
         </div>
       <% } %>
+      <% if (hasCustomizationIssues || typeof query !== 'undefined' && query.customization === 'changed') { %>
+        <div role="alert" class="mb-6 rounded-xl bg-red-50 border border-red-200 text-red-800 px-4 py-3 text-sm">La configuración de una personalización cambió y ya no coincide con este carrito. Quita ese artículo y vuelve a configurarlo.</div>
+      <% } %>
+      <% if (pricesUpdated || typeof query !== 'undefined' && query.prices === 'updated') { %>
+        <div role="status" class="mb-6 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 px-4 py-3 text-sm">El precio de una personalización cambió. Revisa el nuevo total antes de continuar.</div>
+      <% } %>
 
       <div class="grid grid-cols-1 lg:grid-cols-[1.5fr,0.8fr] gap-8">
         <div class="space-y-4">
@@ -58,6 +64,9 @@
                         <p class="text-sm text-stone-500 mt-2">
                           Personalización: <%= item.customizationSummary %>
                         </p>
+                      <% } %>
+                      <% if (item.customizationSurcharge > 0) { %>
+                        <p class="text-sm text-stone-500 mt-1">Adicional de personalización: RD$ <%= Number(item.customizationSurcharge).toFixed(2) %></p>
                       <% } %>
 
                       <% if (item.customizationPhotoUrl) { %>
@@ -121,7 +130,7 @@
 
             <%- include("../partials/basket-summary", { amount: subtotal }) %>
             <div class="mt-8 space-y-3">
-              <% if (hasStockIssues) { %>
+              <% if (hasStockIssues || hasCustomizationIssues) { %>
                 <span class="block text-center rounded-xl bg-stone-300 text-stone-600 px-5 py-3 font-medium cursor-not-allowed">
                   Revisa el stock antes de continuar
                 </span>

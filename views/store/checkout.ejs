@@ -16,6 +16,8 @@
       <h1 class="text-4xl font-semibold mt-2">Completa tu pedido</h1>
     </section>
 
+    <% if (pricesUpdated) { %><div role="status" class="mb-6 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 px-4 py-3 text-sm">El precio de una personalización cambió. Revisa el nuevo total y vuelve a confirmar tu pedido.</div><% } %>
+
     <div class="grid grid-cols-1 lg:grid-cols-[1.2fr,0.8fr] gap-8">
       <section class="bg-white border border-stone-200 rounded-3xl p-6 shadow-sm">
         <form action="/checkout" method="post" id="checkoutForm" class="space-y-6">
@@ -84,6 +86,9 @@
                 <% } %>
                 <% if (item.customizationSummary) { %>
                   <div class="text-sm text-stone-500 mt-1">Personalización: <%= item.customizationSummary %></div>
+                <% } %>
+                <% if (item.customizationSurcharge > 0) { %>
+                  <div class="text-sm text-stone-500 mt-1">Adicional de personalización: RD$ <%= Number(item.customizationSurcharge).toFixed(2) %></div>
                 <% } %>
                 <% if (item.customizationPhotoUrl) { %>
                   <div class="text-sm text-stone-500 mt-1">Foto cargada para fotograbado: <a href="<%= item.customizationPhotoUrl %>" target="_blank" class="text-[#016B83] underline">ver imagen</a></div>

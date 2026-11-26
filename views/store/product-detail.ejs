@@ -112,6 +112,7 @@
             <span id="productPrice" class="product-detail-price">RD$ <%= Number(defaultPrice || 0).toLocaleString('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
             <span id="productCompareAt" class="product-detail-compare <%= defaultCompareAt && defaultCompareAt > defaultPrice ? '' : 'hidden' %>">RD$ <%= Number(defaultCompareAt || 0).toLocaleString('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
           </div>
+          <% if (engraving.fields.length) { %><p class="text-sm text-stone-600" id="productPriceBreakdown">Precio base <span id="productBasePriceText">RD$ <%= Number(defaultPrice || 0).toLocaleString('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span> · Personalización adicional <span id="productCustomizationSurcharge">RD$ 0.00</span></p><% } %>
           <div class="product-detail-stock <%= productUnavailable ? 'is-unavailable' : '' %>" id="stockState">
             <% if (productUnavailable) { %>Este producto está agotado.<% } else { %>Disponible: <%= defaultStock %><% } %>
           </div>
@@ -137,12 +138,16 @@
               <fieldset class="product-customization-group">
                 <legend>Personalización</legend>
                 <% engraving.fields.forEach(function(field, index) { %>
-                  <% const fieldId = 'custom-field-' + index; const limit = field.maxLength; %>
+                  <% const fieldId = 'custom-field-' + index; const previewId = fieldId + '-preview'; const limit = field.maxLength; %>
                   <div class="product-customization-field">
-                    <label for="<%= fieldId %>"><%= field.label %><% if (field.required) { %><span class="required-mark"> *</span><% } %></label>
+                    <label for="<%= fieldId %>"><%= field.label %><% if (field.required) { %><span class="required-mark"> *</span><% } else { %><span class="text-stone-500"> (opcional)</span><% } %><% if (field.priceDeltaMinor > 0) { %><span class="text-stone-600"> (+RD$ <%= (field.priceDeltaMinor / 100).toFixed(2) %>)</span><% } else { %><span class="text-stone-500"> (incluido)</span><% } %></label>
                     <div class="product-customization-input-wrap">
-                      <input id="<%= fieldId %>" type="text" name="<%= field.inputName %>" class="customization-input" data-label="<%= field.label %>" data-required="<%= field.required ? 'true' : 'false' %>" placeholder="<%= field.placeholder || '' %>" maxlength="<%= limit %>" <% if (field.required) { %>required<% } %> aria-describedby="<%= fieldId %>-count">
+                      <input id="<%= fieldId %>" type="text" name="<%= field.inputName %>" class="customization-input" data-label="<%= field.label %>" data-required="<%= field.required ? 'true' : 'false' %>" data-price-delta-minor="<%= field.priceDeltaMinor || 0 %>" placeholder="<%= field.placeholder || '' %>" maxlength="<%= limit %>" <% if (field.required) { %>required<% } %> aria-describedby="<%= fieldId %>-count">
                       <span class="product-character-count" id="<%= fieldId %>-count" data-character-count="<%= fieldId %>">0/<%= limit %></span>
+                    </div>
+                    <div class="product-customization-live-preview" aria-label="Vista previa de <%= field.label %>">
+                      <span class="product-customization-live-preview__caption">Vista previa · <%= field.label %></span>
+                      <span class="product-font-sample product-font-sample--serif product-customization-live-preview__text" id="<%= previewId %>">Tu texto</span>
                     </div>
                   </div>
                 <% }) %>
@@ -150,18 +155,20 @@
             <% } %>
 
             <% if (engraving.fields.length && engraving.fonts.length) { %>
-              <fieldset class="product-customization-group">
-                <legend>Tipografía <span class="required-mark">*</span></legend>
-                <div class="product-font-options" id="fontPicker">
-                  <% engraving.fonts.forEach(function(font) { %>
-                    <label class="product-font-option">
-                      <input type="radio" name="engravingFont" value="<%= font.name %>" class="font-option" required>
-                      <% if (font.previewImageUrl) { %><img src="<%= font.previewImageUrl %>" alt=""><% } else { %><span class="product-font-sample product-font-sample--<%= font.sampleStyle %>" aria-hidden="true"><%= font.previewText || 'Aa' %></span><% } %>
-                      <span><%= font.name %></span>
-                    </label>
-                  <% }) %>
-                </div>
-              </fieldset>
+              <% engraving.fields.forEach(function(field, fieldIndex) { %>
+                <fieldset class="product-customization-group product-font-group" data-font-group-for="<%= field.inputName %>" <% if (fieldIndex > 0) { %>hidden<% } %>>
+                  <legend>Tipografía · <%= field.label %></legend>
+                  <div class="product-font-options" id="fontPicker-<%= fieldIndex %>">
+                    <% engraving.fonts.forEach(function(font, fontIndex) { %>
+                      <label class="product-font-option">
+                        <input type="radio" name="<%= field.fontInputName %>" value="<%= font.name %>" class="font-option" data-font-for="<%= fieldIndex %>" data-preview-style="<%= font.sampleStyle %>" <%= fontIndex === 0 ? 'checked' : '' %>>
+                        <% if (font.previewImageUrl) { %><img src="<%= font.previewImageUrl %>" alt=""><% } else { %><span class="product-font-sample product-font-sample--<%= font.sampleStyle %>" aria-hidden="true"><%= font.previewText || 'Aa' %></span><% } %>
+                        <span><%= font.name %></span>
+                      </label>
+                    <% }) %>
+                  </div>
+                </fieldset>
+              <% }) %>
             <% } %>
 
             <% if (engraving.photo) { %>
@@ -356,6 +363,8 @@
       const addToCartButton = document.getElementById("addToCartButton");
       const addToCartLabel = addToCartButton && addToCartButton.querySelector("span");
       const lineTotalEl = document.getElementById("productLineTotal");
+      const basePriceTextEl = document.getElementById("productBasePriceText");
+      const surchargeTextEl = document.getElementById("productCustomizationSurcharge");
 
       let selectedVariantIndex = variants.length ? (defaultVariantIndex !== null ? defaultVariantIndex : 0) : null;
       let selectedVariant = selectedVariantIndex !== null ? variants[selectedVariantIndex] : null;
@@ -380,29 +389,58 @@
         return checked ? checked.value : "";
       }
 
+      function updateEngravingPreviews() {
+        customizationInputs.forEach(function (input, index) {
+          const selectedFont = document.querySelector('.font-option[data-font-for="' + index + '"]:checked');
+          const previewStyle = selectedFont?.dataset.previewStyle || "serif";
+          const safeStyle = /^[a-z0-9-]{1,40}$/i.test(previewStyle) ? previewStyle : "serif";
+          const preview = document.getElementById(input.id + "-preview");
+          if (!preview) return;
+
+          preview.textContent = (input.value || "").trim() || "Tu texto";
+          Array.from(preview.classList)
+            .filter(function (className) { return className.startsWith("product-font-sample--"); })
+            .forEach(function (className) { preview.classList.remove(className); });
+          preview.classList.add("product-font-sample--" + safeStyle);
+        });
+      }
+
       function getCustomizationText() {
         const parts = [];
 
-        customizationInputs.forEach(function (input) {
+        customizationInputs.forEach(function (input, index) {
           const value = (input.value || "").trim();
           const label = input.dataset.label || "Dato";
           if (value) {
             parts.push(label + ": " + value);
+            const selectedFont = document.querySelector('.font-option[data-font-for="' + index + '"]:checked');
+            if (selectedFont) parts.push("Tipografía " + label + ": " + selectedFont.value);
           }
         });
-
-        const font = getSelectedFont();
-        if (font) {
-          parts.push("Tipografía: " + font);
-        }
 
         return parts.join(" | ");
       }
 
+      function updateFontGroupVisibility() {
+        customizationInputs.forEach(function (input, index) {
+          const group = document.querySelector('[data-font-group-for="' + input.name + '"]');
+          if (!group) return;
+          group.hidden = index > 0 && !(input.value || "").trim();
+        });
+      }
+
       function updateLineTotal() {
         if (!lineTotalEl) return;
-        const unitPrice = Number(selectedVariant?.price ?? basePrice ?? 0);
+        const baseUnitPrice = Number(selectedVariant?.price ?? basePrice ?? 0);
+        const surchargeMinor = Array.from(customizationInputs).reduce(function (sum, input) {
+          return sum + ((input.value || "").trim() ? Math.max(0, Number(input.dataset.priceDeltaMinor || 0)) : 0);
+        }, 0);
+        const surcharge = surchargeMinor / 100;
+        const unitPrice = baseUnitPrice + surcharge;
         const quantity = Math.max(1, Number(quantityInput?.value || 1));
+        if (priceEl) priceEl.textContent = formatPrice(unitPrice);
+        if (basePriceTextEl) basePriceTextEl.textContent = formatPrice(baseUnitPrice);
+        if (surchargeTextEl) surchargeTextEl.textContent = formatPrice(surcharge);
         lineTotalEl.textContent = formatPrice(unitPrice * quantity);
       }
 
@@ -538,16 +576,23 @@
         updateCharacterCount(input);
         input.addEventListener("input", function () {
           updateCharacterCount(input);
+          updateFontGroupVisibility();
+          updateEngravingPreviews();
           updateWhatsAppLink();
+          updateLineTotal();
         });
       });
 
 
       fontOptions.forEach(function (radio) {
         radio.addEventListener("change", function () {
+          updateEngravingPreviews();
           updateWhatsAppLink();
         });
       });
+
+      updateFontGroupVisibility();
+      updateEngravingPreviews();
 
       if (quantityInput) {
         quantityInput.addEventListener("input", function () {

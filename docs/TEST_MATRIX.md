@@ -117,7 +117,7 @@ Todos los escenarios completos quedan pendientes. Las observaciones parciales or
 | T02 | Categorías creadas admin, géneros separados, oferta tarjeta | navegación dinámica, filtros combinados correctos y precio original/actual | PENDING · B08 alta y filtro; oferta y géneros pendientes |
 | T03 | Variantes color/talla y SKU archivado | combinación exacta, stock correcto, sin sustitución automática | PENDING · Sin ejecución del escenario |
 | T04 | 360/390/768/1024/1440 px y zoom 200% | sin overflow, drawer accesible, compra completa móvil | PENDING · B07 solo ancho |
-| T05 | Configurador múltiples tipos, fuentes, caras, imágenes | preview válida y snapshot reproducible; error explícito ante opción inválida | PENDING · B07 prototipo aislado |
+| T05 | Configurador múltiples tipos, fuentes, caras, imágenes | preview válida y snapshot reproducible; error explícito ante opción inválida | PENDING · vista tipográfica por campo implementada en worktree aislado; falta probar fuente, dos caras y conservación en carrito/pedido |
 | T06 | Dos diseños de un SKU, cantidad agregada > stock | no se vende por encima de total disponible; líneas independientes | PENDING · Sin ejecución del escenario |
 | T07 | Upload inválido, asset de otro cliente, acceso a foto directa | rechazo, autorización y almacenamiento privado | PENDING · Sin ejecución del escenario |
 | T08 | Cambio de precio/plantilla/cupón/envío entre carrito y pago | diff y reconfirmación; total autorizado idéntico al cobrado | PENDING · Sin ejecución del escenario |
@@ -173,6 +173,8 @@ Windows, Node 24.4.0, npm 11.4.2, MongoDB 7.0.24 y MariaDB 11.4.12 en loopback. 
 | ID | Criterio ejecutado | Resultado observado | Estado |
 |---|---|---|---|
 | CUS-01-PREVIEW | Editar texto, reflejarlo en la placa y en la imagen ampliada; cambiar tipografía; ajustar texto al ancho en móvil | Ficha local respondió 200. En Chromium a 390×844, “Valentina” se reflejó en la placa principal y en el modal; Clásica/Elegante cambiaron el estilo. Un texto de 20 caracteres quedó dentro de la zona, sin desbordamiento. La imagen cargó y la consola no mostró errores de aplicación (aviso existente de Tailwind CDN). Con costo de prueba RD$500, precio RD$1,000 y stock 10, se agregó al carrito y se comprobó miniatura, personalización, subtotal RD$1,000 y disponibilidad 10; no se hizo checkout. | VERIFIED · caso acotado |
+
+| CUS-01-PRICE-FONTS | Grabado frontal incluido y trasero opcional +RD$200; fuentes independientes por cara; precio y selector trasero condicionales; validación servidor y snapshot pedido | `npm test` con MySQL local opt-in: 18 aprobadas, 0 fallidas, 0 omitidas. Integración cubrió precio RD$1,290 sin reverso, RD$1,490 al completar reverso, manipulación de recargo ignorada y fuentes separadas conservadas en pedido. En navegador local: selector frontal visible; selector trasero aparece al escribir y permite otra fuente; al borrar texto desaparece selector y el precio vuelve a RD$1,290. | VERIFIED · criterios de este caso en laboratorio |
 
 El caso no verifica el configurador integral CUS-01 ni el editor Canvas/SVG CUS-02. Los valores costo/venta/stock son exclusivamente locales y no se cargaron a producción; no hubo pedido ni comunicación externa.
 

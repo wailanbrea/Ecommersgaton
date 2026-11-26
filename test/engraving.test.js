@@ -4,7 +4,13 @@ const { randomBytes, createHmac } = require("node:crypto");
 const fs = require("node:fs/promises");
 const path = require("node:path");
 const { after, test } = require("node:test");
-const { MOON_CHARM_FONT_PRESET, engravingOptions, readEngraving } = require("../src/services/engraving");
+const {
+  MOON_CHARM_FONT_PRESET,
+  engravingOptions,
+  readEngraving,
+  priceCustomizationSnapshot,
+  quoteUnitPrice
+} = require("../src/services/engraving");
 let closeDatabase;
 after(async () => { if (closeDatabase) await closeDatabase(); });
 
@@ -39,6 +45,46 @@ test("expande el conjunto genérico existente a las diez tipografías de referen
   assert.equal(readEngraving(options, { engraving_0: "Ana", engravingFont: "Black Jack" }).fontName, "Black Jack");
   assert.equal(readEngraving(options, { engraving_0: "Ana", engravingFont: "No existe" }), null);
   assert.deepEqual(engravingOptions({ ...textConfig, fontOptions: [{ name: "Mis letras" }] }).fonts.map((font) => font.name), ["Mis letras"]);
+});
+
+test("cotiza cargos por campo solo cuando el cliente escribe y usa la tarifa configurada por servidor", () => {
+  const product = {
+    hasCustomization: true,
+    customizationFields: [
+      { key: "front", label: "Texto delantero", required: true, maxLength: 20, priceDeltaMinor: 0 },
+      { key: "back", label: "Texto de la parte trasera", required: false, maxLength: 20, priceDeltaMinor: 20_000 }
+    ],
+    fontOptions: [{ name: "Clásica" }, { name: "Moderna" }]
+  };
+  const options = engravingOptions(product);
+  const frontOnly = readEngraving(options, { engraving_0: "GATON", engraving_1: "", engravingFont_0: "Clásica", customPriceDelta: "0" });
+  const bothSides = readEngraving(options, { engraving_0: "GATON", engraving_1: "WAILAN", engravingFont_0: "Clásica", engravingFont_1: "Moderna", customPriceDelta: "0", priceDeltaMinor: "0" });
+  assert.equal(quoteUnitPrice(1290, frontOnly).unitPrice, 1290);
+  assert.equal(quoteUnitPrice(1290, frontOnly).customizationSurcharge, 0);
+  assert.equal(quoteUnitPrice(1290, bothSides).unitPrice, 1490);
+  assert.equal(quoteUnitPrice(1290, bothSides).customizationSurcharge, 200);
+  assert.match(bothSides.summary, /Texto de la parte trasera: WAILAN \(\+RD\$ 200\.00\) \| Tipografía Texto de la parte trasera: Moderna/);
+  const snapshot = priceCustomizationSnapshot(options, bothSides.fields, bothSides.fontSelections);
+  assert.equal(quoteUnitPrice(1290, snapshot).unitPrice, 1490);
+  assert.deepEqual(bothSides.fields.map((field) => field.fontName), ["Clásica", "Moderna"]);
+  assert.equal(engravingOptions({ ...product, customizationFields: [{ ...product.customizationFields[1], priceDeltaMinor: -1 }] }).unavailable, true);
+});
+
+test("el formulario de administración conserva obligatoriedad por campo y guarda el costo en centavos", () => {
+  const adminRoutes = require("../src/routes/admin");
+  const fields = adminRoutes.buildCustomizationFieldsFromBody({
+    customKey: ["front", "back"],
+    customLabel: ["Texto delantero", "Texto trasero"],
+    customPlaceholder: ["", "Opcional"],
+    customRequired: ["false", "true", "false"],
+    customMaxLength: ["20", "20"],
+    customPriceDelta: ["0.00", "200.00"]
+  });
+  assert.deepEqual(fields.map(({ required, priceDeltaMinor }) => ({ required, priceDeltaMinor })), [
+    { required: true, priceDeltaMinor: 0 },
+    { required: false, priceDeltaMinor: 20_000 }
+  ]);
+  assert.equal(adminRoutes.buildCustomizationFieldsFromBody({ customLabel: "Reverso", customPriceDelta: "-2" })[0].priceDeltaMinor, null);
 });
 
 test("grabados distintos y fotograbado privado llegan al pedido", {
@@ -99,6 +145,16 @@ test("grabados distintos y fotograbado privado llegan al pedido", {
     return `/product/${product.slug}`;
   }
   const textRoute = await fixture("texto", textConfig);
+  const braceletRoute = await fixture("brazalete", {
+    basePrice: 1290,
+    hasCustomization: true,
+    gallery: [{ type: "image", url: "/images/muestras-carrito/brazaletes-7-reverso-liso.png", altText: "Reverso liso de la placa del brazalete" }],
+    customizationFields: [
+      { key: "front", label: "Texto de la parte delantera", required: true, maxLength: 20, priceDeltaMinor: 0 },
+      { key: "back", label: "Texto de la parte trasera", required: false, maxLength: 20, priceDeltaMinor: 20_000 }
+    ],
+    fontOptions: [{ name: "Clásica" }, { name: "Moderna" }]
+  });
   const photoRoute = await fixture("foto", { hasCustomization: true, allowPhotoCustomization: true });
   const regularRoute = await fixture("normal", {});
   const incompleteRoute = await fixture("sin-fuentes", { ...textConfig, fontOptions: [] });
@@ -110,12 +166,26 @@ test("grabados distintos y fotograbado privado llegan al pedido", {
   assert.match(await (await request(photoRoute)).text(), /name="customizationPhoto"/);
   assert.doesNotMatch(await (await request(regularRoute)).text(), /name="engravingFont"|name="customizationPhoto"/);
   assert.match(await (await request(incompleteRoute)).text(), /Grabado no disponible/);
+  const braceletHtml = await (await request(braceletRoute)).text();
+  assert.match(braceletHtml, /Texto de la parte trasera.*\+RD\$ 200\.00/);
+  assert.match(braceletHtml, /brazaletes-7-reverso-liso\.png/);
+  assert.match(braceletHtml, /productCustomizationSurcharge/);
+  assert.match(braceletHtml, /name="engravingFont_0"/);
+  assert.match(braceletHtml, /name="engravingFont_1"/);
 
   const addText = (value, font) => request(textRoute + "/add-to-cart", new URLSearchParams({ engraving_0: value, engravingFont: font }));
   assert.match((await addText("Ana", "Inválida")).headers.get("location"), /engraving=invalid/);
   assert.match((await addText("Andrea123", "Clásica")).headers.get("location"), /engraving=invalid/);
   assert.match((await addText("Ana", "Clásica")).headers.get("location"), /cart=added/);
   assert.match((await addText("Eva", "Moderna")).headers.get("location"), /cart=added/);
+  const addBracelet = (back) => request(braceletRoute + "/add-to-cart", new URLSearchParams({
+    engraving_0: "GATON", engraving_1: back, engravingFont_0: "Clásica", engravingFont_1: "Moderna", customPriceDelta: "0"
+  }));
+  assert.match((await addBracelet("")).headers.get("location"), /cart=added/);
+  const frontOnlyCart = await (await request("/cart")).text();
+  assert.match(frontOnlyCart, /Texto de la parte delantera: GATON/);
+  assert.doesNotMatch(frontOnlyCart, /Adicional de personalización: RD\$ 200\.00/);
+  assert.match((await addBracelet("WAILAN")).headers.get("location"), /cart=added/);
   const form = new FormData();
   const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a0iAAAAAASUVORK5CYII=", "base64");
   form.set("customizationPhoto", new Blob([png], { type: "image/png" }), "prueba.png");
@@ -124,6 +194,8 @@ test("grabados distintos y fotograbado privado llegan al pedido", {
   const cart = await (await request("/cart")).text();
   assert.match(cart, /Ana \| Tipografía: Clásica/);
   assert.match(cart, /Eva \| Tipografía: Moderna/);
+  assert.match(cart, /Texto de la parte trasera: WAILAN \(\+RD\$ 200\.00\) \| Tipografía Texto de la parte trasera: Moderna/);
+  assert.match(cart, /Adicional de personalización: RD\$ 200\.00/);
   const asset = cart.match(/href="(\/customization-assets\/[a-f0-9-]+\.png)"/)?.[1];
   assert.ok(asset);
   assets.push(asset);
@@ -142,8 +214,13 @@ test("grabados distintos y fotograbado privado llegan al pedido", {
   const orderId = confirmation.split("/").pop();
   orderIds.push(orderId);
   const order = await Order.findById(orderId).lean();
-  assert.deepEqual(order.items.map((item) => item.engravingFields.map((field) => field.value)), [["Ana"], ["Eva"], []]);
-  assert.deepEqual(order.items.map((item) => item.fontName), ["Clásica", "Moderna", ""]);
+  assert.deepEqual(order.items.map((item) => item.engravingFields.map((field) => field.value)), [["Ana"], ["Eva"], ["GATON"], ["GATON", "WAILAN"], []]);
+  assert.deepEqual(order.items.map((item) => item.fontName), ["Clásica", "Moderna", "Clásica", "", ""]);
+  const braceletOrderItems = order.items.filter((item) => item.productSlug === `${prefix}-brazalete`);
+  assert.deepEqual(braceletOrderItems.map((item) => item.unitPrice), [1290, 1490]);
+  assert.deepEqual(braceletOrderItems.map((item) => item.customizationSurcharge), [0, 200]);
+  assert.deepEqual(braceletOrderItems.map((item) => item.baseUnitPrice), [1290, 1290]);
+  assert.deepEqual(braceletOrderItems.map((item) => item.engravingFields.map((field) => field.fontName)), [["Clásica"], ["Clásica", "Moderna"]]);
   assert.match(await (await request(confirmation)).text(), /Eva \| Tipografía: Moderna/);
   assert.equal((await request(asset)).status, 200);
   assert.equal((await request(asset, null, visitor)).status, 404);

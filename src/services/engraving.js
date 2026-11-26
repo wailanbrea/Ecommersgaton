@@ -22,6 +22,24 @@ function normalizeFontOptions(fontOptions) {
   return fonts;
 }
 
+function normalizePriceDeltaMinor(value) {
+  if (value === undefined || value === null || value === "") return 0;
+  const amount = Number(value);
+  if (!Number.isSafeInteger(amount) || amount < 0 || amount > 100_000_000) return null;
+  return amount;
+}
+
+function toMinorUnits(amount) {
+  const number = Number(amount);
+  if (!Number.isFinite(number) || number < 0) return null;
+  const minor = Math.round(number * 100);
+  return Number.isSafeInteger(minor) ? minor : null;
+}
+
+function fromMinorUnits(amount) {
+  return Number(amount || 0) / 100;
+}
+
 const FONT_SAMPLE_STYLES = new Map([
   ["black jack", "black-jack"], ["dancing script", "dancing-script"], ["great vibes", "great-vibes"],
   ["baskerville", "baskerville"], ["alex brush", "alex-brush"], ["lobster", "lobster"],
@@ -31,12 +49,15 @@ const FONT_SAMPLE_STYLES = new Map([
 function engravingOptions(product) {
   const enabled = Boolean(product.hasCustomization);
   const photo = enabled && Boolean(product.allowPhotoCustomization);
-  const fields = (enabled && Array.isArray(product.customizationFields) ? product.customizationFields : [])
+  const configuredFields = enabled && Array.isArray(product.customizationFields) ? product.customizationFields : [];
+  const fields = configuredFields
     .map((field, index) => ({
       ...field,
       inputName: `engraving_${index}`,
+      fontInputName: configuredFields.length === 1 ? "engravingFont" : `engravingFont_${index}`,
       label: String(field?.label || field?.key || "").trim(),
-      maxLength: Math.min(500, Math.max(1, Math.trunc(Number(field?.maxLength) || 100)))
+      maxLength: Math.min(500, Math.max(1, Math.trunc(Number(field?.maxLength) || 100))),
+      priceDeltaMinor: normalizePriceDeltaMinor(field?.priceDeltaMinor)
     }))
     .filter((field) => field.label);
   const fonts = (enabled ? normalizeFontOptions(product.fontOptions) : [])
@@ -49,7 +70,7 @@ function engravingOptions(product) {
     photo,
     fields,
     fonts,
-    unavailable: enabled && ((!fields.length && !photo) || (fields.length > 0 && !fonts.length))
+    unavailable: enabled && ((!fields.length && !photo) || (fields.length > 0 && !fonts.length) || fields.some((field) => field.priceDeltaMinor === null))
   };
 }
 
@@ -60,16 +81,64 @@ function readEngraving(options, body) {
     if (typeof raw !== "string" || /[\u0000-\u001f\u007f]/.test(raw)) return null;
     const value = raw.trim();
     if ((field.required && !value) || value.length > field.maxLength) return null;
-    if (value) fields.push({ key: field.key || field.inputName, label: field.label, value });
+    if (value) {
+      const suppliedFont = body[field.fontInputName] ?? (options.fields.length === 1 ? body.engravingFont : undefined);
+      const font = options.fonts.find((choice) => choice.name === suppliedFont);
+      if (!font) return null;
+      fields.push({
+        key: field.key || field.inputName,
+        label: field.label,
+        value,
+        priceDeltaMinor: field.priceDeltaMinor,
+        fontName: font.name
+      });
+    }
   }
-  const suppliedFont = body.engravingFont;
-  const font = options.fonts.find((choice) => choice.name === suppliedFont);
   if (options.fields.length && !options.photo && !fields.length) return null;
-  if ((fields.length || (options.fields.length && suppliedFont !== undefined)) && !font) return null;
-  const fontName = fields.length ? font.name : "";
-  const summary = fields.map((field) => `${field.label}: ${field.value}`);
-  if (fontName) summary.push(`Tipografía: ${fontName}`);
-  return { fields, fontName, summary: summary.join(" | ") };
+  const fontName = fields.length === 1 ? fields[0].fontName : "";
+  const fontSelections = fields.map((field) => ({ key: field.key, label: field.label, fontName: field.fontName }));
+  const summary = fields.map((field) => `${field.label}: ${field.value}${field.priceDeltaMinor ? ` (+RD$ ${fromMinorUnits(field.priceDeltaMinor).toFixed(2)})` : ""} | ${fields.length === 1 ? "Tipografía" : `Tipografía ${field.label}`}: ${field.fontName}`);
+  const surchargeMinor = fields.reduce((sum, field) => sum + (field.priceDeltaMinor || 0), 0);
+  return { fields, fontName, fontSelections, summary: summary.join(" | "), surchargeMinor, surcharge: fromMinorUnits(surchargeMinor) };
 }
 
-module.exports = { MOON_CHARM_FONT_PRESET, normalizeFontOptions, engravingOptions, readEngraving };
+function priceCustomizationSnapshot(options, savedFields = [], fontNameOrSelections = "") {
+  if (!options || options.unavailable) return null;
+  const savedByKey = new Map((Array.isArray(savedFields) ? savedFields : []).map((field) => [String(field.key || ""), field]));
+  const body = {};
+  for (const field of options.fields) {
+    const saved = savedByKey.get(String(field.key || field.inputName));
+    body[field.inputName] = typeof saved?.value === "string" ? saved.value : "";
+    const selected = Array.isArray(fontNameOrSelections)
+      ? fontNameOrSelections.find((choice) => String(choice.key || "") === String(field.key || field.inputName))?.fontName
+      : saved?.fontName || (options.fields.length === 1 ? fontNameOrSelections : "");
+    if (selected) body[field.fontInputName] = selected;
+  }
+  return readEngraving(options, body);
+}
+
+function quoteUnitPrice(basePrice, engraving) {
+  const baseMinor = toMinorUnits(basePrice);
+  if (baseMinor === null || !engraving || !Number.isSafeInteger(engraving.surchargeMinor) || engraving.surchargeMinor < 0) return null;
+  const unitPriceMinor = baseMinor + engraving.surchargeMinor;
+  if (!Number.isSafeInteger(unitPriceMinor)) return null;
+  return {
+    baseUnitPrice: fromMinorUnits(baseMinor),
+    baseUnitPriceMinor: baseMinor,
+    customizationSurcharge: fromMinorUnits(engraving.surchargeMinor),
+    customizationSurchargeMinor: engraving.surchargeMinor,
+    unitPrice: fromMinorUnits(unitPriceMinor),
+    unitPriceMinor
+  };
+}
+
+module.exports = {
+  MOON_CHARM_FONT_PRESET,
+  normalizeFontOptions,
+  engravingOptions,
+  readEngraving,
+  priceCustomizationSnapshot,
+  quoteUnitPrice,
+  toMinorUnits,
+  fromMinorUnits
+};

@@ -1,5 +1,59 @@
 # Decisiones y plan de implementación
 
+## ADR-009 · Precio configurable y tipografía independiente por campo · Aprobada en laboratorio
+
+**Fecha:** 26 de noviembre de 2026. **Solicitud:** permitir que cada campo del configurador sea obligatorio u opcional y gratuito o de pago; ejemplo: pulsera a RD$1,290, grabado frontal incluido y grabado trasero opcional con recargo de RD$200. Cada cara conserva su selección tipográfica; el selector trasero aparece solo cuando se introduce texto trasero. **Estado:** aprobada por el usuario e implementada en el laboratorio local. Sin despliegue a producción.
+
+### Auditoría actual
+
+- El producto guarda `customizationFields` dentro del JSON `payload` de MySQL. Cada campo tiene `key`, `label`, `placeholder`, `required` y `maxLength`; no existe precio por campo.
+- El alta/edición administrativa construye y persiste esos campos, y la ficha cliente renderiza uno por campo. `readEngraving()` valida presencia, longitud y tipografía, pero no suma recargos.
+- El servidor asigna `unitPrice` desde la variante o precio base al agregar al carrito; `lineTotal`, checkout y pedido usan ese valor. El navegador no es autoridad del precio, pero el recargo tampoco está modelado.
+- La galería de la ficha ya acepta imágenes de `product.gallery`. El archivo de reverso liso está en `public/images/muestras-carrito/brazaletes-7-reverso-liso.png`, pero aún no está asociado al producto borrador. Esta copia no tiene instalado `mysql2`, por lo que la lectura/escritura del catálogo local no pudo verificarse en este entorno.
+- El usuario aprobó la arquitectura antes de realizar el cambio estructural. La suite automatizada y la comprobación visual local están ejecutadas; ver evidencia `CUS-01-PRICE-FONTS` en `TEST_MATRIX.md`. La cobertura integral del configurador y el despliegue siguen pendientes.
+
+### Diseño aprobado e implementación
+
+Extender cada elemento de `customizationFields` con `priceDeltaMinor` (entero en centavos DOP, no un precio enviado por el navegador). El formulario de administración expondrá obligatoriedad, importe adicional y una indicación clara de incluido/recargo. El campo opcional vacío no suma; con texto suma su recargo. El frente del ejemplo se configura como obligatorio e incluido y el reverso como opcional con 20,000 centavos.
+
+Un servicio de dominio compartido validará los campos permitidos y calculará el precio unitario desde precio de variante/base más los recargos de campos con valor. La misma cotización del servidor alimentará la ficha, carrito, subtotal, checkout, snapshot del pedido y mensaje de confirmación. Guardará el desglose de precio junto a cada campo para que el pedido conserve lo cotizado. Si producto/configuración cambian después de agregar al carrito, el servidor deberá avisar y requerir aceptación del nuevo total antes de completar el checkout.
+
+El payload JSON conserva la configuración sin migración SQL. La implementación local incluye configuración por campo en administración, cotización autoritativa en servidor, actualización de carrito/checkout y snapshot de pedido, además de controles ante cambio de cotización. La selección de tipografía se valida y guarda por cada campo completado. El producto de prueba es un borrador en la base local aislada.
+
+### Riesgos y aceptación propuesta
+
+- Un error de recálculo puede cobrar un precio distinto al visible; validar exclusivamente en servidor, en centavos, y comprobar el mismo desglose en pedido.
+- Productos legacy sin `priceDeltaMinor` deben interpretarse como cero, sin alterar sus precios ni personalizaciones históricas.
+- El campo opcional vacío debe ser RD$1,290; al completar el reverso debe ser RD$1,490; eliminar el texto debe retirar los RD$200.
+- Un cliente no puede manipular `priceDeltaMinor`, recargo, variante, cantidad ni totales mediante el formulario.
+- El archivo de reverso debe añadirse a la galería del borrador local, con texto alternativo “Reverso de la placa”, conservando el frente como imagen principal.
+
+### Plan de verificación y pendientes
+
+1. Recuperar dependencias reproducibles (`npm ci`) y confirmar MySQL local; respaldo verificable del catálogo local antes de editar el borrador.
+2. Asociar el reverso a la galería del borrador mediante la interfaz o una actualización acotada y reversible, sin modificar productos productivos.
+3. Implementar la configuración por campo en altas/ediciones y el cálculo compartido servidor/UI, snapshots de carrito/pedido y protección ante cotización obsoleta.
+4. Ejecutar pruebas de formulario/admin, campo vacío, recargo, eliminación, tampering, variantes, cantidades, persistencia y recorrido hasta pedido de laboratorio; actualizar `TEST_MATRIX.md` con evidencia real.
+5. Revisar diff y riesgos antes de proponer despliegue aparte. La producción requiere autorización específica y backup/cotejo previos.
+
+**Puerta:** la aprobación del usuario fue recibida para implementar en laboratorio. No se desplegó ni se alteró producción; el siguiente despliegue requiere solicitud explícita y preflight/backup conforme a `git-auto-deploy`.
+
+## ADR-008 · Vista previa tipográfica por cara · Laboratorio
+
+**Fecha:** 26 de noviembre de 2026 · **Autorización:** el propietario pidió implementar la propuesta de vista previa en vivo y campos para piezas de varias caras. **Entorno:** worktree aislado `codex/live-engraving-preview`; no autoriza producción ni despliegue.
+
+### Decisión
+
+Reutilizar `customizationFields` como un campo por cara/zona y `fontOptions` como selector común del producto. Cada campo renderiza su propia muestra; al escribir cambia solo su texto y al elegir tipografía se actualizan todas las muestras. Las etiquetas configurables existentes identifican “Frente”, “Reverso” u otra zona. El texto y fuente siguen usando el payload actual del carrito/pedido; no se requiere migración.
+
+La muestra es una ayuda tipográfica aislada bajo cada campo. No se superpone a la foto del producto ni promete posición, tamaño físico, relieve o fidelidad de fabricación. Las caras comparten tipografía en esta primera iteración; elecciones independientes por cara, plantillas de diseño y composición gráfica quedan en CUS-02/CUS-03.
+
+### Riesgos y criterios pendientes
+
+- Revisar visualmente desktop/móvil y dos campos configurados; verificar caracteres, selector de fuente y conservación de los textos en carrito/pedido antes de marcar VERIFIED.
+- Las fuentes personalizadas cuyo administrador solo adjunta una imagen de muestra no necesariamente tienen un archivo tipográfico instalable; la vista dinámica usa el estilo CSS asociado, que puede ser sustituto.
+- No se ejecutaron pruebas ni se accedió a producción en esta tarea. Implementación en laboratorio, estado no verificado.
+
 ## ADR-004 · Shell compartido del administrador · Implementado en laboratorio
 
 **Fecha:** 25 de noviembre de 2026. **Autorización:** solicitud explícita del propietario para rediseñar el panel y preparar nuevos módulos. Se conserva Node/Express/EJS y modelos MySQL. Un partial EJS compartido sostiene la navegación y el shell; CSS/JS propios implementan identidad visual, colapso persistente y drawer móvil. Tailwind se compila en local. El sidebar enlaza solo pantallas existentes. No se modifica el escaparate. El rediseño no significa que todas las páginas comerciales del brief estén implementadas.

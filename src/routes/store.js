@@ -1,7 +1,14 @@
 const fs = require("fs");
 const path = require("path");
 const crypto = require("node:crypto");
-const { engravingOptions, readEngraving } = require("../services/engraving");
+const {
+  engravingOptions,
+  readEngraving,
+  priceCustomizationSnapshot,
+  quoteUnitPrice,
+  toMinorUnits,
+  fromMinorUnits
+} = require("../services/engraving");
 const { pool } = require("../config/db");
 const express = require("express");
 const multer = require("multer");
@@ -148,11 +155,21 @@ async function createOrderAndDecrementStock(orderData, cart, checkoutKey = null)
     }
 
     const movementRows = [];
+    let expectedSubtotalMinor = 0;
     for (const item of cart) {
       const record = products.get(String(item.productId));
       const product = record?.data;
       const quantity = Number(item.quantity || 0);
       if (!product || !Number.isInteger(quantity) || quantity < 1) throw new Error("Cantidad de pedido inválida.");
+      const quote = quoteCartItem(product, item);
+      if (!quote) throw new Error("La personalización cambió o ya no es válida. Revisa el carrito.");
+      const expectedLineTotalMinor = quote.unitPriceMinor * quantity;
+      if (toMinorUnits(item.unitPrice) !== quote.unitPriceMinor || toMinorUnits(item.lineTotal) !== expectedLineTotalMinor) {
+        const error = new Error("El precio de una personalización cambió. Revisa el total antes de confirmar.");
+        error.code = "PRICE_CHANGED";
+        throw error;
+      }
+      expectedSubtotalMinor += expectedLineTotalMinor;
       if (product.hasVariants && Array.isArray(product.variants) && product.variants.length) {
         const variantIndex = findVariantIndex(product, item);
         if (variantIndex < 0) throw new Error("Una variante del carrito ya no existe.");
@@ -169,6 +186,11 @@ async function createOrderAndDecrementStock(orderData, cart, checkoutKey = null)
         product.outOfStock = product.stock <= 0;
         movementRows.push({ productId: String(item.productId), productName: product.name, variantIndex: null, before, after: product.stock, delta: -quantity });
       }
+    }
+
+    const shippingMinor = toMinorUnits(orderData.shippingCost);
+    if (toMinorUnits(orderData.subtotal) !== expectedSubtotalMinor || shippingMinor === null || toMinorUnits(orderData.total) !== expectedSubtotalMinor + shippingMinor) {
+      throw new Error("El total del pedido no coincide con la cotización vigente.");
     }
 
     for (const productId of productIds) {
@@ -279,7 +301,8 @@ function buildWhatsAppMessage(productName, variantLabel, customizationText) {
 }
 
 function calculateCartSubtotal(cart) {
-  return cart.reduce((acc, item) => acc + Number(item.lineTotal || 0), 0);
+  const subtotalMinor = cart.reduce((acc, item) => acc + (toMinorUnits(item.lineTotal) || 0), 0);
+  return fromMinorUnits(subtotalMinor);
 }
 
 function getVariantLabel(variant = {}) {
@@ -330,6 +353,29 @@ function findCartVariant(product = {}, item = {}) {
   }) || null;
 }
 
+function quoteCartItem(product = {}, item = {}) {
+  const variant = findCartVariant(product, item);
+  if (product.hasVariants && Array.isArray(product.variants) && product.variants.length && !variant) return null;
+  const options = engravingOptions(product);
+  const engraving = priceCustomizationSnapshot(options, item.engravingFields, item.fontSelections || item.fontName);
+  if (!engraving) return null;
+  const basePrice = variant?.price ?? product.basePrice ?? 0;
+  const price = quoteUnitPrice(basePrice, engraving);
+  if (!price) return null;
+  return {
+    ...price,
+    variant,
+    engraving,
+    fieldPriceBreakdown: engraving.fields
+      .filter((field) => field.priceDeltaMinor > 0)
+      .map((field) => ({ key: field.key, label: field.label, priceDeltaMinor: field.priceDeltaMinor }))
+  };
+}
+
+function stripCartEnrichment(cart) {
+  return cart.map(({ availableStock, stockUnavailable, stockMessage, priceChanged, customizationUnavailable, ...item }) => item);
+}
+
 function getFirstAvailableVariant(product = {}) {
   if (!product.hasVariants || !Array.isArray(product.variants) || !product.variants.length) {
     return null;
@@ -351,6 +397,7 @@ async function enrichCartWithStock(cart) {
         ...item,
         availableStock: 0,
         stockUnavailable: true,
+        customizationUnavailable: false,
         stockMessage: "Producto no disponible."
       };
     }
@@ -359,11 +406,27 @@ async function enrichCartWithStock(cart) {
     const unavailable = variant ? isVariantUnavailable(variant) : isProductUnavailable(product);
     const availableStock = unavailable ? 0 : getAvailableStock(product, variant);
     const safeQuantity = Math.min(Math.max(1, Number(item.quantity || 1)), Math.max(availableStock, 1));
+    const quote = quoteCartItem(product, item);
+    const customizationUnavailable = !quote;
+    const priceChanged = Boolean(quote && toMinorUnits(item.unitPrice) !== quote.unitPriceMinor);
+    const unitPrice = quote?.unitPrice ?? Number(item.unitPrice || 0);
+    const quantity = unavailable ? Number(item.quantity || 1) : safeQuantity;
+    const lineTotal = fromMinorUnits((toMinorUnits(unitPrice) || 0) * quantity);
 
     return {
       ...item,
-      quantity: unavailable ? Number(item.quantity || 1) : safeQuantity,
-      lineTotal: unavailable ? Number(item.lineTotal || 0) : safeQuantity * Number(item.unitPrice || 0),
+      quantity,
+      baseUnitPrice: quote?.baseUnitPrice ?? Number(item.baseUnitPrice ?? item.unitPrice ?? 0),
+      customizationSurcharge: quote?.customizationSurcharge ?? Number(item.customizationSurcharge || 0),
+      fieldPriceBreakdown: quote?.fieldPriceBreakdown ?? item.fieldPriceBreakdown ?? [],
+      unitPrice,
+      lineTotal: unavailable ? Number(item.lineTotal || 0) : lineTotal,
+      engravingFields: quote?.engraving.fields ?? item.engravingFields ?? [],
+      customizationSummary: quote?.engraving.summary ?? item.customizationSummary ?? "",
+      fontName: quote?.engraving.fontName ?? item.fontName ?? "",
+      fontSelections: quote?.engraving.fontSelections ?? item.fontSelections ?? [],
+      customizationUnavailable,
+      priceChanged,
       availableStock,
       stockUnavailable: unavailable,
       stockMessage: unavailable
@@ -639,7 +702,10 @@ router.post("/product/:slug/add-to-cart", (req, res, next) => {
       return res.redirect(`/product/${product.slug}?stock=unavailable`);
     }
 
-    const unitPrice = Number(selectedVariant?.price ?? product.basePrice ?? 0);
+    const baseUnitPrice = Number(selectedVariant?.price ?? product.basePrice ?? 0);
+    const priceQuote = quoteUnitPrice(baseUnitPrice, engraving);
+    if (!priceQuote) return res.redirect(`/product/${product.slug}?engraving=invalid`);
+    const unitPrice = priceQuote.unitPrice;
     const compareAtPrice = Number(selectedVariant?.compareAtPrice ?? product.compareAtPrice ?? 0);
     const imageUrl =
       selectedVariant?.imageUrl ||
@@ -648,6 +714,7 @@ router.post("/product/:slug/add-to-cart", (req, res, next) => {
 
     const customizationSummary = engraving.summary;
     const fontName = engraving.fontName;
+    const fontSelections = engraving.fontSelections;
     const photoFilename = req.file
       ? crypto.randomUUID() + extensionFromCustomizationMime(req.file.mimetype)
       : "";
@@ -678,8 +745,7 @@ router.post("/product/:slug/add-to-cart", (req, res, next) => {
 
     if (existingIndex >= 0) {
       cart[existingIndex].quantity = Math.min(existingQuantity + finalQuantityToAdd, availableStock);
-      cart[existingIndex].lineTotal =
-        Number(cart[existingIndex].quantity) * Number(cart[existingIndex].unitPrice);
+      cart[existingIndex].lineTotal = fromMinorUnits((toMinorUnits(cart[existingIndex].unitPrice) || 0) * Number(cart[existingIndex].quantity));
       if (customizationPhotoUrl) {
         cart[existingIndex].customizationPhotoUrl = customizationPhotoUrl;
       }
@@ -692,16 +758,22 @@ router.post("/product/:slug/add-to-cart", (req, res, next) => {
         productSlug: product.slug,
         imageUrl,
         quantity,
+        baseUnitPrice: priceQuote.baseUnitPrice,
+        customizationSurcharge: priceQuote.customizationSurcharge,
+        fieldPriceBreakdown: engraving.fields
+          .filter((field) => field.priceDeltaMinor > 0)
+          .map((field) => ({ key: field.key, label: field.label, priceDeltaMinor: field.priceDeltaMinor })),
         unitPrice,
         compareAtPrice,
-        lineTotal: quantity * unitPrice,
+        lineTotal: fromMinorUnits(priceQuote.unitPriceMinor * quantity),
         variantLabel: selectedVariant?.label || "",
         variantOptionName: selectedVariant?.optionName || "",
         variantOptionValue: selectedVariant?.optionValue || "",
         customizationSummary,
         engravingFields: engraving.fields,
         customizationPhotoUrl,
-        fontName
+        fontName,
+        fontSelections
       });
     }
 
@@ -716,13 +788,15 @@ router.post("/product/:slug/add-to-cart", (req, res, next) => {
 
 router.get("/cart", async (req, res) => {
   const cart = await enrichCartWithStock(getSessionCart(req));
-  req.session.cart = cart.map(({ availableStock, stockUnavailable, stockMessage, ...item }) => item);
+  req.session.cart = stripCartEnrichment(cart);
   const subtotal = calculateCartSubtotal(cart.filter((item) => !item.stockUnavailable));
 
   res.render("store/cart", {
     cart,
     subtotal,
-    hasStockIssues: cart.some((item) => item.stockUnavailable || Number(item.quantity || 1) > Number(item.availableStock || 0))
+    hasStockIssues: cart.some((item) => item.stockUnavailable || Number(item.quantity || 1) > Number(item.availableStock || 0)),
+    hasCustomizationIssues: cart.some((item) => item.customizationUnavailable),
+    pricesUpdated: cart.some((item) => item.priceChanged)
   });
 });
 
@@ -732,23 +806,38 @@ router.post("/cart/update/:cartKey", async (req, res) => {
   const requestedQuantity = toPositiveInteger(req.body.quantity || 1);
 
   const item = cart.find((entry) => entry.cartKey === cartKey);
+  let priceChanged = false;
+  let customizationChanged = false;
 
   if (item) {
     const product = await Product.findOne({ _id: item.productId, active: true }).lean();
     const variant = product ? findCartVariant(product, item) : null;
     const unavailable = !product || (variant ? isVariantUnavailable(variant) : isProductUnavailable(product));
     const availableStock = unavailable ? 0 : getAvailableStock(product, variant);
+    const quote = product ? quoteCartItem(product, item) : null;
+    priceChanged = Boolean(quote && toMinorUnits(item.unitPrice) !== quote.unitPriceMinor);
+    customizationChanged = Boolean(product && !quote);
 
-    if (availableStock <= 0) {
+    if (availableStock <= 0 || !quote) {
       item.quantity = 1;
       item.lineTotal = Number(item.unitPrice || 0);
     } else {
       item.quantity = Math.min(requestedQuantity, availableStock);
-      item.lineTotal = Number(item.unitPrice || 0) * item.quantity;
+      item.baseUnitPrice = quote.baseUnitPrice;
+      item.customizationSurcharge = quote.customizationSurcharge;
+      item.fieldPriceBreakdown = quote.fieldPriceBreakdown;
+      item.unitPrice = quote.unitPrice;
+      item.engravingFields = quote.engraving.fields;
+      item.customizationSummary = quote.engraving.summary;
+      item.fontName = quote.engraving.fontName;
+      item.fontSelections = quote.engraving.fontSelections;
+      item.lineTotal = fromMinorUnits(quote.unitPriceMinor * item.quantity);
     }
   }
 
   req.session.cart = cart;
+  if (customizationChanged) return res.redirect("/cart?customization=changed");
+  if (priceChanged) return res.redirect("/cart?prices=updated");
   return res.redirect("/cart");
 });
 
@@ -765,6 +854,7 @@ router.post("/cart/clear", (req, res) => {
 
 router.get("/checkout", async (req, res) => {
   const cart = await enrichCartWithStock(getSessionCart(req));
+  req.session.cart = stripCartEnrichment(cart);
   const siteSettings = await SiteSettings.findOne().lean();
 
   if (!cart.length) {
@@ -775,13 +865,16 @@ router.get("/checkout", async (req, res) => {
     return res.redirect("/cart");
   }
 
+  if (cart.some((item) => item.customizationUnavailable)) return res.redirect("/cart?customization=changed");
+
   const subtotal = calculateCartSubtotal(cart);
 
   res.render("store/checkout", {
     cart,
     subtotal,
     shippingOptions: activeShippingOptions(siteSettings),
-    checkoutToken: req.session.checkoutToken || (req.session.checkoutToken = crypto.randomBytes(32).toString("hex"))
+    checkoutToken: req.session.checkoutToken || (req.session.checkoutToken = crypto.randomBytes(32).toString("hex")),
+    pricesUpdated: cart.some((item) => item.priceChanged) || req.query.prices === "updated"
   });
 });
 
@@ -801,8 +894,18 @@ router.post("/checkout", async (req, res) => {
     }
 
     if (cart.some((item) => item.stockUnavailable || Number(item.quantity || 1) > Number(item.availableStock || 0))) {
-      req.session.cart = cart.map(({ availableStock, stockUnavailable, stockMessage, ...item }) => item);
+      req.session.cart = stripCartEnrichment(cart);
       return res.redirect("/cart");
+    }
+
+    if (cart.some((item) => item.customizationUnavailable)) {
+      req.session.cart = stripCartEnrichment(cart);
+      return res.redirect("/cart?customization=changed");
+    }
+
+    if (cart.some((item) => item.priceChanged)) {
+      req.session.cart = stripCartEnrichment(cart);
+      return res.redirect("/checkout?prices=updated");
     }
 
     const customerName = String(req.body.customerName || "").trim();
@@ -834,6 +937,9 @@ router.post("/checkout", async (req, res) => {
       productSlug: item.productSlug,
       imageUrl: item.imageUrl,
       quantity: Number(item.quantity || 1),
+      baseUnitPrice: Number(item.baseUnitPrice ?? item.unitPrice ?? 0),
+      customizationSurcharge: Number(item.customizationSurcharge || 0),
+      fieldPriceBreakdown: item.fieldPriceBreakdown || [],
       unitPrice: Number(item.unitPrice || 0),
       compareAtPrice: Number(item.compareAtPrice || 0),
       lineTotal: Number(item.lineTotal || 0),
@@ -842,6 +948,7 @@ router.post("/checkout", async (req, res) => {
       variantOptionValue: item.variantOptionValue || "",
       customizationSummary: item.customizationSummary || "",
       engravingFields: item.engravingFields || [],
+      fontSelections: item.fontSelections || [],
       customizationPhotoUrl: item.customizationPhotoUrl || "",
       fontName: item.fontName || ""
     }));
@@ -867,6 +974,7 @@ router.post("/checkout", async (req, res) => {
     return res.redirect(`/order-success/${createdOrderId}`);
   } catch (error) {
     console.error("❌ Error creando pedido:", error);
+    if (error.code === "PRICE_CHANGED") return res.redirect("/checkout?prices=updated");
     return res.redirect("/checkout");
   }
 });
