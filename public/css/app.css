@@ -6046,6 +6046,8 @@ body.ref10-product-page .ref10-detail-main {width:min(100%,1560px);margin:0 auto
 .product-gallery-frame {padding:0;border:1px solid #e8dfd3;border-radius:14px;background:#fff;overflow:hidden}
 .product-gallery-stage {position:relative;display:grid;place-items:center;aspect-ratio:1.34;container-type:inline-size;background:#f4eee5;overflow:hidden}
 .product-gallery-image {display:block;width:100%;height:100%;object-fit:cover}
+.product-gallery-stage--bracelet-plate {aspect-ratio:1.5;background:#fff}
+.product-gallery-image--bracelet-plate {object-fit:contain}
 .product-gallery-placeholder {display:grid;place-items:center;width:100%;height:100%;color:#756d65;font-size:15px}
 .product-gallery-expand {position:absolute;top:16px;right:16px;display:grid;place-items:center;width:44px;height:44px;border:0;border-radius:13px;background:#fff;color:#211c18;box-shadow:0 2px 10px #211c1814;cursor:pointer}
 .product-gallery-expand svg {width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
@@ -6053,6 +6055,8 @@ body.ref10-product-page .ref10-detail-main {width:min(100%,1560px);margin:0 auto
 .product-engraving-preview {position:absolute;left:50%;top:60%;display:none;place-items:center;width:4.8%;height:7%;transform:translate(-50%,-50%);border-radius:3px;background:#f0cf86;color:#a9833c;text-align:center;pointer-events:none}
 .product-engraving-preview.has-engraving {display:grid}
 .product-engraving-preview span {max-width:100%;overflow:hidden;color:#a9833c;font-family:Georgia,"Times New Roman",serif;font-size:min(5cqw,32px);line-height:1;overflow-wrap:anywhere}
+.product-gallery-stage .product-engraving-preview--bracelet-plate {left:50%;top:50%;width:26.5%;height:8%;border-radius:0;background:transparent;color:#583813}
+.product-engraving-preview--bracelet-plate span {max-width:96%;overflow:visible;color:#583813;font-family:Georgia,"Times New Roman",serif;font-size:max(8px,min(2.8cqw,22px));font-weight:500;line-height:1;letter-spacing:.01em;white-space:nowrap;text-shadow:none}
 .product-gallery-thumbnails {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:14px}
 .product-gallery-thumbnails .thumb-btn {position:relative;display:block;aspect-ratio:1;container-type:inline-size;border:2px solid transparent;border-radius:12px;background:#f4eee5;overflow:hidden;cursor:pointer;padding:0}
 .product-gallery-thumbnails .thumb-btn.is-active {border-color:#a8730b}
@@ -6124,12 +6128,17 @@ body.ref10-product-page .ref10-detail-main {width:min(100%,1560px);margin:0 auto
 .product-variant-options .variant-btn.active-variant {border-color:#95670e;background:#fbf8f1;box-shadow:inset 0 0 0 1px #95670e}
 .product-variant-options .variant-btn:disabled {color:#928b83;cursor:not-allowed}
 .product-image-dialog {position:fixed;inset:0;width:min(94vw,1200px);height:min(92dvh,900px);max-width:none;max-height:none;margin:auto;padding:54px 18px 18px;border:0;border-radius:14px;background:#fff;box-shadow:0 18px 80px #0005}
+.product-image-dialog--bracelet-plate {inset:50% 0 auto;height:auto;max-height:92dvh;transform:translateY(-50%)}
 .product-image-dialog::backdrop {background:#191613c9}
 .product-image-dialog > button {position:absolute;top:10px;right:12px;width:36px;height:36px;border:0;border-radius:50%;background:#f3eee7;font-size:27px;line-height:1;cursor:pointer}
 .product-image-dialog-stage {position:relative;display:grid;place-items:center;width:100%;height:100%;aspect-ratio:1.34;container-type:inline-size;overflow:hidden;background:#f4eee5}
 .product-image-dialog-stage > img {width:100%;height:100%;object-fit:cover}
+.product-image-dialog-stage--bracelet-plate {align-self:center;height:auto;aspect-ratio:1.5;background:#fff}
+.product-image-dialog-image--bracelet-plate {object-fit:contain!important}
 .product-image-dialog-stage .product-engraving-preview {top:68%;width:6.2%;height:8%}
 .product-image-dialog-stage .product-engraving-preview span {font-size:min(6cqw,38px)}
+.product-image-dialog-stage .product-engraving-preview--bracelet-plate {left:50%;top:50%;width:26.5%;height:8%;border-radius:0;background:transparent;color:#583813}
+.product-image-dialog-stage .product-engraving-preview--bracelet-plate span {font-size:max(8px,min(2.8cqw,22px))}
 @media(max-width:980px) {
   body.ref10-product-page .ref10-detail-main {padding-top:22px}
   .product-detail-grid {grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
@@ -6148,6 +6157,7 @@ body.ref10-product-page .ref10-detail-main {width:min(100%,1560px);margin:0 auto
   .product-customization-steps > i {flex:1;width:auto;max-width:32px}
   .product-detail-grid {grid-template-columns:minmax(0,1fr);gap:16px}
   .product-gallery-stage {aspect-ratio:1.12}
+  .product-gallery-stage--bracelet-plate {aspect-ratio:1.5}
   .product-engraving-preview,.product-thumb-engraving-preview {top:55.5%}
   .product-gallery-thumbnails {grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px}
   .product-reassurance-grid {gap:8px;margin-top:14px}

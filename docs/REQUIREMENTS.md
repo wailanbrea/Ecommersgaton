@@ -196,7 +196,7 @@ Panel de integraciones: estado conectado/desconectado/sandbox/live, última sinc
 
 Configurador visible dentro de la página del producto, sin salir a otra aplicación. Si no personalizable, no renderizar campos ni aceptar payload. Cada SKU selecciona plantilla publicada compatible. Admin define campos obligatorios/opcionales, límites, orden, dependencia condicional, ayudas, precio por opción y zona. Tipos: texto/nombre/iniciales, fecha, frase, selector, fuente, símbolo permitido, foto, logo/diseño raster, texto multilínea, checkbox. Requerimientos soportados: solo texto, texto+texto, texto+imagen, solo imagen, múltiples zonas y lados cuando la plantilla lo permita. No habilitar archivos vectoriales activos/arbitrarios hasta implementar sanitización segura.
 
-- Cobertura: parcial. Evidencia de partida: Product, ficha, módulos JS de personalización.
+- Cobertura: parcial. Evidencia adicional en laboratorio: muestra local de brazalete con campo de texto y tipografías; el preview de un solo texto se probó en móvil y modal ampliado. No cubre plantillas publicadas, precios por opción, validación de pedidos, zonas múltiples ni reproducción histórica. Ver CUS-01-PREVIEW en TEST_MATRIX.
 - Plan: F3. Depende de plantilla, sku y reglas de taller. Riesgo: diseño irreproducible o privado expuesto.
 - Responsable propuesto: Taller/ingeniería. Pruebas relacionadas: T05, T06, T07, T13.
 

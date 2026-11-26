@@ -117,6 +117,14 @@ Windows, Node 24.4.0, npm 11.4.2, MongoDB 7.0.24 y MariaDB 11.4.12 en loopback. 
 | DB11 | Flujo de escritura de cada pantalla admin, variantes y carreras de inventario | No se cubrió en este lote | PENDING |
 | DB12 | Restauración de backup DB/storage, Docker y Auto-Deploy | No se ejecutó | PENDING |
 
+## Preview de pulsera grabable · laboratorio local · 25 de noviembre de 2026
+
+| ID | Criterio ejecutado | Resultado observado | Estado |
+|---|---|---|---|
+| CUS-01-PREVIEW | Editar texto, reflejarlo en la placa y en la imagen ampliada; cambiar tipografía; ajustar texto al ancho en móvil | Ficha local respondió 200. En Chromium a 390×844, “Valentina” se reflejó en la placa principal y en el modal; Clásica/Elegante cambiaron el estilo. Un texto de 20 caracteres quedó dentro de la zona, sin desbordamiento. La imagen cargó y la consola no mostró errores de aplicación (aviso existente de Tailwind CDN). Con costo de prueba RD$500, precio RD$1,000 y stock 10, se agregó al carrito y se comprobó miniatura, personalización, subtotal RD$1,000 y disponibilidad 10; no se hizo checkout. | VERIFIED · caso acotado |
+
+El caso no verifica el configurador integral CUS-01 ni el editor Canvas/SVG CUS-02. Los valores costo/venta/stock son exclusivamente locales y no se cargaron a producción; no hubo pedido ni comunicación externa.
+
 ### Límites del resultado
 
 Mongo conservó stock 12 y los conteos de origen; luego del smoke MySQL mantiene esos mismos 23 documentos más un pedido de prueba cancelado. El pedido no envió WhatsApp ni pago. El checkout mostró alternativas de envío a RD$0.00 por fallback preexistente. La consola del navegador mostró el aviso de Tailwind CDN y en la portada un 404 de `/favicon.ico`; no son fallos de conexión a MySQL. `/admin` raíz devuelve 404, mientras sus cinco páginas implementadas verificadas responden 200. No declarar aceptación integral del producto.

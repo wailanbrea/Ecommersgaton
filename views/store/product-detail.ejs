@@ -13,6 +13,8 @@
   <main class="ref10-detail-main section-shell py-10">
     <% const isCustomizable = Boolean(product.hasCustomization); %>
     <% const hasSampleEngravingPreview = isCustomizable && product.mainImageUrl === '/images/muestras-carrito/personalizados-1.webp'; %>
+    <% const isBraceletPlatePreview = isCustomizable && product.mainImageUrl === '/images/muestras-carrito/brazaletes-4.jpeg'; %>
+    <% const hasEngravingPreview = hasSampleEngravingPreview || isBraceletPlatePreview; %>
     <nav class="product-detail-breadcrumb" aria-label="Ruta de navegación">
       <a href="/">Inicio</a><span aria-hidden="true">/</span>
       <a href="/shop">Joyería</a>
@@ -50,14 +52,14 @@
     <section class="product-detail-grid <%= isCustomizable ? 'is-customizable' : '' %>">
       <div class="product-detail-gallery-column">
         <div class="product-gallery-frame">
-          <div class="product-gallery-stage">
+          <div class="product-gallery-stage <%= isBraceletPlatePreview ? 'product-gallery-stage--bracelet-plate' : '' %>">
             <% if (defaultImage) { %>
-              <img id="mainProductImage" src="<%= defaultImage %>" alt="<%= product.name %>" class="product-gallery-image">
+              <img id="mainProductImage" src="<%= defaultImage %>" alt="<%= product.name %>" class="product-gallery-image <%= isBraceletPlatePreview ? 'product-gallery-image--bracelet-plate' : '' %>">
               <button type="button" class="product-gallery-expand" data-open-product-image aria-label="Ampliar imagen del producto">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m13-5v3a2 2 0 0 1-2 2h-3M9 9l-6-6m12 0 6-6M3 21l6-6m12 6-6-6"/></svg>
               </button>
-              <% if (hasSampleEngravingPreview) { %>
-                <div class="product-engraving-preview" aria-label="Vista previa ilustrativa del grabado"><span id="engravingPreviewText" aria-live="polite"></span></div>
+              <% if (hasEngravingPreview) { %>
+                <div class="product-engraving-preview <%= isBraceletPlatePreview ? 'product-engraving-preview--bracelet-plate' : '' %>" aria-label="Vista previa ilustrativa del grabado"><span id="engravingPreviewText" aria-live="polite"></span></div>
                 <span class="product-gallery-caption">Vista previa ilustrativa</span>
               <% } else { %>
                 <span class="product-gallery-caption">Galería del producto</span>
@@ -216,11 +218,11 @@
     </section>
 
     <% if (defaultImage) { %>
-      <dialog class="product-image-dialog" id="productImageDialog" aria-label="Imagen ampliada de <%= product.name %>">
+      <dialog class="product-image-dialog <%= isBraceletPlatePreview ? 'product-image-dialog--bracelet-plate' : '' %>" id="productImageDialog" aria-label="Imagen ampliada de <%= product.name %>">
         <button type="button" data-close-product-image aria-label="Cerrar imagen ampliada">×</button>
-        <div class="product-image-dialog-stage">
-          <img src="<%= defaultImage %>" id="expandedProductImage" alt="<%= product.name %>">
-          <% if (hasSampleEngravingPreview) { %><div class="product-engraving-preview" aria-hidden="true"><span id="expandedEngravingPreviewText"></span></div><% } %>
+        <div class="product-image-dialog-stage <%= isBraceletPlatePreview ? 'product-image-dialog-stage--bracelet-plate' : '' %>">
+          <img src="<%= defaultImage %>" id="expandedProductImage" alt="<%= product.name %>" <%= isBraceletPlatePreview ? 'class="product-image-dialog-image--bracelet-plate"' : '' %>>
+          <% if (hasEngravingPreview) { %><div class="product-engraving-preview <%= isBraceletPlatePreview ? 'product-engraving-preview--bracelet-plate' : '' %>" aria-hidden="true"><span id="expandedEngravingPreviewText"></span></div><% } %>
         </div>
       </dialog>
     <% } %>
@@ -360,6 +362,7 @@
       const imageDialog = document.getElementById("productImageDialog");
       const engravingPreviewText = document.getElementById("engravingPreviewText");
       const expandedEngravingPreviewText = document.getElementById("expandedEngravingPreviewText");
+      const isBraceletPlatePreview = <%- JSON.stringify(Boolean(isBraceletPlatePreview)) %>;
       const stockState = document.getElementById("stockState");
       const whatsappButton = document.getElementById("whatsappButton");
       const variantButtons = document.querySelectorAll(".variant-btn");
@@ -456,6 +459,28 @@
         if (expandedEngravingPreviewText) {
           expandedEngravingPreviewText.textContent = engraving;
           expandedEngravingPreviewText.parentElement.classList.toggle("has-engraving", Boolean(engraving));
+        }
+        if (isBraceletPlatePreview) {
+          const selectedFont = getSelectedFont().toLowerCase();
+          const fontFamily = selectedFont.includes("eleg")
+            ? "'Segoe Script','Brush Script MT',cursive"
+            : selectedFont.includes("modern")
+              ? "Arial,Helvetica,sans-serif"
+              : "Georgia,'Times New Roman',serif";
+          [engravingPreviewText, expandedEngravingPreviewText].filter(Boolean).forEach(function (preview) {
+            preview.style.fontFamily = fontFamily;
+            preview.style.fontSize = "";
+            if (!engraving) return;
+            const width = preview.parentElement.clientWidth * 0.94;
+            const baseSize = parseFloat(getComputedStyle(preview).fontSize) || 16;
+            const estimatedSize = width / Math.max(1, engraving.length) * 1.3;
+            preview.style.fontSize = Math.max(5.5, Math.min(baseSize, estimatedSize)) + "px";
+            const renderedWidth = preview.scrollWidth;
+            if (renderedWidth > width) {
+              const fittedSize = parseFloat(preview.style.fontSize) * width / renderedWidth;
+              preview.style.fontSize = Math.max(5.5, fittedSize) + "px";
+            }
+          });
         }
         document.querySelectorAll("[data-engraving-thumb]").forEach(function (thumbPreview) {
           thumbPreview.textContent = engraving;
@@ -572,7 +597,10 @@
 
       const openImageButton = document.querySelector("[data-open-product-image]");
       const closeImageButton = document.querySelector("[data-close-product-image]");
-      if (openImageButton && imageDialog) openImageButton.addEventListener("click", function () { imageDialog.showModal(); });
+      if (openImageButton && imageDialog) openImageButton.addEventListener("click", function () {
+        imageDialog.showModal();
+        updateEngravingPreview();
+      });
       if (closeImageButton && imageDialog) closeImageButton.addEventListener("click", function () { imageDialog.close(); });
       if (imageDialog) {
         imageDialog.addEventListener("click", function (event) {
@@ -603,6 +631,7 @@
       fontOptions.forEach(function (radio) {
         radio.addEventListener("change", function () {
           refreshFontPreview();
+          updateEngravingPreview();
           updateWhatsAppLink();
         });
       });
