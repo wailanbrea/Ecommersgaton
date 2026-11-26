@@ -46,7 +46,7 @@ Cambio local en `views/store/shop.ejs`: se quitaron del catálogo el filtro sele
 
 Verificación local: `npm test` 6/6; compilación EJS 3/3; Chromium 127.0.0.1:8081, inicio 200 y catálogo 200. Al pulsar el enlace principal Fragancias, URL `/#fragancias`, `scrollY=3897`, sección destino `top=91.6px`. En catálogo: búsqueda y categoría presentes, controles/valores de género ausentes, 15 tarjetas renderizadas.
 
-Despliegue `0364187`: Auto-Deploy informó `deployed`, imagen y SHA activos `gaton-app:0364187`. `https://gaton.bsolutions.dev/health/ready`, `/` y `/shop` respondieron 200. La portada sirve el enlace del menú `/#fragancias`, mantiene la CTA separada hacia `/shop?category=fragancias` y contiene `id=fragancias`; el catálogo no renderiza controles ni opciones de género, conserva búsqueda/categoría y muestra 15 tarjetas. Verificación de lectura, sin cambios de datos comerciales.
+Despliegue final `755cff6`: Auto-Deploy informó `deployed`, imagen y SHA activos `gaton-app:755cff6`. `https://gaton.bsolutions.dev/health/ready`, `/` y `/shop` respondieron 200. La portada sirve el enlace del menú `/#fragancias`, mantiene la CTA separada hacia `/shop?category=fragancias` y contiene `id=fragancias`; el catálogo no renderiza controles ni opciones de género, conserva búsqueda/categoría y muestra 15 tarjetas. Verificación de lectura, sin cambios de datos comerciales.
 
 ## Ejecutado el 24 de noviembre de 2026
 

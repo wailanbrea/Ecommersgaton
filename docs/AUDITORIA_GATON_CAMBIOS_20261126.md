@@ -27,6 +27,6 @@
 
 ## Resultado
 
-**7 puntos verificados y 2 parciales.** GC-01 ya estaba implementado en el enlace del menú y quedó verificado; la CTA separada `Explorar Fragancias` conserva su destino al catálogo. GC-02 se desplegó como `0364187` y se comprobó en producción. GC-04 depende de los logos originales y su mapa; GC-08 requiere aplicar la dirección precisa al bloque Contacto además del footer.
+**7 puntos verificados y 2 parciales.** GC-01 ya estaba implementado en el enlace del menú y quedó verificado; la CTA separada `Explorar Fragancias` conserva su destino al catálogo. GC-02 se desplegó como `755cff6` y se comprobó en producción. GC-04 depende de los logos originales y su mapa; GC-08 requiere aplicar la dirección precisa al bloque Contacto además del footer.
 
-Las verificaciones de producción fueron de lectura: portada, catálogo de Fragancias, menú, tarjetas de precios, apertura del carrito vacío y verificación posterior de `0364187`. No se crearon pedidos, no se agregaron productos a una sesión productiva y no se alteró inventario ni configuración productiva.
+Las verificaciones de producción fueron de lectura: portada, catálogo de Fragancias, menú, tarjetas de precios, apertura del carrito vacío y verificación posterior de `755cff6`. No se crearon pedidos, no se agregaron productos a una sesión productiva y no se alteró inventario ni configuración productiva.
