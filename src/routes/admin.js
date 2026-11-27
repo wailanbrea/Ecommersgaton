@@ -1290,13 +1290,14 @@ router.get("/reviews", requireAdmin, async (req, res) => {
   const reviews = await Review.find().sort({ createdAt: -1 }).lean();
   const productIds = [...new Set((reviews || []).map((review) => review.productId).filter(Boolean))];
   const products = productIds.length
-    ? await Product.find({ _id: { $in: productIds } }).select("name slug").lean()
+    ? await Product.find({ _id: { $in: productIds } }).select("name slug mainImageUrl").lean()
     : [];
   const productMap = Object.fromEntries(products.map((product) => [String(product._id), product]));
 
   res.render("admin/reviews/index", {
     reviews,
-    productMap
+    productMap,
+    action: String(req.query.action || "")
   });
 });
 
@@ -1307,7 +1308,7 @@ router.post("/reviews/:id/approve", requireAdmin, async (req, res) => {
       visible: true
     });
 
-    return res.redirect("/admin/reviews");
+    return res.redirect("/admin/reviews?action=approved");
   } catch (error) {
     console.error("❌ Error aprobando reseña:", error);
     return res.status(500).send("Error interno aprobando reseña");
@@ -1325,7 +1326,7 @@ router.post("/reviews/:id/toggle-visible", requireAdmin, async (req, res) => {
     review.visible = !review.visible;
     await review.save();
 
-    return res.redirect("/admin/reviews");
+    return res.redirect("/admin/reviews?action=toggled");
   } catch (error) {
     console.error("❌ Error cambiando visibilidad de reseña:", error);
     return res.status(500).send("Error interno cambiando visibilidad");
@@ -1335,7 +1336,7 @@ router.post("/reviews/:id/toggle-visible", requireAdmin, async (req, res) => {
 router.post("/reviews/:id/delete", requireAdmin, async (req, res) => {
   try {
     await Review.findByIdAndDelete(req.params.id);
-    return res.redirect("/admin/reviews");
+    return res.redirect("/admin/reviews?action=deleted");
   } catch (error) {
     console.error("❌ Error eliminando reseña:", error);
     return res.status(500).send("Error interno eliminando reseña");

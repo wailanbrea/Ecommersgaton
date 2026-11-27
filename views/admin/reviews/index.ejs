@@ -7,114 +7,422 @@
   <link rel="stylesheet" href="/css/app.css">
   <link rel="stylesheet" href="/css/admin-utilities.css">
   <link rel="stylesheet" href="/css/admin.css">
+  <style>
+    .rev-page { max-width: 1280px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; display: flex; flex-direction: column; gap: 1rem; }
+    .rev-toolbar-card { background: #fff; border: 1px solid #e7e5e4; border-radius: 1.1rem; padding: 1rem 1.15rem; box-shadow: 0 1px 3px rgba(28,25,23,.04); display: flex; flex-direction: column; gap: .85rem; }
+    .rev-toolbar-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .65rem; }
+    .rev-filter-field { display: flex; flex-direction: column; gap: .25rem; }
+    .rev-filter-field label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #78716c; }
+    .rev-filter-input, .rev-filter-select { border: 1px solid #d6d3d1; border-radius: .65rem; padding: .5rem .75rem; font-size: .84rem; color: #1c1917; background: #fff; }
+    .rev-filter-input:focus, .rev-filter-select:focus { outline: 2px solid #292524; outline-offset: 1px; border-color: #292524; }
+    .rev-search-wrap { flex: 1 1 220px; }
+    .rev-search-wrap input { width: 100%; box-sizing: border-box; }
+    .rev-status-pills { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
+    .rev-pill-btn { border: 1px solid #d6d3d1; background: #fff; color: #44403c; border-radius: 999px; padding: .36rem .78rem; font-size: .78rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all .15s ease; }
+    .rev-pill-btn:hover { background: #f5f5f4; }
+    .rev-pill-btn.is-active { background: #1c1917; color: #fff; border-color: #1c1917; }
+    .rev-toolbar-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem; padding-top: .65rem; border-top: 1px solid #f5f5f4; font-size: .8rem; color: #78716c; }
+    .rev-meta-actions { display: flex; flex-wrap: wrap; gap: .45rem; }
+    .rev-mini-btn { border: 1px solid #d6d3d1; background: #fff; color: #44403c; border-radius: .55rem; padding: .3rem .65rem; font-size: .76rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .rev-mini-btn:hover { background: #f5f5f4; }
+
+    .rev-list { display: flex; flex-direction: column; gap: .6rem; }
+    .rev-card { background: #fff; border: 1px solid #e7e5e4; border-radius: 1rem; box-shadow: 0 1px 2px rgba(28,25,23,.04); overflow: hidden; transition: border-color .15s ease, box-shadow .15s ease; }
+    .rev-card[open] { border-color: #a8a29e; box-shadow: 0 6px 20px rgba(28,25,23,.07); }
+    .rev-card[hidden] { display: none !important; }
+    .rev-summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 44px 92px minmax(150px, 1fr) minmax(180px, 1.4fr) auto 28px; align-items: center; gap: .85rem; padding: .75rem 1rem; user-select: none; }
+    .rev-summary::-webkit-details-marker { display: none; }
+    .rev-summary:hover { background: #fafaf9; }
+    @media (max-width: 960px) {
+      .rev-summary { grid-template-columns: 44px 1fr auto 24px; gap: .55rem .75rem; }
+      .rev-sum-comment, .rev-sum-stars-col { display: none; }
+    }
+    .rev-sum-thumb { width: 44px; height: 44px; border-radius: .6rem; object-fit: cover; border: 1px solid #e7e5e4; background: #fafaf9; }
+    .rev-sum-thumb-empty { width: 44px; height: 44px; border-radius: .6rem; border: 1px dashed #d6d3d1; background: #fafaf9; color: #a8a29e; display: flex; align-items: center; justify-content: center; font-size: .64rem; font-weight: 600; text-align: center; }
+    .rev-stars { color: #d97706; font-size: .9rem; letter-spacing: .04em; white-space: nowrap; }
+    .rev-sum-date { font-size: .72rem; color: #78716c; margin-top: .1rem; white-space: nowrap; }
+    .rev-sum-author { font-weight: 700; font-size: .88rem; color: #1c1917; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rev-sum-prod { font-size: .76rem; color: #016B83; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rev-sum-comment { font-size: .83rem; color: #57534e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rev-badges { display: flex; flex-wrap: wrap; gap: .35rem; justify-content: flex-end; }
+    .rev-badge { display: inline-flex; align-items: center; border-radius: 999px; padding: .22rem .62rem; font-size: .72rem; font-weight: 700; white-space: nowrap; }
+    .rev-badge--approved { background: #dcfce7; color: #166534; }
+    .rev-badge--pending { background: #fef3c7; color: #92400e; }
+    .rev-badge--visible { background: #dbeafe; color: #1e40af; }
+    .rev-badge--hidden { background: #e7e5e4; color: #44403c; }
+    .rev-chevron { width: 24px; height: 24px; border-radius: 999px; background: #f5f5f4; color: #57534e; display: inline-flex; align-items: center; justify-content: center; font-size: .75rem; transition: transform .18s ease, background .15s ease; }
+    .rev-card[open] .rev-chevron { transform: rotate(180deg); background: #1c1917; color: #fff; }
+
+    .rev-detail { padding: 1.2rem 1.35rem 1.35rem; border-top: 1px solid #e7e5e4; background: #fff; }
+    .rev-grid { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 1.35rem; align-items: start; }
+    @media (max-width: 960px) { .rev-grid { grid-template-columns: 1fr; } }
+    .rev-prod-box { display: flex; align-items: center; gap: .9rem; background: #fafaf9; border: 1px solid #f0efed; border-radius: .9rem; padding: .8rem 1rem; margin-bottom: 1rem; }
+    .rev-thumb-lg { width: 64px; height: 64px; border-radius: .75rem; object-fit: cover; border: 1px solid #e7e5e4; background: #fff; flex-shrink: 0; }
+    .rev-thumb-lg-empty { width: 64px; height: 64px; border-radius: .75rem; border: 1px dashed #d6d3d1; background: #fff; color: #a8a29e; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: .7rem; font-weight: 600; text-align: center; }
+    .rev-meta-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem 1.2rem; margin-bottom: 1rem; font-size: .84rem; }
+    @media (max-width: 640px) { .rev-meta-grid { grid-template-columns: 1fr; } }
+    .rev-meta-item span { display: block; font-size: .7rem; text-transform: uppercase; letter-spacing: .04em; color: #78716c; font-weight: 700; margin-bottom: .1rem; }
+    .rev-meta-item strong { color: #1c1917; font-weight: 600; word-break: break-word; }
+    .rev-comment-box { background: #fdfbf7; border: 1px solid #ede6d6; border-radius: .85rem; padding: .95rem 1.05rem; }
+    .rev-comment-label { font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: #854d0e; margin-bottom: .45rem; }
+    .rev-comment-text { font-size: .92rem; color: #292524; line-height: 1.55; white-space: pre-line; margin: 0; }
+    .rev-side { background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 1rem; padding: 1.05rem; display: flex; flex-direction: column; gap: .65rem; }
+    .rev-empty-box { background: #fff; border: 1px solid #e7e5e4; border-radius: 1rem; padding: 2.25rem 1rem; text-align: center; color: #78716c; font-size: .9rem; }
+  </style>
 </head>
 <body class="admin-shell-body">
   <%- include("../../partials/admin-shell-start") %>
-<main class="max-w-7xl mx-auto px-4 py-8">
-    <div class="flex justify-end gap-4 mb-6">
-      <a href="/admin/dashboard" class="rounded-xl bg-white border border-stone-300 px-4 py-2 text-sm font-medium hover:bg-stone-50 text-center">
-        Volver
-      </a>
-    </div>
+  <%
+    const allReviews = Array.isArray(reviews) ? reviews : [];
+    const pendingCount = allReviews.filter((r) => !r.approved).length;
+    const approvedCount = allReviews.filter((r) => r.approved && r.visible).length;
+    const hiddenCount = allReviews.filter((r) => !r.visible).length;
+    function formatReviewDate(dt) {
+      if (!dt) return "";
+      const d = new Date(dt);
+      if (Number.isNaN(d.getTime())) return "";
+      return d.toLocaleString("es-DO", {
+        timeZone: "America/Santo_Domingo",
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+    function formatReviewIsoDay(dt) {
+      if (!dt) return "";
+      const d = new Date(dt);
+      if (Number.isNaN(d.getTime())) return "";
+      const parts = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "America/Santo_Domingo",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }).formatToParts(d);
+      const y = parts.find((p) => p.type === "year")?.value;
+      const m = parts.find((p) => p.type === "month")?.value;
+      const day = parts.find((p) => p.type === "day")?.value;
+      return y && m && day ? `${y}-${m}-${day}` : "";
+    }
+  %>
+  <main class="rev-page">
+    <% if (action === "approved") { %>
+      <div role="status" class="rounded-2xl bg-green-50 border border-green-200 text-green-800 px-4 py-3 text-sm font-medium">
+        Reseña aprobada y publicada correctamente.
+      </div>
+    <% } else if (action === "toggled") { %>
+      <div role="status" class="rounded-2xl bg-green-50 border border-green-200 text-green-800 px-4 py-3 text-sm font-medium">
+        Visibilidad de la reseña actualizada correctamente.
+      </div>
+    <% } else if (action === "deleted") { %>
+      <div role="status" class="rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 text-sm font-medium">
+        Reseña eliminada correctamente.
+      </div>
+    <% } %>
 
-    <div class="space-y-4">
-      <% if (!reviews || reviews.length === 0) { %>
-        <div class="bg-white border border-stone-200 rounded-2xl p-8 text-center text-stone-500 shadow-sm">
-          No hay reseñas registradas.
+    <section class="rev-toolbar-card" aria-label="Filtros de reseñas">
+      <div class="rev-toolbar-row">
+        <div class="rev-filter-field rev-search-wrap">
+          <label for="revSearchInput">Buscar reseña</label>
+          <input id="revSearchInput" type="search" class="rev-filter-input" placeholder="Cliente, correo, producto o comentario...">
         </div>
-      <% } %>
+        <div class="rev-filter-field">
+          <label for="revDateFrom">Fecha desde</label>
+          <input id="revDateFrom" type="date" class="rev-filter-input">
+        </div>
+        <div class="rev-filter-field">
+          <label for="revDateTo">Fecha hasta</label>
+          <input id="revDateTo" type="date" class="rev-filter-input">
+        </div>
+        <div class="rev-filter-field">
+          <label for="revRatingSelect">Puntuación</label>
+          <select id="revRatingSelect" class="rev-filter-select">
+            <option value="all">Todas las estrellas</option>
+            <option value="5">5 estrellas</option>
+            <option value="4">4 estrellas</option>
+            <option value="3">3 estrellas</option>
+            <option value="2">2 estrellas</option>
+            <option value="1">1 estrella</option>
+          </select>
+        </div>
+        <div class="rev-filter-field">
+          <label for="revStatusSelect">Estado</label>
+          <select id="revStatusSelect" class="rev-filter-select">
+            <option value="all">Todas (<%= allReviews.length %>)</option>
+            <option value="pending">Pendientes (<%= pendingCount %>)</option>
+            <option value="approved">Aprobadas y visibles (<%= approvedCount %>)</option>
+            <option value="hidden">Ocultas (<%= hiddenCount %>)</option>
+          </select>
+        </div>
+      </div>
 
-      <% if (reviews && reviews.length > 0) { %>
-        <% reviews.forEach(function(review) { %>
-          <% const product = productMap ? productMap[String(review.productId || "")] : null; %>
-          <div class="bg-white border border-stone-200 rounded-2xl p-6 shadow-sm">
-            <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
-              <div class="flex-1">
-                <div class="flex flex-wrap items-center gap-3 mb-3">
-                  <div class="text-amber-500 text-lg"><%= "★".repeat(review.rating || 5) %></div>
+      <div class="rev-status-pills" role="group" aria-label="Filtro rápido por estado">
+        <button type="button" class="rev-pill-btn is-active" data-rev-status="all">Todas (<%= allReviews.length %>)</button>
+        <button type="button" class="rev-pill-btn" data-rev-status="pending">Pendientes (<%= pendingCount %>)</button>
+        <button type="button" class="rev-pill-btn" data-rev-status="approved">Aprobadas (<%= approvedCount %>)</button>
+        <button type="button" class="rev-pill-btn" data-rev-status="hidden">Ocultas (<%= hiddenCount %>)</button>
+      </div>
 
-                  <% if (review.approved) { %>
-                    <span class="inline-flex rounded-full bg-green-100 text-green-700 px-3 py-1 text-xs font-medium">
-                      Aprobada
-                    </span>
-                  <% } else { %>
-                    <span class="inline-flex rounded-full bg-yellow-100 text-yellow-700 px-3 py-1 text-xs font-medium">
-                      Pendiente
-                    </span>
-                  <% } %>
+      <div class="rev-toolbar-meta">
+        <div>Mostrando <strong id="revVisibleCount"><%= allReviews.length %></strong> de <strong><%= allReviews.length %></strong> reseñas · Haz clic en una reseña para ver el detalle completo.</div>
+        <div class="rev-meta-actions">
+          <button type="button" class="rev-mini-btn" id="revQuickToday">Hoy</button>
+          <button type="button" class="rev-mini-btn" id="revQuick7d">Últimos 7 días</button>
+          <button type="button" class="rev-mini-btn" id="revClearFilters">Limpiar filtros</button>
+          <button type="button" class="rev-mini-btn" id="revToggleAll">Expandir todas</button>
+        </div>
+      </div>
+    </section>
 
-                  <% if (review.visible) { %>
-                    <span class="inline-flex rounded-full bg-blue-100 text-blue-700 px-3 py-1 text-xs font-medium">
-                      Visible
-                    </span>
-                  <% } else { %>
-                    <span class="inline-flex rounded-full bg-stone-200 text-stone-700 px-3 py-1 text-xs font-medium">
-                      Oculta
-                    </span>
-                  <% } %>
-                </div>
+    <% if (!allReviews.length) { %>
+      <div class="rev-empty-box">No hay reseñas registradas.</div>
+    <% } else { %>
+      <div class="rev-list" id="revList">
+        <% allReviews.forEach(function(review) { %>
+          <%
+            const product = productMap ? productMap[String(review.productId || "")] : null;
+            const prodImg = product && product.mainImageUrl ? safePublicUrl(product.mainImageUrl) : "";
+            const revPhoto = review.photoUrl ? safePublicUrl(review.photoUrl) : "";
+            const thumb = prodImg || revPhoto;
+            const ratingNum = Math.min(5, Math.max(1, Number(review.rating || 5)));
+            const stars = "★".repeat(ratingNum) + "☆".repeat(5 - ratingNum);
+            const dateStr = formatReviewDate(review.createdAt);
+            const isoDay = formatReviewIsoDay(review.createdAt);
+            const statusKey = !review.approved ? "pending" : (review.visible ? "approved" : "hidden");
+            const searchBlob = [review.customerName, review.email, review.province, review.comment, product?.name || "testimonio general"].join(" ").toLowerCase();
+          %>
+          <details class="rev-card" data-rev-card data-status="<%= statusKey %>" data-visible="<%= review.visible ? 'true' : 'false' %>" data-approved="<%= review.approved ? 'true' : 'false' %>" data-rating="<%= ratingNum %>" data-day="<%= isoDay %>" data-search="<%= searchBlob %>">
+            <summary class="rev-summary">
+              <% if (thumb) { %>
+                <img src="<%= thumb %>" alt="<%= product ? product.name : review.customerName %>" class="rev-sum-thumb" loading="lazy">
+              <% } else { %>
+                <div class="rev-sum-thumb-empty" aria-hidden="true">Sin foto</div>
+              <% } %>
 
-                <div class="flex flex-col md:flex-row gap-5">
-                  <% if (review.photoUrl) { %>
-                    <div class="w-full md:w-40 shrink-0">
-                      <img src="<%= review.photoUrl %>" alt="Foto de reseña de <%= review.customerName %>" class="w-full h-40 object-cover rounded-2xl border border-stone-200 bg-stone-50">
-                    </div>
-                  <% } %>
-
-                  <div class="flex-1 min-w-0">
-                    <h3 class="text-lg font-semibold text-stone-900"><%= review.customerName %></h3>
-                    <% if (review.province) { %>
-                      <p class="text-sm text-[#016B83] font-medium mt-1">Provincia: <%= review.province %></p>
-                    <% } %>
-
-                    <% if (review.email) { %>
-                      <a href="mailto:<%= review.email %>" class="text-sm text-stone-500 hover:text-stone-900 break-all"><%= review.email %></a>
-                    <% } else { %>
-                      <p class="text-sm text-stone-400">Sin correo registrado</p>
-                    <% } %>
-
-                    <p class="text-stone-600 mt-3 whitespace-pre-line"><%= review.comment %></p>
-
-                    <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-stone-500">
-                      <div>Producto: <% if (product) { %><a href="/product/<%= product.slug %>" target="_blank" class="text-[#016B83] font-medium"><%= product.name %></a><% } else { %><%= review.productId ? "Producto no encontrado" : "Testimonio general" %><% } %></div>
-                      <div>Fecha: <%= review.createdAt ? new Date(review.createdAt).toLocaleDateString("es-DO") : "-" %></div>
-                    </div>
-                  </div>
-                </div>
+              <div class="rev-sum-stars-col">
+                <div class="rev-stars" aria-label="<%= ratingNum %> de 5 estrellas"><%= stars %></div>
+                <div class="rev-sum-date"><%= dateStr ? dateStr.split(",")[0] : "Sin fecha" %></div>
               </div>
 
-              <div class="w-full lg:w-[260px]">
-                <div class="bg-stone-50 rounded-2xl p-4 space-y-3">
+              <div>
+                <div class="rev-sum-author"><%= review.customerName %></div>
+                <div class="rev-sum-prod"><%= product ? product.name : "Testimonio general" %></div>
+              </div>
+
+              <div class="rev-sum-comment">“<%= review.comment %>”</div>
+
+              <div class="rev-badges">
+                <% if (review.approved) { %>
+                  <span class="rev-badge rev-badge--approved">Aprobada</span>
+                <% } else { %>
+                  <span class="rev-badge rev-badge--pending">Pendiente</span>
+                <% } %>
+                <% if (review.visible) { %>
+                  <span class="rev-badge rev-badge--visible">Visible</span>
+                <% } else { %>
+                  <span class="rev-badge rev-badge--hidden">Oculta</span>
+                <% } %>
+              </div>
+
+              <span class="rev-chevron" aria-hidden="true">▾</span>
+            </summary>
+
+            <div class="rev-detail">
+              <div class="rev-grid">
+                <div>
+                  <div class="rev-prod-box">
+                    <% if (prodImg) { %>
+                      <img src="<%= prodImg %>" alt="<%= product.name %>" class="rev-thumb-lg" loading="lazy">
+                    <% } else { %>
+                      <div class="rev-thumb-lg-empty" aria-hidden="true">Sin foto</div>
+                    <% } %>
+                    <div>
+                      <div class="text-xs font-bold uppercase tracking-wide text-stone-500">Producto reseñado</div>
+                      <% if (product) { %>
+                        <a href="/product/<%= product.slug %>" target="_blank" rel="noopener" class="text-base font-bold text-[#016B83] hover:underline"><%= product.name %></a>
+                      <% } else { %>
+                        <div class="text-base font-bold text-stone-800"><%= review.productId ? "Producto no encontrado" : "Testimonio general" %></div>
+                      <% } %>
+                      <div class="rev-stars mt-1"><%= stars %> <span class="text-xs text-stone-500 font-semibold">(<%= ratingNum %>/5)</span></div>
+                    </div>
+                  </div>
+
+                  <div class="rev-meta-grid">
+                    <div class="rev-meta-item"><span>Cliente</span><strong><%= review.customerName %></strong></div>
+                    <div class="rev-meta-item"><span>Correo</span><strong><%= review.email || "Sin correo registrado" %></strong></div>
+                    <div class="rev-meta-item"><span>Fecha</span><strong><%= dateStr || "-" %></strong></div>
+                    <div class="rev-meta-item"><span>Provincia</span><strong><%= review.province || "No indicada" %></strong></div>
+                  </div>
+
+                  <div class="rev-comment-box">
+                    <div class="rev-comment-label">★ Comentario del cliente</div>
+                    <p class="rev-comment-text"><%= review.comment %></p>
+                  </div>
+
+                  <% if (revPhoto) { %>
+                    <div class="mt-3 rounded-xl border border-stone-200 bg-stone-50 p-3">
+                      <div class="text-xs font-bold uppercase tracking-wide text-stone-600 mb-2">Foto adjunta por el cliente</div>
+                      <img src="<%= revPhoto %>" alt="Foto de reseña de <%= review.customerName %>" class="max-h-48 rounded-xl border border-stone-200 object-contain bg-white">
+                    </div>
+                  <% } %>
+                </div>
+
+                <aside class="rev-side">
+                  <h4 class="text-sm font-bold text-stone-900 mb-1">Moderación</h4>
+
                   <% if (!review.approved) { %>
                     <form action="/admin/reviews/<%= review._id %>/approve" method="post">
                       <input type="hidden" name="_csrf" value="<%= adminCsrfToken %>">
-                      <button type="submit" class="w-full rounded-xl bg-green-600 text-white px-4 py-3 text-sm font-medium hover:bg-green-700">
-                        Aprobar
+                      <button type="submit" class="w-full rounded-xl bg-green-600 text-white px-4 py-2.5 text-sm font-medium hover:bg-green-700">
+                        Aprobar y publicar
                       </button>
                     </form>
                   <% } %>
 
                   <form action="/admin/reviews/<%= review._id %>/toggle-visible" method="post">
                     <input type="hidden" name="_csrf" value="<%= adminCsrfToken %>">
-                    <button type="submit" class="w-full rounded-xl bg-white border border-stone-300 px-4 py-3 text-sm font-medium hover:bg-stone-50">
-                      <%= review.visible ? "Ocultar" : "Mostrar" %>
+                    <button type="submit" class="w-full rounded-xl bg-white border border-stone-300 px-4 py-2.5 text-sm font-medium hover:bg-stone-50">
+                      <%= review.visible ? "Ocultar en tienda" : "Mostrar en tienda" %>
                     </button>
                   </form>
 
                   <form action="/admin/reviews/<%= review._id %>/delete" method="post" onsubmit="return confirm('¿Eliminar esta reseña?');">
                     <input type="hidden" name="_csrf" value="<%= adminCsrfToken %>">
-                    <button type="submit" class="w-full rounded-xl bg-red-600 text-white px-4 py-3 text-sm font-medium hover:bg-red-700">
-                      Eliminar
+                    <button type="submit" class="w-full rounded-xl bg-red-600 text-white px-4 py-2.5 text-sm font-medium hover:bg-red-700">
+                      Eliminar reseña
                     </button>
                   </form>
-                </div>
+                </aside>
               </div>
             </div>
-          </div>
+          </details>
         <% }) %>
-      <% } %>
-    </div>
+      </div>
+      <div id="revEmptyFilter" class="rev-empty-box" hidden>No hay reseñas que coincidan con los filtros seleccionados.</div>
+    <% } %>
   </main>
+
+  <script>
+    (function () {
+      const cards = Array.from(document.querySelectorAll("[data-rev-card]"));
+      const searchInput = document.getElementById("revSearchInput");
+      const dateFromInput = document.getElementById("revDateFrom");
+      const dateToInput = document.getElementById("revDateTo");
+      const ratingSelect = document.getElementById("revRatingSelect");
+      const statusSelect = document.getElementById("revStatusSelect");
+      const statusPills = Array.from(document.querySelectorAll("[data-rev-status]"));
+      const visibleCountEl = document.getElementById("revVisibleCount");
+      const emptyFilterEl = document.getElementById("revEmptyFilter");
+      const toggleAllBtn = document.getElementById("revToggleAll");
+
+      function santoDomingoIso(offsetDays) {
+        const d = new Date(Date.now() + (offsetDays || 0) * 86400000);
+        const parts = new Intl.DateTimeFormat("en-CA", {
+          timeZone: "America/Santo_Domingo",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit"
+        }).formatToParts(d);
+        const y = parts.find(function (p) { return p.type === "year"; })?.value;
+        const m = parts.find(function (p) { return p.type === "month"; })?.value;
+        const day = parts.find(function (p) { return p.type === "day"; })?.value;
+        return y && m && day ? (y + "-" + m + "-" + day) : "";
+      }
+
+      function syncStatusUI(val) {
+        if (statusSelect) statusSelect.value = val;
+        statusPills.forEach(function (btn) {
+          btn.classList.toggle("is-active", btn.dataset.revStatus === val);
+        });
+      }
+
+      function applyFilters() {
+        const q = (searchInput?.value || "").trim().toLowerCase();
+        const st = statusSelect?.value || "all";
+        const rating = ratingSelect?.value || "all";
+        const from = dateFromInput?.value || "";
+        const to = dateToInput?.value || "";
+        let visible = 0;
+
+        cards.forEach(function (card) {
+          const day = card.dataset.day || "";
+          const okStatus =
+            st === "all" ||
+            (st === "pending" && card.dataset.approved !== "true") ||
+            (st === "approved" && card.dataset.approved === "true" && card.dataset.visible === "true") ||
+            (st === "hidden" && card.dataset.visible !== "true");
+          const okRating = rating === "all" || card.dataset.rating === rating;
+          const okSearch = !q || (card.dataset.search || "").includes(q);
+          const okFrom = !from || (day && day >= from);
+          const okTo = !to || (day && day <= to);
+          const show = okStatus && okRating && okSearch && okFrom && okTo;
+          card.hidden = !show;
+          if (show) visible += 1;
+        });
+
+        if (visibleCountEl) visibleCountEl.textContent = String(visible);
+        if (emptyFilterEl) emptyFilterEl.hidden = visible > 0 || cards.length === 0;
+      }
+
+      if (searchInput) searchInput.addEventListener("input", applyFilters);
+      if (dateFromInput) dateFromInput.addEventListener("change", applyFilters);
+      if (dateToInput) dateToInput.addEventListener("change", applyFilters);
+      if (ratingSelect) ratingSelect.addEventListener("change", applyFilters);
+      if (statusSelect) {
+        statusSelect.addEventListener("change", function () {
+          syncStatusUI(statusSelect.value);
+          applyFilters();
+        });
+      }
+      statusPills.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          syncStatusUI(btn.dataset.revStatus || "all");
+          applyFilters();
+        });
+      });
+
+      const quickToday = document.getElementById("revQuickToday");
+      if (quickToday) {
+        quickToday.addEventListener("click", function () {
+          const today = santoDomingoIso(0);
+          if (dateFromInput) dateFromInput.value = today;
+          if (dateToInput) dateToInput.value = today;
+          applyFilters();
+        });
+      }
+
+      const quick7d = document.getElementById("revQuick7d");
+      if (quick7d) {
+        quick7d.addEventListener("click", function () {
+          if (dateFromInput) dateFromInput.value = santoDomingoIso(-6);
+          if (dateToInput) dateToInput.value = santoDomingoIso(0);
+          applyFilters();
+        });
+      }
+
+      const clearBtn = document.getElementById("revClearFilters");
+      if (clearBtn) {
+        clearBtn.addEventListener("click", function () {
+          if (searchInput) searchInput.value = "";
+          if (dateFromInput) dateFromInput.value = "";
+          if (dateToInput) dateToInput.value = "";
+          if (ratingSelect) ratingSelect.value = "all";
+          syncStatusUI("all");
+          applyFilters();
+        });
+      }
+
+      if (toggleAllBtn) {
+        toggleAllBtn.addEventListener("click", function () {
+          const visibleCards = cards.filter(function (c) { return !c.hidden; });
+          const anyClosed = visibleCards.some(function (c) { return !c.open; });
+          visibleCards.forEach(function (c) { c.open = anyClosed; });
+          toggleAllBtn.textContent = anyClosed ? "Contraer todas" : "Expandir todas";
+        });
+      }
+    })();
+  </script>
   <%- include("../../partials/admin-shell-end") %>
 </body>
 </html>

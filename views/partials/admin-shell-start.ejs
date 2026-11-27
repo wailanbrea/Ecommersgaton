@@ -1,4 +1,25 @@
-<% const activePath = adminCurrentPath || "/admin/dashboard"; %>
+<% const activePath = adminCurrentPath || "/admin/dashboard"; const unseenOrders = Number(typeof adminUnseenOrdersCount !== "undefined" ? adminUnseenOrdersCount : 0); const pendingReviews = Number(typeof adminPendingReviewsCount !== "undefined" ? adminPendingReviewsCount : 0); %>
+<style>
+  .admin-nav-badge {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: #dc2626;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .admin-nav-badge--amber {
+    background: #d97706;
+  }
+</style>
 <div class="admin-shell" data-admin-shell>
   <aside class="admin-sidebar" id="admin-sidebar" aria-label="Navegación administrativa">
     <a class="admin-brand" href="/admin/dashboard" aria-label="GATÓN DO, ir al dashboard">
@@ -27,12 +48,12 @@
         <span class="admin-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span><span class="admin-nav-label">Categorías</span>
       </a><% } %>
       <% if ((adminPermissions || []).includes('orders.view') || (adminPermissions || []).includes('orders.edit')) { %><a class="admin-nav-link <%= activePath.startsWith('/admin/orders') ? 'is-active' : '' %>" href="/admin/orders" aria-label="Pedidos" title="Pedidos" data-admin-link data-label="pedidos ventas">
-        <span class="admin-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 4h2l2.2 11.1a2 2 0 0 0 2 1.6h8.6a2 2 0 0 0 1.9-1.4L22 8H6"/><circle cx="10" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg></span><span class="admin-nav-label">Pedidos</span>
+        <span class="admin-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 4h2l2.2 11.1a2 2 0 0 0 2 1.6h8.6a2 2 0 0 0 1.9-1.4L22 8H6"/><circle cx="10" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg></span><span class="admin-nav-label">Pedidos</span><% if (unseenOrders > 0) { %><span class="admin-nav-badge" title="<%= unseenOrders %> pedido(s) sin ver"><%= unseenOrders > 99 ? '99+' : unseenOrders %></span><% } %>
       </a><% } %>
 
       <p class="admin-nav-heading">Relación con clientes</p>
       <% if ((adminPermissions || []).includes('reviews.view') || (adminPermissions || []).includes('reviews.moderate')) { %><a class="admin-nav-link <%= activePath.startsWith('/admin/reviews') ? 'is-active' : '' %>" href="/admin/reviews" aria-label="Reseñas" title="Reseñas" data-admin-link data-label="reseñas opiniones">
-        <span class="admin-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9z"/></svg></span><span class="admin-nav-label">Reseñas</span>
+        <span class="admin-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9z"/></svg></span><span class="admin-nav-label">Reseñas</span><% if (pendingReviews > 0) { %><span class="admin-nav-badge admin-nav-badge--amber" title="<%= pendingReviews %> reseña(s) pendiente(s)"><%= pendingReviews > 99 ? '99+' : pendingReviews %></span><% } %>
       </a><% } %>
 
       <p class="admin-nav-heading">Administración</p>

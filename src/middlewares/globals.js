@@ -1,5 +1,7 @@
 const SiteSettings = require("../models/SiteSettings");
 const Category = require("../models/Category");
+const Order = require("../models/Order");
+const Review = require("../models/Review");
 
 const GENDER_WORDS = [
   "hombre",
@@ -105,6 +107,30 @@ module.exports = async function globals(req, res, next) {
         };
       });
 
+    let adminUnseenOrdersCount = 0;
+    let adminPendingReviewsCount = 0;
+    if (req.session && req.session.adminId && adminPath.startsWith("/admin")) {
+      if (adminPath === "/admin/orders" && req.method === "GET") {
+        req.session.ordersLastSeenAt = new Date().toISOString();
+      }
+      const [recentOrders, pendingReviews] = await Promise.all([
+        Order.find().select("createdAt status").lean(),
+        Review.countDocuments({ approved: false })
+      ]);
+      adminPendingReviewsCount = Number(pendingReviews || 0);
+      if (req.session.ordersLastSeenAt) {
+        const seenMs = new Date(req.session.ordersLastSeenAt).getTime();
+        adminUnseenOrdersCount = (recentOrders || []).filter((o) => {
+          const t = o.createdAt ? new Date(o.createdAt).getTime() : 0;
+          return t > seenMs;
+        }).length;
+      } else {
+        adminUnseenOrdersCount = (recentOrders || []).filter(
+          (o) => String(o.status || "pending").toLowerCase() === "pending"
+        ).length;
+      }
+    }
+
     res.locals.siteSettings = settings || null;
     res.locals.headerCategories = topLevelCategories || [];
     res.locals.publicCategories = publicCategories || [];
@@ -113,6 +139,8 @@ module.exports = async function globals(req, res, next) {
     res.locals.safePublicUrl = safePublicUrl;
     res.locals.isAdminLoggedIn = Boolean(req.session && req.session.adminId);
     res.locals.currentAdminEmail = req.session?.adminEmail || null;
+    res.locals.adminUnseenOrdersCount = adminUnseenOrdersCount;
+    res.locals.adminPendingReviewsCount = adminPendingReviewsCount;
     res.locals.cartCount = cartCount;
     res.locals.basketLines = cart;
 
