@@ -348,11 +348,23 @@ function buildFontOptionsFromBody(body, req = null) {
   const previews = ensureArray(body.fontPreviewText);
   const imageUrls = ensureArray(body.fontPreviewImageUrl);
   const fontFileUrls = ensureArray(body.fontFileUrl);
+  const actives = ensureArray(body.fontActive);
 
   const maxLength = Math.max(names.length, previews.length, imageUrls.length, fontFileUrls.length);
   const fonts = [];
+  let activeIndex = 0;
 
   for (let i = 0; i < maxLength; i++) {
+    const activeValue = String(actives[activeIndex] ?? "");
+    let active = activeValue === "" ? true : activeValue === "true";
+    if (activeValue !== "") {
+      activeIndex += 1;
+      if (activeValue === "false" && String(actives[activeIndex] || "") === "true") {
+        active = true;
+        activeIndex += 1;
+      }
+    }
+
     const name = String(names[i] || "").trim();
     const previewText = String(previews[i] || "").trim();
     const uploadedFontImage = req ? uploadedIndexedFile(req, "fontPreviewImageFile", i) : null;
@@ -365,7 +377,8 @@ function buildFontOptionsFromBody(body, req = null) {
     const record = {
       name,
       previewText,
-      previewImageUrl
+      previewImageUrl,
+      active
     };
     if (fontFileUrl) record.fontFileUrl = fontFileUrl;
     fonts.push(record);
@@ -1416,4 +1429,5 @@ router.use(requireAdmin, require("./admin-tools"));
 router.use(requireAdmin, require("./admin-access"));
 
 router.buildCustomizationFieldsFromBody = buildCustomizationFieldsFromBody;
+router.buildFontOptionsFromBody = buildFontOptionsFromBody;
 module.exports = router;

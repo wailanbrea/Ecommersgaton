@@ -332,18 +332,31 @@
       </section>
 
       <section>
-        <div class="flex items-center justify-between gap-4 mb-2">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
           <h3 class="text-xl font-semibold text-stone-900">Tipografías</h3>
-          <button type="button" id="addFontBtn" class="rounded-xl bg-stone-900 text-white px-4 py-2 text-sm font-medium hover:bg-stone-800">
-            Agregar tipografía
-          </button>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" id="loadPresetFontsBtn" class="rounded-xl bg-white border border-stone-300 text-stone-800 px-4 py-2 text-sm font-medium hover:bg-stone-50">
+              Cargar 10 tipografías estándar
+            </button>
+            <button type="button" id="addFontBtn" class="rounded-xl bg-stone-900 text-white px-4 py-2 text-sm font-medium hover:bg-stone-800">
+              Agregar tipografía
+            </button>
+          </div>
         </div>
-        <p class="text-sm text-stone-600 mb-4">Configura al menos una tipografía para vender piezas con grabado de texto. Puedes usar las fuentes integradas o subir tu propio archivo de fuente (<code>.ttf</code>, <code>.otf</code>, <code>.woff2</code>, <code>.woff</code>).</p>
+        <p class="text-sm text-stone-600 mb-4">Activa o desactiva cada tipografía para este producto sin tener que borrarla. Puedes usar las fuentes integradas o subir tu propio archivo (<code>.ttf</code>, <code>.otf</code>, <code>.woff2</code>, <code>.woff</code>).</p>
 
         <div id="fontsContainer" class="space-y-4">
           <% if (formData.fontOptions && formData.fontOptions.length) { %>
             <% formData.fontOptions.forEach((font, index) => { %>
               <div class="font-item bg-stone-50 border border-stone-200 rounded-2xl p-4">
+                <div class="flex items-center justify-between gap-3 mb-3 pb-3 border-b border-stone-200">
+                  <label class="inline-flex items-center gap-2 text-sm font-medium text-stone-800 cursor-pointer">
+                    <input type="hidden" name="fontActive" value="false">
+                    <input type="checkbox" name="fontActive" value="true" <%= font.active !== false ? "checked" : "" %> class="rounded border-stone-300">
+                    <span>Activa en este producto</span>
+                  </label>
+                  <button type="button" class="remove-block rounded-xl bg-red-600 text-white px-3 py-1.5 text-xs font-medium">Quitar</button>
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label class="block text-sm font-medium mb-2">Nombre</label>
@@ -369,9 +382,6 @@
                       <p class="text-xs text-stone-500 mt-2">Imagen actual: <%= font.previewImageUrl %></p>
                     <% } %>
                   </div>
-                </div>
-                <div class="mt-4">
-                  <button type="button" class="remove-block rounded-xl bg-red-600 text-white px-4 py-2 text-sm">Quitar</button>
                 </div>
               </div>
             <% }) %>
@@ -509,6 +519,14 @@
 
   <template id="fontTemplate">
     <div class="font-item bg-stone-50 border border-stone-200 rounded-2xl p-4">
+      <div class="flex items-center justify-between gap-3 mb-3 pb-3 border-b border-stone-200">
+        <label class="inline-flex items-center gap-2 text-sm font-medium text-stone-800 cursor-pointer">
+          <input type="hidden" name="fontActive" value="false">
+          <input type="checkbox" name="fontActive" value="true" checked class="rounded border-stone-300">
+          <span>Activa en este producto</span>
+        </label>
+        <button type="button" class="remove-block rounded-xl bg-red-600 text-white px-3 py-1.5 text-xs font-medium">Quitar</button>
+      </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label class="block text-sm font-medium mb-2">Nombre</label>
@@ -516,7 +534,7 @@
         </div>
         <div>
           <label class="block text-sm font-medium mb-2">Texto de vista previa</label>
-          <input type="text" name="fontPreviewText" placeholder="Aa" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+          <input type="text" name="fontPreviewText" value="Aa" placeholder="Aa" class="w-full rounded-xl border border-stone-300 px-4 py-3">
         </div>
         <div>
           <label class="block text-sm font-medium mb-2">Archivo de fuente (.ttf, .otf, .woff2)</label>
@@ -528,9 +546,6 @@
           <input type="hidden" name="fontPreviewImageUrl">
           <input type="file" name="fontPreviewImageFile0" accept="image/*" data-upload-prefix="fontPreviewImageFile" class="w-full rounded-xl border border-stone-300 px-4 py-3 bg-white">
         </div>
-      </div>
-      <div class="mt-4">
-        <button type="button" class="remove-block rounded-xl bg-red-600 text-white px-4 py-2 text-sm">Quitar</button>
       </div>
     </div>
   </template>
@@ -575,6 +590,24 @@
 
     document.getElementById("addFontBtn").addEventListener("click", function () {
       appendTemplate("fontTemplate", "fontsContainer");
+    });
+
+    document.getElementById("loadPresetFontsBtn").addEventListener("click", function () {
+      const presets = ["Black Jack", "Dancing Script", "Great Vibes", "Baskerville", "Alex Brush", "Lobster", "Life Savers", "Courier New", "Impact", "Rockwell"];
+      const existing = new Set(
+        Array.from(document.querySelectorAll('#fontsContainer input[name="fontName"]'))
+          .map(function (el) { return (el.value || "").trim().toLowerCase(); })
+          .filter(Boolean)
+      );
+      presets.forEach(function (presetName) {
+        if (existing.has(presetName.toLowerCase())) return;
+        const template = document.getElementById("fontTemplate");
+        const clone = template.content.cloneNode(true);
+        const nameInput = clone.querySelector('input[name="fontName"]');
+        if (nameInput) nameInput.value = presetName;
+        document.getElementById("fontsContainer").appendChild(clone);
+      });
+      refreshUploadIndexes();
     });
 
     document.addEventListener("click", function (e) {

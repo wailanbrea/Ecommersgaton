@@ -232,7 +232,7 @@
                     </div>
 
                     <% if (engraving.fonts.length) { %>
-                      <fieldset class="product-customization-group product-font-group" data-font-group-for="<%= field.inputName %>" <% if (index > 0) { %>hidden<% } %>>
+                      <fieldset class="product-customization-group product-font-group" data-font-group-for="<%= field.inputName %>">
                         <legend>Tipografía · <%= field.label %></legend>
                         <div class="product-font-options" id="fontPicker-<%= index %>">
                           <% engraving.fonts.forEach(function(font, fontIndex) { %>
@@ -531,10 +531,10 @@
       }
 
       function updateFontGroupVisibility() {
-        customizationInputs.forEach(function (input, index) {
+        customizationInputs.forEach(function (input) {
           const group = document.querySelector('[data-font-group-for="' + input.name + '"]');
           if (!group) return;
-          group.hidden = index > 0 && !(input.value || "").trim();
+          group.hidden = false;
         });
       }
 

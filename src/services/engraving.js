@@ -13,7 +13,7 @@ const MOON_CHARM_FONT_PRESET = [
 
 function normalizeFontOptions(fontOptions) {
   const fonts = Array.isArray(fontOptions)
-    ? fontOptions.filter((font) => typeof font?.name === "string" && font.name.trim())
+    ? fontOptions.filter((font) => typeof font?.name === "string" && font.name.trim() && font.active !== false)
     : [];
   const names = fonts.map((font) => font.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase()).sort();
   if (names.length === 3 && names.join("|") === ["clasica", "elegante", "moderna"].sort().join("|")) {

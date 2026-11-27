@@ -5,20 +5,22 @@ const fs = require("node:fs");
 const ejs = require("ejs");
 
 const { engravingOptions } = require("../src/services/engraving");
+const adminRoutes = require("../src/routes/admin");
 
-test("engravingOptions conserva fontFileUrl válido y asigna customFontFamily", () => {
+test("engravingOptions conserva fontFileUrl válido, asigna customFontFamily y excluye tipografías desactivadas", () => {
   const product = {
     hasCustomization: true,
     customizationFields: [{ key: "frente", label: "Frente", maxLength: 20, required: true }],
     fontOptions: [
-      { name: "Mi Cursiva", previewText: "Aa", fontFileUrl: "/uploads/fonts/mi-cursiva-123.ttf" },
+      { name: "Mi Cursiva", previewText: "Aa", fontFileUrl: "/uploads/fonts/mi-cursiva-123.ttf", active: true },
+      { name: "Oculta", previewText: "Aa", fontFileUrl: "/uploads/fonts/oculta-1.ttf", active: false },
       { name: "Fuente Inválida", previewText: "Aa", fontFileUrl: "https://evil.example/font.ttf" },
       { name: "Dancing Script", previewText: "Aa" }
     ]
   };
 
   const options = engravingOptions(product);
-  assert.equal(options.fonts.length, 3);
+  assert.deepEqual(options.fonts.map((f) => f.name), ["Mi Cursiva", "Fuente Inválida", "Dancing Script"]);
   assert.equal(options.fonts[0].fontFileUrl, "/uploads/fonts/mi-cursiva-123.ttf");
   assert.equal(options.fonts[0].customFontFamily, "gaton-custom-font-0");
   assert.equal(options.fonts[1].fontFileUrl, "");
@@ -27,7 +29,25 @@ test("engravingOptions conserva fontFileUrl válido y asigna customFontFamily", 
   assert.equal(options.fonts[2].customFontFamily, "");
 });
 
-test("product-detail.ejs emite @font-face y data-custom-font-family para fuentes subidas", () => {
+test("buildFontOptionsFromBody conserva estado active true/false por tipografía", () => {
+  const fonts = adminRoutes.buildFontOptionsFromBody({
+    fontName: ["Black Jack", "Lobster", "Rockwell"],
+    fontPreviewText: ["Aa", "Aa", "Aa"],
+    fontPreviewImageUrl: ["", "", ""],
+    fontFileUrl: ["", "", ""],
+    fontActive: ["false", "true", "false", "false", "true"]
+  });
+  assert.deepEqual(
+    fonts.map(({ name, active }) => ({ name, active })),
+    [
+      { name: "Black Jack", active: true },
+      { name: "Lobster", active: false },
+      { name: "Rockwell", active: true }
+    ]
+  );
+});
+
+test("product-detail.ejs emite @font-face y muestra selector de tipografía visible en cada lado", () => {
   const viewPath = path.join(__dirname, "..", "views", "store", "product-detail.ejs");
   const template = fs.readFileSync(viewPath, "utf8");
   const product = {
@@ -40,9 +60,13 @@ test("product-detail.ejs emite @font-face y data-custom-font-family para fuentes
     hasVariants: false,
     variants: [],
     hasCustomization: true,
-    customizationFields: [{ key: "frente", label: "Frente", maxLength: 20, required: true }],
+    customizationFields: [
+      { key: "frente", label: "Frente", maxLength: 20, required: true },
+      { key: "reverso", label: "Reverso", maxLength: 20, required: false }
+    ],
     fontOptions: [
-      { name: "Mi Fuente", previewText: "Aa", fontFileUrl: "/uploads/fonts/mi-fuente-1.woff2" }
+      { name: "Mi Fuente", previewText: "Aa", fontFileUrl: "/uploads/fonts/mi-fuente-1.woff2", active: true },
+      { name: "Desactivada", previewText: "Aa", active: false }
     ]
   };
 
@@ -81,4 +105,8 @@ test("product-detail.ejs emite @font-face y data-custom-font-family para fuentes
   assert.match(html, /font-family:\s*'gaton-custom-font-0'/);
   assert.match(html, /url\('\/uploads\/fonts\/mi-fuente-1\.woff2'\)/);
   assert.match(html, /data-custom-font-family="gaton-custom-font-0"/);
+  assert.doesNotMatch(html, /Desactivada/);
+  assert.match(html, /data-font-group-for="engraving_0">/);
+  assert.match(html, /data-font-group-for="engraving_1">/);
+  assert.doesNotMatch(html, /data-font-group-for="engraving_1"\s+hidden/);
 });
