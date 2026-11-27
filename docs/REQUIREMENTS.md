@@ -6,7 +6,7 @@
 |---|---|---|
 | ADM-01 | Layout EJS compartido, paleta premium, sidebar expandible y navegación responsive en las pantallas existentes | IMPLEMENTED; renderizado en pruebas |
 | ADM-02 | Mostrar solo navegación administrativa con rutas implementadas | PARTIAL; Dashboard, Ventas, Productos, Inventario, Categorías, Pedidos, Reseñas y Configuración |
-| INV-01 | Exportar existencias CSV, XLSX y PDF; importar esos formatos con vista previa, validación por ID/variante, transacción y bitácora | IMPLEMENTED; flujos probados en laboratorio |
+| INV-01 | Exportar existencias CSV, XLSX y PDF; importar esos formatos con vista previa, validación por ID/variante, transacción y bitácora | PARTIAL; flujos principales probados en laboratorio, faltan identidad SKU estable y ciclo integral |
 | INV-02 | Conciliar inventario con transacciones de venta, proteger sobreventa concurrente y gestionar devoluciones | PENDING; fuera del importador aislado |
 | SAL-01 | Mostrar ingresos por fecha de pago confirmado y distinguirlos de pedidos pendientes | IMPLEMENTED; confirmación manual, sin proveedor de pagos |
 | SAL-02 | Períodos/comparación, evolución diaria, pagos, ticket promedio, productos de pedidos pagados y exportar | PARTIAL; ver TEST_MATRIX |
@@ -88,12 +88,12 @@ Monolito modular SSR + endpoints JSON internos versionados (`/api/v1`) para conf
 - Plan: F0. Depende de adr y topología. Riesgo: arranque parcial o persistencia inconsistente.
 - Responsable propuesto: Arquitectura. Pruebas relacionadas: T09, T24, T27.
 
-## ARC-02 · PENDING
+## ARC-02 · IN_PROGRESS
 
-MongoDB replica set/Atlas con soporte de transacciones, índices y migraciones versionadas; transacciones breves con retries acotados, sin llamadas externas dentro de ellas. Local y CI usar replica set real, no mocks de concurrencia. Verificar plan de Atlas elegido soporta operaciones/backup requeridos; si no, usar dedicado o replica set administrado. No exponer puerto DB a Internet.
+MySQL/MariaDB es el motor de runtime aprobado (ADR-003/ADR-010); esquema versionado, claves/índices y transacciones acotadas con reintentos donde proceda, sin llamadas externas dentro de transacciones. La aplicación productiva y local ya usan MySQL/MariaDB; MongoDB queda solo como referencia de consulta/importación fuera del runtime. Mantener el puerto SQL privado. Falta completar cobertura de concurrencia, restauración, métricas y revisión de capacidades/versiones.
 
-- Cobertura: pendiente. Evidencia de partida: server.js, config, routers y modelos.
-- Plan: F1–F7. Depende de adr y topología. Riesgo: arranque parcial o persistencia inconsistente.
+- Cobertura: parcial. Evidencia: DB01–DB10 en `docs/TEST_MATRIX.md`; DB11/DB12 y T09/T24/T27 siguen pendientes.
+- Plan: F1/F7. Depende de ensayos de concurrencia y restauración aislada. Riesgo: pérdida de datos o persistencia inconsistente.
 - Responsable propuesto: Arquitectura. Pruebas relacionadas: T09, T24, T27.
 
 ## ARC-03 · IN_PROGRESS
@@ -106,7 +106,7 @@ Almacenamiento compatible S3/R2 mediante adaptador. Buckets separados público y
 
 ## ARC-04 · PENDING
 
-Worker durable con outbox en Mongo y leasing atómico, reintentos exponenciales con jitter, límite, dead letter, replay autorizado, reconciliación. No depender de timers de un proceso web. Redis/cola dedicada solo si métricas lo justifican. Jobs independientes de entrega web y sin datos personales innecesarios.
+Worker durable con outbox transaccional en MySQL y leasing atómico, reintentos exponenciales con jitter, límite, dead letter, replay autorizado y reconciliación. No depender de timers de un proceso web. Redis/cola dedicada solo si métricas lo justifican. Jobs independientes de entrega web y sin datos personales innecesarios.
 
 - Cobertura: pendiente. Evidencia de partida: server.js, config, routers y modelos.
 - Plan: F1–F7. Depende de adr y topología. Riesgo: arranque parcial o persistencia inconsistente.
@@ -114,7 +114,7 @@ Worker durable con outbox en Mongo y leasing atómico, reintentos exponenciales 
 
 ## ARC-05 · IN_PROGRESS
 
-Entorno reproducible Docker Compose: web, worker, reverse proxy cuando proceda, DB local replica set, almacenamiento local/S3 de pruebas. Dockerfile multistage, usuario no root, versiones pinneadas, lockfile, `npm ci`, CSS compilado, health/readiness. `.env.example` documentado sin secretos. Aplicación inicia tras comprobar configuración/DB; seed explícito y no destructivo, sin cuentas demo en producción.
+Entorno reproducible Docker Compose: web, worker cuando esté implementado, reverse proxy externo cuando proceda, MariaDB y almacenamiento persistente aislados. Dockerfile multistage, usuario no root, versiones fijadas, lockfile, `npm ci`, CSS compilado, health/readiness. `.env.example` documentado sin secretos. Aplicación inicia tras comprobar configuración/DB; seed explícito y no destructivo, sin cuentas demo en producción. Los perfiles operativos worker/scheduler/media actuales son placeholders y no cuentan como workers funcionales.
 
 - Cobertura: parcial. Evidencia de partida: server.js, config, routers y modelos.
 - Plan: F1–F7. Depende de adr y topología. Riesgo: arranque parcial o persistencia inconsistente.
@@ -122,7 +122,7 @@ Entorno reproducible Docker Compose: web, worker, reverse proxy cuando proceda, 
 
 ## ARC-06 · PENDING
 
-Hosting: desarrollo y staging aislados en VPS Linux Contabo existente si se verifica capacidad, con Docker, red/volúmenes/credenciales independientes, límites y subdominio no indexable. Producción preferida: VPS Linux dedicado en costa este de EE. UU. (4 GB RAM/2 vCPU como hipótesis inicial para app + worker con DB separada; medir), Cloudflare DNS/TLS/CDN/WAF según plan, Nginx/Caddy, MongoDB Atlas y R2. Cotizar costos actuales y comparar backup, SLA, regiones, latencia RD y titularidad. No instalar en Windows/XAMPP por defecto. No comprometer recursos compartidos sin medir. Sin PaaS de disco efímero con uploads locales.
+Hosting: la operación vigente es `gaton.bsolutions.dev` en VPS Linux `147.93.5.21`, Docker con contenedor app y MariaDB privada, Cloudflare DNS/TLS y proxy Nginx; MongoDB Atlas no es el runtime aprobado. R2 aún no está configurado. La propuesta original de Atlas/VPS dedicado y sus estimaciones quedan como referencia histórica, no como despliegue pendiente. Falta verificar capacidad, staging aislado, recuperación de backup/media, SLA, regiones, latencia RD, titularidad y retención; sin comprometer recursos compartidos no medidos ni usar PaaS de disco efímero para uploads.
 
 - Cobertura: pendiente. Evidencia de partida: server.js, config, routers y modelos.
 - Plan: F1–F7. Depende de adr y topología. Riesgo: arranque parcial o persistencia inconsistente.
@@ -196,7 +196,7 @@ Panel de integraciones: estado conectado/desconectado/sandbox/live, última sinc
 
 Configurador visible dentro de la página del producto, sin salir a otra aplicación. Si no personalizable, no renderizar campos ni aceptar payload. Cada SKU selecciona plantilla publicada compatible. Admin define campos obligatorios/opcionales, límites, orden, dependencia condicional, ayudas, precio por opción y zona. Tipos: texto/nombre/iniciales, fecha, frase, selector, fuente, símbolo permitido, foto, logo/diseño raster, texto multilínea, checkbox. Requerimientos soportados: solo texto, texto+texto, texto+imagen, solo imagen, múltiples zonas y lados cuando la plantilla lo permita. No habilitar archivos vectoriales activos/arbitrarios hasta implementar sanitización segura.
 
-- Cobertura: parcial. La ficha ahora incluye implementación local de una vista previa tipográfica por cada campo existente, y el selector aplica la fuente a todas las caras; la administración aclara cómo nombrar cada cara. Esta implementación no se ha probado en navegador, carrito ni pedido y no está verificada. No cubre plantillas publicadas, precios por opción, zonas con tipografía independiente ni reproducción histórica. Ver T05 en TEST_MATRIX y ADR-008.
+- Cobertura: parcial. La ficha y el navegador local verificaron la superposición ilustrativa del texto en fotos de frente/reverso, fuentes independientes por cara, selector trasero condicional y recargo configurable aplicado en servidor. La matriz también registra una verificación productiva acotada de la configuración actual del brazalete; eso no acredita el requisito integral. Aún no cubre plantillas versionadas publicadas, zonas físicas calibradas por taller, reproducción histórica del diseño ni un ciclo integral de carrito/pedido para todas las combinaciones. Ver `CUS-01-IMAGE-PREVIEW-2026-11-27`, `CUS-01-PROD`, T05/T06/T07 y ADR-011 en TEST_MATRIX/DECISIONS.
 - Plan: F3. Depende de plantilla, sku y reglas de taller. Riesgo: diseño irreproducible o privado expuesto.
 - Responsable propuesto: Taller/ingeniería. Pruebas relacionadas: T05, T06, T07, T13.
 
@@ -220,7 +220,7 @@ Contrato de plantilla: `templateVersionId`, `variantIds`, `sides[]` con backgrou
 
 Carga móvil/desktop con progreso, reemplazo y error recuperable. JPG/PNG/WebP inicialmente; HEIC solo tras prueba de decodificación o conversión local; advertir formato no admitido. Propuesta inicial configurable: 10 MB/archivo, 20 MP máximo, 3 archivos por zona solo si plantilla lo permite. Validar magic bytes/decodificación/dimensiones, límites de request, rechazar polyglots/archivos ejecutables, corregir orientación y eliminar EXIF de derivados, cuarentena y escaneo/normalización. Original privado solo si necesario para taller; no servir directamente por URL pública. Restricción de pertenencia al draft; no aceptar objectKey/URL ajena. Confirmar política de originales con taller. No impedir todo el flujo por fallo de preview: ofrecer reintento o modo asesorado explícito conservando especificaciones.
 
-- Cobertura: parcial. Las cargas nuevas se guardan en `storage/customizations` y se sirven mediante sesión del comprador o permiso `orders.view`; los archivos legacy bajo `public/uploads/customizations` pasan por la misma autorización. No se ha probado validación por magic bytes/decodificación, limpieza EXIF, escaneo, límites de píxeles ni matriz completa de pertenencia.
+- Cobertura: parcial. Las cargas nuevas se guardan en `storage/customizations` y se sirven mediante sesión del comprador o permiso `orders.view`; los archivos legacy bajo `public/uploads/customizations` pasan por la misma autorización. Sharp decodifica completamente JPG/PNG/WebP, coteja el formato real con el MIME, limita dimensiones a 12,000 px y 24 MP, rechaza animación/multipágina y genera una copia normalizada sin metadatos. La suite prueba los tres formatos válidos, PNG truncado con cabecera conservada, MIME discordante y dimensiones excesivas; la prueba HTTP confirma rechazo previo al carrito y acceso privado autorizado. Una prueba elimina script añadido al final al volver a codificar. Aún faltan antivirus/cuarentena, familias de polyglot especializadas y matriz completa de pertenencia.
 - Plan: F3. Depende de plantilla, sku y reglas de taller. Riesgo: diseño irreproducible o privado expuesto.
 - Responsable propuesto: Taller/ingeniería. Pruebas relacionadas: T05, T06, T07, T13.
 
@@ -268,7 +268,7 @@ Archivos: lifecycle draft abandonado → cleanup tras plazo configurable (propue
 
 Cada SKU físico tiene onHand, reserved, available; `onHand >= reserved >= 0`. Tipo stock (pieza existente) o bajo pedido solo con capacidad/plazos aprobados; por defecto inventario físico, no aceptar ventas ilimitadas. Pieza base de joyería personalizada reserva el SKU correspondiente, no un stock distinto ficticio. Si dos productos comparten materia prima, definir SKU base/BOM únicamente con reglas confirmadas; no duplicar existencias.
 
-- Cobertura: parcial. Evidencia de partida: Product.stock y store.js.
+- Cobertura: parcial. Exportación CSV/XLSX/PDF, preview, round-trip PDF oficial, parser CSV/XLSX, neutralización de fórmulas, duplicados y variante obsoleta están probados (`INV-01-PDF-HTTP`, `INV-01-IMPORT-UNIT`, `INV-01-PDF-ROUNDTRIP`). Integración local aplicó por HTTP cantidades sintéticas con CSV, XLSX y PDF oficial y restauró el stock inicial mediante importación compensatoria auditada; variante física aplicada por firma estable; lote de producto base obsoleto y firma de variante cambiada durante la vista previa devuelven 409 (`INV-IMPORT-APPLY-ATOMIC`). El fallo tardío revierte el lote sin movimientos parciales. No existe función dedicada de deshacer. En el catálogo MySQL de laboratorio se contaron 16 productos activos, 0 variantes y 16 sin SKU. La columna SKU del archivo es informativa: la identidad de importación es el ID de producto y la posición/firma de variante; no hay unicidad o estabilidad de SKU comprobada. Siguen pendientes el contrato de identidad SKU, saldos/reservas y concurrencia del flujo de venta/reserva.
 - Plan: F4. Depende de identidad sku y transacciones. Riesgo: sobreventa o doble descuento.
 - Responsable propuesto: Inventario. Pruebas relacionadas: T06, T09, T10, T12.
 
@@ -276,7 +276,7 @@ Cada SKU físico tiene onHand, reserved, available; `onHand >= reserved >= 0`. T
 
 Al carrito NO descontar ni reservar por defecto. Checkout suma cantidades por SKU incluso si diseños diferentes. Una transacción verifica y crea order + reservas + cupón reservado + outbox; updates condicionales por disponibilidad. Propuesta reserva inicial 30 min para pago online, plazo específico para transferencia/manual (propuesta 24h, confirmación comercial); job de expiración libera solo reservas activas, nunca una consumida. No usar `Math.max(0, stock-qty)` para ocultar sobreventa. Retener stock mientras pago está en verificación solo mediante regla acotada y reconciliación.
 
-- Cobertura: parcial. El checkout ahora bloquea filas de producto y confirma en una sola transacción pedido, stock y `inventory_movements`; `checkout_key` única evita doble envío simultáneo. T09 reducido a dos solicitudes se ejecutó en laboratorio. No hay reservas temporales, outbox, vencimiento, consumo por confirmación de pago ni 20 solicitudes concurrentes; no satisface el flujo integral solicitado.
+- Cobertura: parcial. El checkout ahora bloquea filas de producto y confirma en una sola transacción pedido, stock y `inventory_movements`; `checkout_key` única evita doble envío simultáneo. En laboratorio se probaron 20 solicitudes concurrentes con stock 1: solo una creó el pedido y se registró un único decremento; el doble submit con clave idempotente devuelve el mismo pedido. No hay reservas temporales, outbox, vencimiento ni consumo de reserva por confirmación de pago; el modelo de disponibilidad aún no satisface el flujo integral solicitado.
 - Plan: F4. Depende de identidad sku y transacciones. Riesgo: sobreventa o doble descuento.
 - Responsable propuesto: Inventario. Pruebas relacionadas: T06, T09, T10, T12.
 
@@ -668,7 +668,7 @@ Revisar accesibilidad WCAG 2.2 AA como objetivo: teclado, lector pantalla, error
 
 Threat model: admin comprometido, IDOR/BOLA, CSRF, XSS, NoSQL injection, SSRF, enumeración, regex DoS, uploads maliciosos, webhooks falsos, doble cobro/overbooking, robo de tokens, fuga de fotos, exposición a terceros y proveedor caído. Aplicar validación de schemas (whitelist), consultas parametrizadas/operadores controlados, escape de regex o búsqueda indexada, paginación/límites, escapar EJS, sanitizar HTML CMS, allowlist de URLs, no fetch arbitrario desde URL usuario.
 
-- Cobertura: parcial. Se corrigieron IDOR de `/order-success/:id`, exposición pública de fotos de personalización y descuento de stock fuera de transacción; se verificaron dos carreras e intentos anónimos en laboratorio. Quedan validaciones de esquema amplias, límites/rate limit, XSS/CMS, scans de carga y revisión integral SEC-08.
+- Cobertura: parcial. Se corrigieron IDOR de `/order-success/:id`, exposición pública de fotos de personalización y descuento de stock fuera de transacción; se verificaron carreras e intentos anónimos en laboratorio. La ficha escapa `<`, `>`, `&`, U+2028 y U+2029 en JS inline, y la configuración avanzada escapa `<` antes de insertarse en `<textarea>`; payloads de cierre comprobados por HTTP local (`SEC-XSS-PRODUCT-JSON`). Reseñas probadas en ambas vistas. `safePublicUrl` aplica allowlist HTTP(S)/mismo origen a hrefs CMS en CTA, categorías, menú Personalizados y redes sociales; los src/data-image públicos de catálogo también usan el filtro, incluso el cambio de imagen de variante, con pruebas unitarias/estáticas acotadas; se probó por HTTP el render de URLs CMS hostiles inyectadas solo en memoria; se comprobó además el escape HTML de `heroTitle`; aún faltan otros campos CMS y otros sinks/atributos dinámicos, validaciones de esquema amplias, límites/rate limit, escaneo de cargas y revisión integral SEC-08.
 - Plan: F1/F7. Depende de política, permisos y operaciones. Riesgo: exposición o pérdida de datos.
 - Responsable propuesto: Seguridad. Pruebas relacionadas: T07, T22, T24, T27.
 
@@ -676,7 +676,7 @@ Threat model: admin comprometido, IDOR/BOLA, CSRF, XSS, NoSQL injection, SSRF, e
 
 HTTPS extremo a extremo, proxy trust exacto, cookies Secure HttpOnly SameSite apropiado, CSRF en mutaciones de sesión (multipart incluido); webhooks exentos solo con firma válida y rutas aisladas. Regenerar sesión tras login, logout/revocación, expiración inactividad, rate limit por cuenta/IP y anti-bruteforce, hash bcrypt/Argon2 con parámetros actuales, MFA admin, recuperación segura, autorización por recurso, roles y auditoría. CORS cerrado, Helmet/CSP, límites request/timeouts, mensajes de error sin stack, 404/403 consistentes para evitar enumeración. No endpoints de debug en prod.
 
-- Cobertura: parcial. Sesión mantiene `httpOnly`, `sameSite=lax`, `secure` en producción; el admin tiene CSRF y RBAC probados por unidad; token de checkout impredecible evita CSRF y doble envío del formulario. No se probó fixation/logout a nivel HTTP, rate limit, MFA, CSP/Helmet ni CSRF de todas las mutaciones públicas.
+- Cobertura: parcial. Sesión mantiene `httpOnly`, `sameSite=lax`, `secure` en producción; RBAC y CSRF base tienen pruebas unitarias; importación multipart rechaza token ausente (403) después de Multer, y edición de personalización admin sin sesión/CSRF es denegada (403 sin persistencia). El token de checkout es impredecible. Faltan pruebas HTTP de los demás formularios multipart, fixation/logout, rate limit, MFA, CSP/Helmet y mutaciones públicas.
 - Plan: F1/F7. Depende de política, permisos y operaciones. Riesgo: exposición o pérdida de datos.
 - Responsable propuesto: Seguridad. Pruebas relacionadas: T07, T22, T24, T27.
 
@@ -692,7 +692,7 @@ Secrets manager o variables protegidas, `.env.example`, rotación, CI secret sca
 
 Privacidad: clasificar público/privado/sensible; minimizar datos, consentimiento, política de finalidad y retención aprobada, acceso/rectificación/supresión y obligaciones fiscales/contractuales aplicables (validar con asesor RD, incluida protección de datos). Proteger imágenes originales, bocetos, comprobantes y exportaciones; cifrado en tránsito/reposo, links expiran y se revocan por autorización; evitar PII en URLs/logs/analytics. Descargar assets mediante autorización por order/role/draft; logs redaccionados. Expiración de cache/backup y borrado coordinado, preservar evidencia legal bajo acceso limitado. No declarar cumplimiento legal sin revisión.
 
-- Cobertura: parcial. Archivos nuevos privados y legacy custodiados por sesión de pedido o permiso de lectura de pedidos; GET anónimo retorna 404. Faltan enlaces expiran/revocación, prueba cruzada entre compradores, análisis de medios, retención aprobada y revisión legal.
+- Cobertura: parcial. Archivos nuevos privados y legacy custodiados por sesión de pedido o permiso de lectura de pedidos; GET anónimo y desde otra sesión retorna 404 para pedido y foto en laboratorio. Faltan enlaces expiran/revocación, análisis de medios, retención aprobada y revisión legal.
 - Plan: F1/F7. Depende de política, permisos y operaciones. Riesgo: exposición o pérdida de datos.
 - Responsable propuesto: Seguridad. Pruebas relacionadas: T07, T22, T24, T27.
 
@@ -730,9 +730,9 @@ QA seguridad: probar rutas admin anónimas, cross-user order/draft/asset, CSRF, 
 
 ## MIG-01 · BLOCKED
 
-Inventario de versión real, Git tag de baseline, SHA, backup DB y uploads, entorno de ensayo aislado, mapa de datos (no importar export público sobre DB real). Revisar licencias/assets, ruta histórica PM2 y variables actuales sin imprimir secretos. Identificar discrepancias con ZIP y los PDF. No escribir en producción.
+Inventario del código desplegado, SHA, arquitectura MySQL, fuentes de datos y medios con hashes; conservar un ensayo aislado y un mapa de datos actualizado. Revisar licencias/assets, respaldo restaurable de DB y uploads, y discrepancias con ZIP y PDF. El proyecto ya se desplegó a producción; este requisito sigue bloqueado para nuevas migraciones/cortes porque el backup del motor solo figura como guardado y su integridad/restauración de DB y media no se ha verificado independientemente. No hacer pruebas destructivas con datos productivos.
 
-- Cobertura: parcial. Evidencia de partida: Export público, modelos y manifiesto SHA-256.
+- Cobertura: parcial. Evidencia: `docs/DATA_MIGRATION.md`, estado Git/HEAD y `DB01`–`DB10`; backup/restore integral pendiente en `DB12`.
 - Plan: F0. Depende de head y respaldo verificado. Riesgo: pérdida de campos o referencias.
 - Responsable propuesto: Datos/propietario. Pruebas relacionadas: T24, T25.
 

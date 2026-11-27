@@ -1,3 +1,6 @@
+<% const jsonForInlineScript = (value) => JSON.stringify(value).replace(/[<>&\u2028\u2029]/g, (character) => ({
+  "<": "\\u003c", ">": "\\u003e", "&": "\\u0026", "\u2028": "\\u2028", "\u2029": "\\u2029"
+})[character]); %>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -55,7 +58,7 @@
         <div class="product-gallery-frame">
           <div class="product-gallery-stage <%= isBraceletPlateImage ? 'product-gallery-stage--bracelet-plate' : '' %>">
             <% if (defaultImage) { %>
-              <img id="mainProductImage" src="<%= defaultImage %>" alt="<%= product.name %>" class="product-gallery-image <%= isBraceletPlateImage ? 'product-gallery-image--bracelet-plate' : '' %>">
+              <img id="mainProductImage" src="<%= safePublicUrl(defaultImage) %>" alt="<%= product.name %>" class="product-gallery-image <%= isBraceletPlateImage ? 'product-gallery-image--bracelet-plate' : '' %>">
               <button type="button" class="product-gallery-expand" data-open-product-image aria-label="Ampliar imagen del producto">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m13-5v3a2 2 0 0 1-2 2h-3M9 9l-6-6m12 0 6-6M3 21l6-6m12 6-6-6"/></svg>
               </button>
@@ -68,14 +71,14 @@
         <% if ((product.gallery && product.gallery.some(function(item) { return item.type === 'image'; })) || defaultImage) { %>
           <div class="product-gallery-thumbnails" aria-label="Imágenes del producto">
             <% if (defaultImage) { %>
-              <button type="button" class="thumb-btn is-active" data-image="<%= defaultImage %>" aria-label="Ver imagen principal" aria-pressed="true">
-                <img src="<%= defaultImage %>" alt="<%= product.name %>">
+                <button type="button" class="thumb-btn is-active" data-image="<%= safePublicUrl(defaultImage) %>" aria-label="Ver imagen principal" aria-pressed="true">
+                <img src="<%= safePublicUrl(defaultImage) %>" alt="<%= product.name %>">
               </button>
             <% } %>
             <% (product.gallery || []).forEach(function(item, index) { %>
               <% if (item.type === "image") { %>
-                <button type="button" class="thumb-btn" data-image="<%= item.url %>" aria-label="Ver imagen <%= index + 2 %> de <%= product.name %>" aria-pressed="false">
-                  <img src="<%= item.url %>" alt="<%= item.altText || product.name %>">
+                <button type="button" class="thumb-btn" data-image="<%= safePublicUrl(item.url) %>" aria-label="Ver imagen <%= index + 2 %> de <%= product.name %>" aria-pressed="false">
+                  <img src="<%= safePublicUrl(item.url) %>" alt="<%= item.altText || product.name %>">
                 </button>
               <% } %>
             <% }) %>
@@ -92,7 +95,7 @@
         <% if (product.videoUrl) { %>
           <div class="lux-card p-4 mt-6">
             <div class="moon-title mb-3">Video del producto</div>
-            <video controls class="w-full rounded-[1.25rem] bg-black"><source src="<%= product.videoUrl %>"></video>
+            <video controls class="w-full rounded-[1.25rem] bg-black"><source src="<%= safePublicUrl(product.videoUrl) %>"></video>
           </div>
         <% } %>
       </div>
@@ -138,16 +141,23 @@
               <fieldset class="product-customization-group">
                 <legend>Personalización</legend>
                 <% engraving.fields.forEach(function(field, index) { %>
-                  <% const fieldId = 'custom-field-' + index; const previewId = fieldId + '-preview'; const limit = field.maxLength; %>
+                  <% const fieldId = 'custom-field-' + index; const previewId = fieldId + '-preview'; const limit = field.maxLength; const previewImages = (product.gallery || []).filter(function(item) { return item.type === 'image' && item.url; }); const fieldPreviewImage = index === 0 ? defaultImage : (previewImages[index - 1] && previewImages[index - 1].url); %>
                   <div class="product-customization-field">
                     <label for="<%= fieldId %>"><%= field.label %><% if (field.required) { %><span class="required-mark"> *</span><% } else { %><span class="text-stone-500"> (opcional)</span><% } %><% if (field.priceDeltaMinor > 0) { %><span class="text-stone-600"> (+RD$ <%= (field.priceDeltaMinor / 100).toFixed(2) %>)</span><% } else { %><span class="text-stone-500"> (incluido)</span><% } %></label>
                     <div class="product-customization-input-wrap">
                       <input id="<%= fieldId %>" type="text" name="<%= field.inputName %>" class="customization-input" data-label="<%= field.label %>" data-required="<%= field.required ? 'true' : 'false' %>" data-price-delta-minor="<%= field.priceDeltaMinor || 0 %>" placeholder="<%= field.placeholder || '' %>" maxlength="<%= limit %>" <% if (field.required) { %>required<% } %> aria-describedby="<%= fieldId %>-count">
                       <span class="product-character-count" id="<%= fieldId %>-count" data-character-count="<%= fieldId %>">0/<%= limit %></span>
                     </div>
-                    <div class="product-customization-live-preview" aria-label="Vista previa de <%= field.label %>">
-                      <span class="product-customization-live-preview__caption">Vista previa · <%= field.label %></span>
-                      <span class="product-font-sample product-font-sample--serif product-customization-live-preview__text" id="<%= previewId %>">Tu texto</span>
+                    <div class="product-customization-live-preview<%= fieldPreviewImage ? ' product-customization-live-preview--image' : '' %>" aria-label="Vista previa ilustrativa de <%= field.label %>">
+                      <span class="product-customization-live-preview__caption">Vista ilustrativa · <%= field.label %></span>
+                      <% if (fieldPreviewImage) { %>
+                        <span class="product-customization-image-preview">
+                          <img src="<%= safePublicUrl(fieldPreviewImage) %>" alt="Imagen del producto para <%= field.label %>">
+                          <span class="product-font-sample product-font-sample--serif product-customization-image-preview__text" id="<%= previewId %>" aria-live="polite">Tu texto</span>
+                        </span>
+                      <% } else { %>
+                        <span class="product-font-sample product-font-sample--serif product-customization-live-preview__text" id="<%= previewId %>" aria-live="polite">Tu texto</span>
+                      <% } %>
                     </div>
                   </div>
                 <% }) %>
@@ -162,7 +172,7 @@
                     <% engraving.fonts.forEach(function(font, fontIndex) { %>
                       <label class="product-font-option">
                         <input type="radio" name="<%= field.fontInputName %>" value="<%= font.name %>" class="font-option" data-font-for="<%= fieldIndex %>" data-preview-style="<%= font.sampleStyle %>" <%= fontIndex === 0 ? 'checked' : '' %>>
-                        <% if (font.previewImageUrl) { %><img src="<%= font.previewImageUrl %>" alt=""><% } else { %><span class="product-font-sample product-font-sample--<%= font.sampleStyle %>" aria-hidden="true"><%= font.previewText || 'Aa' %></span><% } %>
+                        <% if (font.previewImageUrl) { %><img src="<%= safePublicUrl(font.previewImageUrl) %>" alt=""><% } else { %><span class="product-font-sample product-font-sample--<%= font.sampleStyle %>" aria-hidden="true"><%= font.previewText || 'Aa' %></span><% } %>
                         <span><%= font.name %></span>
                       </label>
                     <% }) %>
@@ -214,7 +224,7 @@
       <dialog class="product-image-dialog <%= isBraceletPlateImage ? 'product-image-dialog--bracelet-plate' : '' %>" id="productImageDialog" aria-label="Imagen ampliada de <%= product.name %>">
         <button type="button" data-close-product-image aria-label="Cerrar imagen ampliada">×</button>
         <div class="product-image-dialog-stage <%= isBraceletPlateImage ? 'product-image-dialog-stage--bracelet-plate' : '' %>">
-          <img src="<%= defaultImage %>" id="expandedProductImage" alt="<%= product.name %>" <%= isBraceletPlateImage ? 'class="product-image-dialog-image--bracelet-plate"' : '' %>>
+          <img src="<%= safePublicUrl(defaultImage) %>" id="expandedProductImage" alt="<%= product.name %>" <%= isBraceletPlateImage ? 'class="product-image-dialog-image--bracelet-plate"' : '' %>>
         </div>
       </dialog>
     <% } %>
@@ -229,7 +239,7 @@
             <% reviews.forEach(function(review) { %>
               <div class="review-card-public">
                 <% if (review.photoUrl) { %>
-                  <img src="<%= review.photoUrl %>" alt="Foto de reseña de <%= review.customerName %>" class="review-card-public__photo">
+                  <img src="<%= safePublicUrl(review.photoUrl) %>" alt="Foto de reseña de <%= review.customerName %>" class="review-card-public__photo">
                 <% } %>
 
                 <div class="review-card-public__body">
@@ -318,7 +328,7 @@
             <a href="/product/<%= item.slug %>" class="product-card block">
               <div class="product-image-wrap">
                 <% if (item.mainImageUrl) { %>
-                  <img src="<%= item.mainImageUrl %>" alt="<%= item.name %>">
+                  <img src="<%= safePublicUrl(item.mainImageUrl) %>" alt="<%= item.name %>">
                 <% } else { %>
                   <div class="w-full h-full flex items-center justify-center text-stone-400">Sin imagen</div>
                 <% } %>
@@ -341,13 +351,13 @@
 
   <script>
     (function () {
-      const variants = <%- JSON.stringify(product.variants || []) %>;
-      const defaultVariantIndex = <%- JSON.stringify((defaultVariantIndex !== null && defaultVariantIndex >= 0) ? defaultVariantIndex : null) %>;
-      const productUnavailable = <%- JSON.stringify(Boolean(productUnavailable)) %>;
-      const engravingUnavailable = <%- JSON.stringify(engraving.unavailable) %>;
-      const productStock = <%- JSON.stringify(Number(defaultStock || 0)) %>;
-      const basePrice = <%- JSON.stringify(Number(product.basePrice || 0)) %>;
-      const baseCompareAt = <%- JSON.stringify(Number(product.compareAtPrice || 0)) %>;
+      const variants = <%- jsonForInlineScript(product.variants || []) %>;
+      const defaultVariantIndex = <%- jsonForInlineScript((defaultVariantIndex !== null && defaultVariantIndex >= 0) ? defaultVariantIndex : null) %>;
+      const productUnavailable = <%- jsonForInlineScript(Boolean(productUnavailable)) %>;
+      const engravingUnavailable = <%- jsonForInlineScript(engraving.unavailable) %>;
+      const productStock = <%- jsonForInlineScript(Number(defaultStock || 0)) %>;
+      const basePrice = <%- jsonForInlineScript(Number(product.basePrice || 0)) %>;
+      const baseCompareAt = <%- jsonForInlineScript(Number(product.compareAtPrice || 0)) %>;
       const priceEl = document.getElementById("productPrice");
       const compareEl = document.getElementById("productCompareAt");
       const mainImage = document.getElementById("mainProductImage");
@@ -356,6 +366,19 @@
       const stockState = document.getElementById("stockState");
       const whatsappButton = document.getElementById("whatsappButton");
       const variantButtons = document.querySelectorAll(".variant-btn");
+
+      function safeProductImageUrl(value) {
+        const candidate = String(value || "").trim();
+        if (/^\/(?!\/)/.test(candidate) && !/[\u0000-\u0020\\]/.test(candidate)) return candidate;
+        try {
+          const parsed = new URL(candidate);
+          return ["http:", "https:"].includes(parsed.protocol) && !parsed.username && !parsed.password
+            ? parsed.href
+            : "";
+        } catch (_) {
+          return "";
+        }
+      }
       const customizationInputs = document.querySelectorAll(".customization-input");
       const fontOptions = document.querySelectorAll(".font-option");
       const variantIndexInput = document.getElementById("variantIndexInput");
@@ -389,6 +412,16 @@
         return checked ? checked.value : "";
       }
 
+      function fitImagePreviewText(preview) {
+        if (!preview || !preview.classList.contains("product-customization-image-preview__text")) return;
+        preview.style.fontSize = "";
+        let fontSize = parseFloat(window.getComputedStyle(preview).fontSize) || 14;
+        while (preview.scrollWidth > preview.clientWidth && fontSize > 8) {
+          fontSize = Math.max(8, fontSize - 1);
+          preview.style.fontSize = fontSize + "px";
+        }
+      }
+
       function updateEngravingPreviews() {
         customizationInputs.forEach(function (input, index) {
           const selectedFont = document.querySelector('.font-option[data-font-for="' + index + '"]:checked');
@@ -402,6 +435,7 @@
             .filter(function (className) { return className.startsWith("product-font-sample--"); })
             .forEach(function (className) { preview.classList.remove(className); });
           preview.classList.add("product-font-sample--" + safeStyle);
+          fitImagePreviewText(preview);
         });
       }
 
@@ -458,7 +492,7 @@
 
       function updateWhatsAppLink() {
         const basePhone = "18493306269";
-        const productName = <%- JSON.stringify(product.name || "") %>;
+        const productName = <%- jsonForInlineScript(product.name || "") %>;
         const variantLabel = selectedVariant ? (selectedVariant.label || selectedVariant.optionValue || "") : "";
         const customization = getCustomizationText();
 
@@ -516,9 +550,10 @@
           }
         }
 
-        if (variant.imageUrl && mainImage) {
-          mainImage.src = variant.imageUrl;
-          if (expandedImage) expandedImage.src = variant.imageUrl;
+        const variantImageUrl = safeProductImageUrl(variant.imageUrl);
+        if (variantImageUrl && mainImage) {
+          mainImage.src = variantImageUrl;
+          if (expandedImage) expandedImage.src = variantImageUrl;
         }
 
         updateBuyState(unavailable, stock);
@@ -591,6 +626,7 @@
         });
       });
 
+      window.addEventListener("resize", updateEngravingPreviews);
       updateFontGroupVisibility();
       updateEngravingPreviews();
 

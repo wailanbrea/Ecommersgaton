@@ -26,8 +26,9 @@
     "express-session": "^1.18.0",
     "multer": "^2.5.0",
     "mysql2": "^3.24.6",
-    "pdf-parse": "^1.1.1",
-    "pdfkit": "^0.17.2"
+    "pdf-parse": "^2.4.5",
+    "pdfkit": "^0.17.2",
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "mongodb-memory-server-core": "^10.4.3",
@@ -37,6 +38,9 @@
   },
   "overrides": {
     "qs": "^6.16.2",
-    "uuid": "^11.1.1"
+    "uuid": "^11.1.1",
+    "nodemon": {
+      "minimatch": "^11.0.1"
+    }
   }
 }

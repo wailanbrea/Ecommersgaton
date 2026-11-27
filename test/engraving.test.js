@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 const { randomBytes, createHmac } = require("node:crypto");
 const fs = require("node:fs/promises");
 const path = require("node:path");
+const sharp = require("sharp");
 const { after, test } = require("node:test");
 const {
   MOON_CHARM_FONT_PRESET,
@@ -187,9 +188,18 @@ test("grabados distintos y fotograbado privado llegan al pedido", {
   assert.doesNotMatch(frontOnlyCart, /Adicional de personalización: RD\$ 200\.00/);
   assert.match((await addBracelet("WAILAN")).headers.get("location"), /cart=added/);
   const form = new FormData();
-  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a0iAAAAAASUVORK5CYII=", "base64");
+  const png = await sharp({ create: { width: 1, height: 1, channels: 4, background: { r: 183, g: 139, b: 66, alpha: 1 } } }).png().toBuffer();
   form.set("customizationPhoto", new Blob([png], { type: "image/png" }), "prueba.png");
   assert.match((await request(photoRoute + "/add-to-cart", form)).headers.get("location"), /cart=added/);
+  const truncatedPng = new FormData();
+  truncatedPng.set("customizationPhoto", new Blob([png.subarray(0, 33)], { type: "image/png" }), "truncado.png");
+  assert.match((await request(photoRoute + "/add-to-cart", truncatedPng)).headers.get("location"), /engraving=photo/);
+  const fakePng = new FormData();
+  fakePng.set("customizationPhoto", new Blob([Buffer.from("esto no es PNG")], { type: "image/png" }), "falso.png");
+  assert.match((await request(photoRoute + "/add-to-cart", fakePng)).headers.get("location"), /engraving=photo/);
+  const mismatchedPng = new FormData();
+  mismatchedPng.set("customizationPhoto", new Blob([png], { type: "image/webp" }), "no-coincide.webp");
+  assert.match((await request(photoRoute + "/add-to-cart", mismatchedPng)).headers.get("location"), /engraving=photo/);
 
   const cart = await (await request("/cart")).text();
   assert.match(cart, /Ana \| Tipografía: Clásica/);
@@ -199,7 +209,18 @@ test("grabados distintos y fotograbado privado llegan al pedido", {
   const asset = cart.match(/href="(\/customization-assets\/[a-f0-9-]+\.png)"/)?.[1];
   assert.ok(asset);
   assets.push(asset);
-  assert.deepEqual(Buffer.from(await (await request(asset)).arrayBuffer()), png);
+  const privateAssetResponse = await request(asset);
+  assert.equal(privateAssetResponse.status, 200);
+  assert.match(privateAssetResponse.headers.get("content-type") || "", /^image\/png\b/i);
+  assert.equal(privateAssetResponse.headers.get("x-content-type-options"), "nosniff");
+  assert.match(privateAssetResponse.headers.get("cache-control") || "", /private/);
+  assert.match(privateAssetResponse.headers.get("cache-control") || "", /no-store/);
+  const normalizedPhoto = Buffer.from(await privateAssetResponse.arrayBuffer());
+  const normalizedMetadata = await sharp(normalizedPhoto).metadata();
+  assert.equal(normalizedMetadata.format, "png");
+  assert.equal(normalizedMetadata.width, 1);
+  assert.equal(normalizedMetadata.height, 1);
+  assert.equal(normalizedMetadata.exif, undefined);
   assert.equal((await request(asset, null, visitor)).status, 404);
 
   const checkout = await (await request("/checkout")).text();

@@ -24,30 +24,47 @@ test("checkout serializa compras simultáneas y no vende sobre inventario", {
   const product = await Product.create({ _id: productId, name: "Fixture de concurrencia", slug, active: true, stock: 1, outOfStock: false, featured: false, hasVariants: false, basePrice: 10, compareAtPrice: 0 });
   const idempotentProductId = crypto.randomBytes(12).toString("hex");
   const idempotentProduct = await Product.create({ _id: idempotentProductId, name: "Fixture de idempotencia", slug: `prueba-idempotencia-${idempotentProductId}`, active: true, stock: 2, outOfStock: false, featured: false, hasVariants: false, basePrice: 10, compareAtPrice: 0 });
+  const multiDesignProductId = crypto.randomBytes(12).toString("hex");
+  const multiDesignProduct = await Product.create({
+    _id: multiDesignProductId, name: "Fixture de dos grabados", slug: `prueba-dos-grabados-${multiDesignProductId}`,
+    sku: `QA-${multiDesignProductId}`, active: true, stock: 1, outOfStock: false, featured: false,
+    hasVariants: false, hasCustomization: true, customizationFields: [
+      { key: "name", label: "Nombre", required: true, maxLength: 20, priceDeltaMinor: 0 }
+    ], fontOptions: [{ name: "Clásica" }], basePrice: 10, compareAtPrice: 0
+  });
   const orderIds = [];
+  const outsiderSid = crypto.randomBytes(24).toString("hex");
+  const tokenOwnerSid = crypto.randomBytes(24).toString("hex");
+  const attackerCheckoutToken = crypto.randomBytes(32).toString("hex");
+  const ownerCheckoutToken = crypto.randomBytes(32).toString("hex");
   let httpServer;
   t.after(async () => {
     try {
       if (httpServer) await new Promise((resolve) => httpServer.close(resolve));
       await fs.rm(privateFile, { force: true });
+      await pool.execute("DELETE FROM app_sessions WHERE sid IN (?,?)", [outsiderSid, tokenOwnerSid]);
       if (orderIds.length) await pool.execute(`DELETE FROM orders WHERE id IN (${orderIds.map(() => "?").join(",")})`, orderIds);
-      await pool.execute("DELETE FROM inventory_movements WHERE product_id IN (?,?)", [productId, idempotentProductId]);
+      await pool.execute("DELETE FROM inventory_movements WHERE product_id IN (?,?,?)", [productId, idempotentProductId, multiDesignProductId]);
       await pool.execute("DELETE FROM products WHERE id=?", [productId]);
       await pool.execute("DELETE FROM products WHERE id=?", [idempotentProductId]);
+      await pool.execute("DELETE FROM products WHERE id=?", [multiDesignProductId]);
     } finally { await closeDB(); }
   });
 
   const cartItem = { productId, productName: product.name, productSlug: slug, quantity: 1, unitPrice: 10, lineTotal: 10 };
-  const orderData = (item = cartItem) => ({ customerName: "Prueba aislada", phone: "0000000000", email: "", notes: "", items: [item], shippingMethod: "Prueba", shippingDescription: "", shippingCost: 0, subtotal: 10, total: 10, paymentMethod: "cash_on_delivery", status: "pending" });
-  const results = await Promise.allSettled([
-    storeRoutes.createOrderAndDecrementStock(orderData(), [cartItem]),
+  const orderData = (item = cartItem) => {
+    const items = Array.isArray(item) ? item : [item];
+    const subtotal = items.reduce((sum, entry) => sum + entry.lineTotal, 0);
+    return { customerName: "Prueba aislada", phone: "0000000000", email: "", notes: "", items, shippingMethod: "Prueba", shippingDescription: "", shippingCost: 0, subtotal, total: subtotal, paymentMethod: "cash_on_delivery", status: "pending" };
+  };
+  const results = await Promise.allSettled(Array.from({ length: 20 }, () =>
     storeRoutes.createOrderAndDecrementStock(orderData(), [cartItem])
-  ]);
+  ));
   const successful = results.filter((result) => result.status === "fulfilled");
   const rejected = results.filter((result) => result.status === "rejected");
   orderIds.push(...successful.map((result) => result.value));
   assert.equal(successful.length, 1);
-  assert.equal(rejected.length, 1);
+  assert.equal(rejected.length, 19);
   const updated = await Product.findById(productId).lean();
   assert.equal(updated.stock, 0);
   assert.equal(updated.outOfStock, true);
@@ -66,12 +83,53 @@ test("checkout serializa compras simultáneas y no vende sobre inventario", {
   const [[idempotentOrderCount]] = await pool.execute("SELECT COUNT(*) AS count FROM orders WHERE checkout_key=?", [checkoutKey]);
   assert.equal(Number(idempotentOrderCount.count), 1);
 
+  const twoDistinctDesigns = ["ANA", "EVA"].map((value, index) => ({
+    productId: multiDesignProductId, productName: multiDesignProduct.name, productSlug: multiDesignProduct.slug,
+    quantity: 1, unitPrice: 10, lineTotal: 10, cartKey: `${multiDesignProductId}__design-${index}`,
+    engravingFields: [{ key: "name", label: "Nombre", value, priceDeltaMinor: 0, fontName: "Clásica" }],
+    fontSelections: [{ key: "name", label: "Nombre", fontName: "Clásica" }], fontName: "Clásica"
+  }));
+  await assert.rejects(
+    storeRoutes.createOrderAndDecrementStock(orderData(twoDistinctDesigns), twoDistinctDesigns),
+    /inventario cambió/i,
+    "dos diseños distintos del mismo SKU no deben superar una unidad disponible"
+  );
+  assert.equal((await Product.findById(multiDesignProductId).lean()).stock, 1, "el rollback conserva el stock inicial");
+  const [[multiDesignMovementCount]] = await pool.execute("SELECT COUNT(*) AS count FROM inventory_movements WHERE product_id=? AND action='checkout'", [multiDesignProductId]);
+  assert.equal(Number(multiDesignMovementCount.count), 0, "el rechazo no deja movimientos parciales");
+
   const { app } = require("../server");
   httpServer = app.listen(0, "127.0.0.1");
   await new Promise((resolve, reject) => { httpServer.once("listening", resolve); httpServer.once("error", reject); });
   const origin = `http://127.0.0.1:${httpServer.address().port}`;
+  const outsiderExpires = Date.now() + 600_000;
+  await pool.execute("INSERT INTO app_sessions (sid,expires,data) VALUES (?,?,?)", [outsiderSid, outsiderExpires, JSON.stringify({
+    cookie: { expires: new Date(outsiderExpires), originalMaxAge: 600_000 }, recentOrderIds: [], checkoutToken: attackerCheckoutToken
+  })]);
+  await pool.execute("INSERT INTO app_sessions (sid,expires,data) VALUES (?,?,?)", [tokenOwnerSid, outsiderExpires, JSON.stringify({
+    cookie: { expires: new Date(outsiderExpires), originalMaxAge: 600_000 }, cart: [], checkoutToken: ownerCheckoutToken
+  })]);
+  const outsiderSignature = crypto.createHmac("sha256", process.env.SESSION_SECRET).update(outsiderSid).digest("base64").replace(/=+$/, "");
+  const outsiderCookie = `gatondo.sid=${encodeURIComponent(`s:${outsiderSid}.${outsiderSignature}`)}`;
+  const ownerSignature = crypto.createHmac("sha256", process.env.SESSION_SECRET).update(tokenOwnerSid).digest("base64").replace(/=+$/, "");
+  const ownerCookie = `gatondo.sid=${encodeURIComponent(`s:${tokenOwnerSid}.${ownerSignature}`)}`;
   const anonymousOrder = await fetch(`${origin}/order-success/${orderIds[0]}`);
+  const crossSessionOrder = await fetch(`${origin}/order-success/${orderIds[0]}`, { headers: { cookie: outsiderCookie } });
   const anonymousAsset = await fetch(`${origin}/customization-assets/${privateFilename}`);
+  const crossSessionAsset = await fetch(`${origin}/customization-assets/${privateFilename}`, { headers: { cookie: outsiderCookie } });
   assert.equal(anonymousOrder.status, 404);
+  assert.equal(crossSessionOrder.status, 404);
   assert.equal(anonymousAsset.status, 404);
+  assert.equal(crossSessionAsset.status, 404);
+
+  const crossSessionCheckoutToken = await fetch(`${origin}/checkout`, {
+    method: "POST",
+    headers: { cookie: outsiderCookie, "content-type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ checkoutToken: ownerCheckoutToken, customerName: "Prueba cruzada", phone: "0000000000", shippingMethod: "Prueba" }),
+    redirect: "manual"
+  });
+  assert.equal(crossSessionCheckoutToken.status, 409);
+  const [[unchangedOrderCount]] = await pool.execute("SELECT COUNT(*) AS count FROM orders WHERE checkout_key=?", [checkoutKey]);
+  assert.equal(Number(unchangedOrderCount.count), 1, "el token ajeno no debe crear otro pedido");
+  assert.equal((await Product.findById(idempotentProductId).lean()).stock, 1, "el token ajeno no debe descontar inventario");
 });

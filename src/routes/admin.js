@@ -623,7 +623,7 @@ router.post("/login", redirectIfLoggedIn, adminCsrf, async (req, res) => {
   });
 });
 
-router.use(requireAdmin, attachAdminAccess, adminCsrf);
+router.use(requireAdmin, adminCsrf, attachAdminAccess);
 
 router.post("/logout", requireAdmin, (req, res) => {
   req.session.destroy(() => {
@@ -696,7 +696,7 @@ router.get("/categories/new", requireAdmin, async (req, res) => {
   });
 });
 
-router.post("/categories/new", requireAdmin, upload.any(), adminCsrf, async (req, res) => {
+router.post("/categories/new", requireAdmin, upload.any(), adminCsrf.afterMultipart, async (req, res) => {
   try {
     const {
       name,
@@ -786,7 +786,7 @@ router.get("/categories/:id/edit", requireAdmin, async (req, res) => {
   });
 });
 
-router.post("/categories/:id/edit", requireAdmin, upload.any(), adminCsrf, async (req, res) => {
+router.post("/categories/:id/edit", requireAdmin, upload.any(), adminCsrf.afterMultipart, async (req, res) => {
   try {
     const existingCategory = await Category.findById(req.params.id);
 
@@ -914,7 +914,7 @@ router.get("/products/new", requireAdmin, async (req, res) => {
   });
 });
 
-router.post("/products/new", requireAdmin, upload.any(), adminCsrf, async (req, res) => {
+router.post("/products/new", requireAdmin, upload.any(), adminCsrf.afterMultipart, async (req, res) => {
   try {
     const formData = productFormDataFromBody(req.body, req)
     const allCategories = await Category.find().sort({ sortOrder: 1, name: 1 }).lean();
@@ -1063,7 +1063,7 @@ router.get("/products/:id/edit", requireAdmin, async (req, res) => {
   });
 });
 
-router.post("/products/:id/edit", requireAdmin, upload.any(), adminCsrf, async (req, res) => {
+router.post("/products/:id/edit", requireAdmin, upload.any(), adminCsrf.afterMultipart, async (req, res) => {
   try {
     const existingProduct = await Product.findById(req.params.id);
     const allCategories = await Category.find().sort({ sortOrder: 1, name: 1 }).lean();
@@ -1259,7 +1259,7 @@ router.get("/settings", requireAdmin, async (req, res) => {
   });
 });
 
-router.post("/settings", requireAdmin, upload.any(), adminCsrf, async (req, res) => {
+router.post("/settings", requireAdmin, upload.any(), adminCsrf.afterMultipart, async (req, res) => {
   try {
     const formData = settingsFormDataFromBody(req.body, req);
 

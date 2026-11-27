@@ -7,10 +7,10 @@
   }
 
   const footerBrand = footer10Text(siteSettings?.brandName, "GATON DO");
-  const instagramUrl = siteSettings?.instagramUrl || siteSettings?.instagram || "https://www.instagram.com/gaton.do";
-  const tiktokUrl = siteSettings?.tiktokUrl || siteSettings?.tiktok || "https://www.tiktok.com/@gaton.do";
-  const facebookUrl = siteSettings?.facebookUrl || siteSettings?.facebook || "";
-  const linktreeUrl = siteSettings?.linktreeUrl || siteSettings?.linktree || "";
+  const instagramUrl = safePublicUrl(siteSettings?.instagramUrl || siteSettings?.instagram, "https://www.instagram.com/gaton.do");
+  const tiktokUrl = safePublicUrl(siteSettings?.tiktokUrl || siteSettings?.tiktok, "https://www.tiktok.com/@gaton.do");
+  const facebookUrl = safePublicUrl(siteSettings?.facebookUrl || siteSettings?.facebook);
+  const linktreeUrl = safePublicUrl(siteSettings?.linktreeUrl || siteSettings?.linktree);
   const whatsappDigits = String(siteSettings?.whatsapp || siteSettings?.whatsappNumber || siteSettings?.phone || "").replace(/\D/g, "");
   const whatsappUrl = whatsappDigits ? `https://wa.me/${whatsappDigits}` : "";
 %>
@@ -18,7 +18,7 @@
 <footer class="ref10-footer">
   <div class="ref10-footer-inner">
     <div class="ref10-footer-brand">
-      <a href="/" aria-label="<%= footerBrand %>"><img src="<%= siteSettings?.footerLogoUrl || '/images/logo-gatondo-white.png' %>" alt="<%= footerBrand %>"></a>
+      <a href="/" aria-label="<%= footerBrand %>"><img src="<%= safePublicUrl(siteSettings?.footerLogoUrl, '/images/logo-gatondo-white.png') %>" alt="<%= footerBrand %>"></a>
       <p><%= footer10Text(siteSettings?.slogan || siteSettings?.footerSlogan, "Joyas con intención. Hechas a mano en República Dominicana.") %></p>
     </div>
 

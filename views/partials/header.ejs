@@ -44,8 +44,8 @@
     || (ref10PersonalizedCategory ? `/shop?category=${encodeURIComponent(ref10PersonalizedCategory.slug)}` : "/shop?q=personalizado");
 
   const ref10CartCount = typeof cartCount !== "undefined" ? cartCount : (typeof cartItemCount !== "undefined" ? cartItemCount : 0);
-  const ref10Logo = siteSettings?.logoUrl || "/images/logo-gatondo-color.png";
-  const ref10MobileLogo = siteSettings?.logoUrl || "/images/logo-gatondo-header.png";
+  const ref10Logo = safePublicUrl(siteSettings?.logoUrl, "/images/logo-gatondo-color.png");
+  const ref10MobileLogo = safePublicUrl(siteSettings?.logoUrl, "/images/logo-gatondo-header.png");
 %>
 
 <header class="ref10-header" id="top">
@@ -106,7 +106,7 @@
       <a href="/">Inicio</a>
       <a href="/#fragancias">Fragancias</a>
       <a href="/#coleccion">Colección</a>
-      <a href="<%= ref10PersonalizedUrl %>">Personalizados</a>
+      <a href="<%= safePublicUrl(ref10PersonalizedUrl, '/shop?q=personalizado') %>">Personalizados</a>
       <a href="/#historia">Historia</a>
       <a href="/#clientes">Clientes</a>
       <a href="/#contacto">Contacto</a>

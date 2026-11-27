@@ -17,6 +17,7 @@ const Product = require("../models/Product");
 const Review = require("../models/Review");
 const SiteSettings = require("../models/SiteSettings");
 const Order = require("../models/Order");
+const { normalizeCustomizationImage } = require("../services/customizationImage");
 
 const router = express.Router();
 
@@ -98,15 +99,6 @@ const reviewUpload = multer({
 function uploadedReviewPhotoUrl(file) {
   if (!file || !file.filename) return "";
   return `/uploads/reviews/${file.filename}`;
-}
-
-function extensionFromCustomizationMime(mimeType = "") {
-  const map = {
-    "image/jpeg": ".jpg",
-    "image/png": ".png",
-    "image/webp": ".webp"
-  };
-  return map[mimeType] || "";
 }
 
 const customizationUpload = multer({
@@ -649,7 +641,9 @@ router.post("/product/:slug/reviews", reviewUpload.single("reviewPhoto"), async 
 
 router.post("/product/:slug/add-to-cart", (req, res, next) => {
   parseCustomization(req, res, (error) => {
-    if (error) return res.redirect(`/product/${encodeURIComponent(req.params.slug)}?engraving=photo`);
+    if (error) {
+      return res.redirect(`/product/${encodeURIComponent(req.params.slug)}?engraving=photo`);
+    }
     next();
   });
 }, async (req, res) => {
@@ -665,8 +659,18 @@ router.post("/product/:slug/add-to-cart", (req, res, next) => {
 
     const options = engravingOptions(product);
     const engraving = readEngraving(options, req.body);
-    if (options.unavailable || !engraving || (req.file && !options.photo)) {
+    if (options.unavailable || !engraving) {
       return res.redirect(`/product/${product.slug}?engraving=invalid`);
+    }
+    if (req.file && !options.photo) return res.redirect(`/product/${product.slug}?engraving=invalid`);
+
+    let normalizedPhoto = null;
+    if (req.file) {
+      try {
+        normalizedPhoto = await normalizeCustomizationImage(req.file.buffer, req.file.mimetype);
+      } catch {
+        return res.redirect(`/product/${product.slug}?engraving=photo`);
+      }
     }
 
     const requestedQuantity = toPositiveInteger(req.body.quantity || 1);
@@ -715,8 +719,8 @@ router.post("/product/:slug/add-to-cart", (req, res, next) => {
     const customizationSummary = engraving.summary;
     const fontName = engraving.fontName;
     const fontSelections = engraving.fontSelections;
-    const photoFilename = req.file
-      ? crypto.randomUUID() + extensionFromCustomizationMime(req.file.mimetype)
+    const photoFilename = normalizedPhoto
+      ? crypto.randomUUID() + normalizedPhoto.extension
       : "";
     const customizationPhotoUrl = photoFilename ? `/customization-assets/${photoFilename}` : "";
 
@@ -740,7 +744,7 @@ router.post("/product/:slug/add-to-cart", (req, res, next) => {
     }
 
     if (photoFilename) {
-      await fs.promises.writeFile(path.join(CUSTOMIZATION_UPLOAD_ROOT, photoFilename), req.file.buffer, { flag: "wx", mode: 0o600 });
+      await fs.promises.writeFile(path.join(CUSTOMIZATION_UPLOAD_ROOT, photoFilename), normalizedPhoto.buffer, { flag: "wx", mode: 0o600 });
     }
 
     if (existingIndex >= 0) {

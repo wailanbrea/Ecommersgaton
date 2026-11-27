@@ -69,7 +69,7 @@
                 <% if (product.featured || index === 0) { %><span class="ref10-product-badge"><%= product.featured ? 'Destacado' : 'Nuevo' %></span><% } %>
                 <% if (isProductUnavailable && isProductUnavailable(product)) { %><span class="ref10-product-badge danger">Agotado</span><% } %>
                 <% if (product.mainImageUrl) { %>
-                  <img src="<%= product.mainImageUrl %>" alt="<%= t(product.name) %>">
+                  <img src="<%= safePublicUrl(product.mainImageUrl) %>" alt="<%= t(product.name) %>">
                 <% } else { %>
                   <img src="/images/logo-gatondo-color.png" alt="GATON DO" class="ref10-product-placeholder">
                 <% } %>

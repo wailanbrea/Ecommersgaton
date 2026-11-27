@@ -2,6 +2,7 @@
 
 **Fuente:** `E:\Gaton Ecommer\GATON CAMBIOS .pdf` (2 páginas)
 **SHA-256:** `04e88534155b2d45e04df5694250f3fe85d16d7ecbec8704150797920ea26296`
+**Cotejo de la fuente:** texto extraído y dos páginas renderizadas/revisadas visualmente el 26 de noviembre de 2026; el contenido legible coincide con los nueve puntos de esta tabla. El original permanece intacto.
 **Revisión original:** 26 de noviembre de 2026 · revisión auditada `755cff6` · producción `755cff6`. Esta cabecera identifica el cotejo inicial; el registro final de publicación se añade abajo.
 **Alcance:** cotejo inicial de los 9 puntos contra el código y producción, seguido de la implementación local de GC-01/GC-02 y su verificación en laboratorio. No se cambiaron datos comerciales.
 

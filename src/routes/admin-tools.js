@@ -3,7 +3,7 @@ const express = require("express");
 const multer = require("multer");
 const ExcelJS = require("exceljs");
 const PDFDocument = require("pdfkit");
-const pdfParse = require("pdf-parse");
+const { PDFParse } = require("pdf-parse");
 const { pool } = require("../config/db");
 const Order = require("../models/Order");
 const Product = require("../models/Product");
@@ -55,7 +55,10 @@ async function parseUpload(file) {
     raw = [];
     sheet.eachRow((row, n) => { if (n === 1) return; const values = row.values.slice(1); raw.push(Object.fromEntries(headers.map((h, i) => [h, values[i]?.text ?? values[i] ?? ""]))); });
   } else if (ext === "pdf") {
-    const parsed = await pdfParse(file.buffer);
+    const parser = new PDFParse({ data: file.buffer });
+    let parsed;
+    try { parsed = await parser.getText(); }
+    finally { await parser.destroy(); }
     raw = parsed.text.split(/\r?\n/).map((line) => line.trim()).filter((line) => line.startsWith(`${PDF_MARKER}|`)).map((line) => {
       const [, productId, variantIndex, signatureEncoded, stock] = line.split("|");
       return { productId, variantIndex, variantSignature: Buffer.from(signatureEncoded || "", "base64url").toString("utf8"), stock };
@@ -133,7 +136,7 @@ router.get("/inventory/export.xlsx", async (_req, res) => {
   res.type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet").set("Content-Disposition", 'attachment; filename="gaton-inventario.xlsx"').send(Buffer.from(buf));
 });
 router.get("/inventory/export.pdf", async (_req, res) => { const products = await Product.find({ active: true }).sort({ name: 1 }).lean(); return sendPdf(res, inventoryRows(products), "Exportación / formato importable"); });
-router.post("/inventory/import/preview", upload.single("inventoryFile"), adminCsrf, async (req, res) => {
+router.post("/inventory/import/preview", upload.single("inventoryFile"), adminCsrf.afterMultipart, async (req, res) => {
   try {
     if (!req.file) throw new Error("Selecciona un archivo CSV, Excel o PDF.");
     const rows = await parseUpload(req.file);
@@ -259,3 +262,4 @@ router.get("/sales/export.pdf", async (req, res) => {
 });
 
 module.exports = router;
+module.exports.inventoryTestHelpers = { cleanCell, csvEscape, parseCsv, parseUpload, sendPdf };

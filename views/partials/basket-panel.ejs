@@ -6,7 +6,7 @@
   <% lines.forEach(item => { %>
     <article class="basket-line">
       <% if (item.imageUrl) { %>
-        <img class="basket-thumb" src="<%= item.imageUrl %>" alt="<%= item.productName %>" width="64" height="64">
+        <img class="basket-thumb" src="<%= safePublicUrl(item.imageUrl) %>" alt="<%= item.productName %>" width="64" height="64">
       <% } else { %>
         <span class="basket-thumb">Sin foto</span>
       <% } %>

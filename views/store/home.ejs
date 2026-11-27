@@ -66,19 +66,19 @@
     <section class="ref10-hero" id="inicio">
       <% if (heroVideo) { %>
         <video class="ref10-hero-media" autoplay muted loop playsinline>
-          <source src="<%= heroVideo %>">
+          <source src="<%= safePublicUrl(heroVideo) %>">
         </video>
       <% } else if (heroBg) { %>
-        <img class="ref10-hero-media" src="<%= heroBg %>" alt="<%= t(siteSettings?.brandName, 'GATON DO') %>">
+        <img class="ref10-hero-media" src="<%= safePublicUrl(heroBg) %>" alt="<%= t(siteSettings?.brandName, 'GATON DO') %>">
       <% } %>
       <div class="ref10-hero-overlay"></div>
       <div class="ref10-hero-content">
-        <img src="<%= siteSettings?.heroLogoUrl || '/images/logo-gatondo-white.png' %>" alt="<%= t(siteSettings?.brandName, 'GATON DO') %>" class="ref10-hero-logo">
+        <img src="<%= safePublicUrl(siteSettings?.heroLogoUrl, '/images/logo-gatondo-white.png') %>" alt="<%= t(siteSettings?.brandName, 'GATON DO') %>" class="ref10-hero-logo">
         <h1><%= t(siteSettings?.heroTitle, "Joyas con intención") %></h1>
         <p><%= t(siteSettings?.heroSubtitle, "Piezas hechas a mano que cuentan tu historia. Plata, oro y fragancias de autor, diseñadas en República Dominicana.") %></p>
         <div class="ref10-hero-actions">
-          <a href="<%= siteSettings?.heroButtonUrl || '/shop' %>" class="ref10-btn ref10-btn-primary"><%= t(siteSettings?.heroButtonText, "Ver la colección") %></a>
-          <a href="<%= siteSettings?.heroSecondaryButtonUrl || '#historia' %>" class="ref10-btn ref10-btn-outline"><%= t(siteSettings?.heroSecondaryButtonText, "Nuestra esencia") %></a>
+          <a href="<%= safePublicUrl(siteSettings?.heroButtonUrl, '/shop') %>" class="ref10-btn ref10-btn-primary"><%= t(siteSettings?.heroButtonText, "Ver la colección") %></a>
+          <a href="<%= safePublicUrl(siteSettings?.heroSecondaryButtonUrl, '#historia') %>" class="ref10-btn ref10-btn-outline"><%= t(siteSettings?.heroSecondaryButtonText, "Nuestra esencia") %></a>
         </div>
       </div>
     </section>
@@ -101,9 +101,9 @@
 
         <div class="ref10-collection-grid">
           <% mainCollections.forEach((category, index) => { %>
-            <a href="<%= category.destinationUrl || ('/shop?category=' + category.slug) %>" class="ref10-collection-card ref10-tone-<%= (index % 4) + 1 %>">
+            <a href="<%= safePublicUrl(category.destinationUrl, '/shop?category=' + encodeURIComponent(category.slug || '')) %>" class="ref10-collection-card ref10-tone-<%= (index % 4) + 1 %>">
               <% if (category.imageUrl) { %>
-                <img src="<%= category.imageUrl %>" alt="<%= t(category.name) %>">
+                <img src="<%= safePublicUrl(category.imageUrl) %>" alt="<%= t(category.name) %>">
               <% } else { %>
                 <img src="/images/logo-gatondo-white.png" alt="<%= t(category.name) %>" class="ref10-card-logo">
               <% } %>
@@ -126,14 +126,14 @@
           <p><%= t(siteSettings?.catalogText, "Cada pieza está pensada para acompañarte. Selecciona, agrega al carrito y finaliza tu pedido por WhatsApp.") %></p>
         </div>
 
-        <nav class="ref10-shop-chips" aria-label="Colecciones"><a href="/shop">Todo</a><% allPublicCategories.forEach(category => { %><a href="<%= category.destinationUrl || ('/shop?category=' + category.slug) %>"><%= category.name %></a><% }) %></nav>
+        <nav class="ref10-shop-chips" aria-label="Colecciones"><a href="/shop">Todo</a><% allPublicCategories.forEach(category => { %><a href="<%= safePublicUrl(category.destinationUrl, '/shop?category=' + encodeURIComponent(category.slug || '')) %>"><%= category.name %></a><% }) %></nav>
         <div class="ref10-product-grid">
           <% featuredList.slice(0, 8).forEach((product, index) => { %>
             <a href="/product/<%= product.slug %>" class="ref10-product-card">
               <div class="ref10-product-image">
                 <% if (product.featured || index === 0) { %><span class="ref10-product-badge">Best seller</span><% } %>
                 <% if (product.mainImageUrl) { %>
-                  <img src="<%= product.mainImageUrl %>" alt="<%= t(product.name) %>">
+                  <img src="<%= safePublicUrl(product.mainImageUrl) %>" alt="<%= t(product.name) %>">
                 <% } else { %>
                   <img src="/images/logo-gatondo-color.png" alt="GATON DO" class="ref10-product-placeholder">
                 <% } %>
@@ -161,14 +161,14 @@
           <p><%= t(siteSettings?.fragranceText, "Aromas envolventes que complementan tu estilo. Edición limitada, embotellados con intención.") %></p>
         </div>
 
-        <p style="text-align:center"><a class="ref10-btn" href="<%= siteSettings?.fragranceButtonUrl || '/shop?category=fragancias' %>"><%= t(siteSettings?.fragranceButtonText, "Explorar Fragancias") %></a></p>
+        <p style="text-align:center"><a class="ref10-btn" href="<%= safePublicUrl(siteSettings?.fragranceButtonUrl, '/shop?category=fragancias') %>"><%= t(siteSettings?.fragranceButtonText, "Explorar Fragancias") %></a></p>
         <div class="ref10-product-grid ref10-dark-product-grid">
           <% fragranceList.forEach((product, index) => { %>
             <a href="/product/<%= product.slug %>" class="ref10-product-card ref10-dark-product-card">
               <div class="ref10-product-image">
                 <% if (index === 0) { %><span class="ref10-product-badge gold">Edición limitada</span><% } %>
                 <% if (product.mainImageUrl) { %>
-                  <img src="<%= product.mainImageUrl %>" alt="<%= t(product.name) %>">
+                  <img src="<%= safePublicUrl(product.mainImageUrl) %>" alt="<%= t(product.name) %>">
                 <% } else { %>
                   <img src="/images/logo-gatondo-white.png" alt="GATON DO" class="ref10-product-placeholder">
                 <% } %>
@@ -192,7 +192,7 @@
       <div class="ref10-container ref10-story-grid">
         <div class="ref10-story-visual">
           <% if (siteSettings?.aboutImageUrl) { %>
-            <img src="<%= siteSettings.aboutImageUrl %>" alt="Historia GATON DO">
+            <img src="<%= safePublicUrl(siteSettings.aboutImageUrl) %>" alt="Historia GATON DO">
           <% } else { %>
             <img src="/images/logo-gatondo-color.png" alt="GATON DO" class="ref10-story-logo">
           <% } %>
@@ -209,7 +209,7 @@
             <span>✦ Materiales nobles</span>
             <span>✦ Personalizable</span>
           </div>
-          <a href="<%= siteSettings?.storyButtonUrl || '/shop' %>" class="ref10-btn ref10-btn-primary"><%= t(siteSettings?.storyButtonText, "Descubre la colección") %></a>
+          <a href="<%= safePublicUrl(siteSettings?.storyButtonUrl, '/shop') %>" class="ref10-btn ref10-btn-primary"><%= t(siteSettings?.storyButtonText, "Descubre la colección") %></a>
         </div>
       </div>
     </section>
@@ -248,7 +248,7 @@
               <% const reviewProduct = (typeof reviewProductMap !== 'undefined' && reviewProductMap) ? reviewProductMap[String(review.productId || '')] : null; %>
               <article class="ref10-testimonial-card">
                 <b>“</b>
-                <% if (review.photoUrl) { %><img src="<%= review.photoUrl %>" alt="Foto de reseña" class="ref10-review-photo"><% } %>
+                <% if (review.photoUrl) { %><img src="<%= safePublicUrl(review.photoUrl) %>" alt="Foto de reseña" class="ref10-review-photo"><% } %>
                 <p>“<%= t(review.comment) %>”</p>
                 <% if (reviewProduct) { %><a href="/product/<%= reviewProduct.slug %>">Producto: <%= t(reviewProduct.name) %></a><% } %>
                 <small>— <%= t(review.customerName) %></small>
