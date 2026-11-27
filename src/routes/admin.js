@@ -1232,9 +1232,24 @@ router.post("/products/:id/delete", requireAdmin, async (req, res) => {
 
 router.get("/orders", requireAdmin, async (req, res) => {
   const orders = await Order.find().sort({ createdAt: -1 }).lean();
+  const productIds = [
+    ...new Set(
+      (orders || [])
+        .flatMap((order) => (Array.isArray(order.items) ? order.items : []).map((item) => item.productId))
+        .filter(Boolean)
+    )
+  ];
+  const products = productIds.length
+    ? await Product.find({ _id: { $in: productIds } }).select("mainImageUrl variants").lean()
+    : [];
+  const productImageMap = Object.fromEntries(
+    products.map((product) => [String(product._id), String(product.mainImageUrl || "").trim()])
+  );
 
   res.render("admin/orders/index", {
-    orders
+    orders,
+    productImageMap,
+    saved: req.query.saved === "1"
   });
 });
 
@@ -1260,7 +1275,7 @@ router.post("/orders/:id/status", requireAdmin, async (req, res) => {
     order.status = newStatus;
     await order.save();
 
-    return res.redirect(`/admin/orders`);
+    return res.redirect(`/admin/orders?saved=1`);
   } catch (error) {
     console.error("❌ Error actualizando estado del pedido:", error);
     return res.status(500).send("Error interno actualizando pedido");
