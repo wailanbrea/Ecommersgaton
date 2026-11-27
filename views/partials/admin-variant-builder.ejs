@@ -1,0 +1,50 @@
+<div class="rounded-2xl border border-[#d9c8ae] bg-[#fbf8f2] p-5 mb-5" data-variant-builder>
+  <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+    <div>
+      <h4 class="text-base font-semibold text-stone-900">Constructor rápido de combinaciones</h4>
+      <p class="text-xs text-stone-600 mt-1">Agrega todos los colores y tamaños que necesites (2, 3, 4 o más). Luego genera las combinaciones y quita con un clic las que no existan.</p>
+    </div>
+    <span class="text-xs font-medium text-stone-600" data-vb-summary></span>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div class="rounded-xl border border-stone-200 bg-white p-4">
+      <label class="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">Opción 1 (ej. Color)</label>
+      <input type="text" data-vb-name1 value="Color" placeholder="Color" class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm mb-3">
+      <div class="flex gap-2">
+        <input type="text" data-vb-input1 placeholder="Ej. Dorado, Plateado, Negro (Enter para agregar)" class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm">
+        <button type="button" data-vb-add1 class="rounded-xl bg-stone-900 text-white px-3 py-2 text-xs font-semibold hover:bg-stone-800 whitespace-nowrap">+ Agregar</button>
+      </div>
+      <div class="flex flex-wrap gap-2 mt-3" data-vb-chips1></div>
+    </div>
+
+    <div class="rounded-xl border border-stone-200 bg-white p-4">
+      <label class="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">Opción 2 opcional (ej. Tamaño / Grosor)</label>
+      <input type="text" data-vb-name2 value="Tamaño" placeholder="Tamaño" class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm mb-3">
+      <div class="flex gap-2">
+        <input type="text" data-vb-input2 placeholder="Ej. 16 cm, 18 cm, 20 cm, 21 cm (Enter para agregar)" class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm">
+        <button type="button" data-vb-add2 class="rounded-xl bg-stone-900 text-white px-3 py-2 text-xs font-semibold hover:bg-stone-800 whitespace-nowrap">+ Agregar</button>
+      </div>
+      <div class="flex flex-wrap gap-2 mt-3" data-vb-chips2></div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4 items-end">
+    <div>
+      <label class="block text-xs font-medium text-stone-600 mb-1">Precio inicial por combinación (RD$)</label>
+      <input type="text" inputmode="decimal" data-vb-default-price placeholder="Usa el precio base si se deja vacío" class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm">
+    </div>
+    <div>
+      <label class="block text-xs font-medium text-stone-600 mb-1">Stock inicial por combinación</label>
+      <input type="number" min="0" data-vb-default-stock value="5" class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm">
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <button type="button" data-vb-generate class="flex-1 rounded-xl bg-[#016B83] text-white px-4 py-2.5 text-xs font-semibold hover:opacity-95 whitespace-nowrap">
+        Generar combinaciones
+      </button>
+      <button type="button" data-vb-apply-all class="rounded-xl bg-white border border-stone-300 text-stone-800 px-3 py-2.5 text-xs font-medium hover:bg-stone-50 whitespace-nowrap">
+        Aplicar precio/stock a todas
+      </button>
+    </div>
+  </div>
+</div>

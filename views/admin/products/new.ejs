@@ -210,10 +210,10 @@
         <div class="flex items-center justify-between gap-4 mb-4">
           <h3 class="text-xl font-semibold text-stone-900">Variantes</h3>
           <button type="button" id="addVariantBtn" class="rounded-xl bg-stone-900 text-white px-4 py-2 text-sm font-medium hover:bg-stone-800">
-            Agregar variante
+            Agregar variante manual
           </button>
         </div>
-        <p class="text-sm text-stone-600 mb-4">Si la pieza combina dos atributos (ej. Color y Tamaño), crea una variante por cada combinación disponible llenando también la Segunda opción y Valor 2. La tienda mostrará dos selectores enlazados y bloqueará automáticamente las combinaciones que no existan o estén agotadas.</p>
+        <%- include("../../partials/admin-variant-builder") %>
 
         <div id="variantsContainer" class="space-y-4">
           <% if (formData.variants && formData.variants.length) { %>
@@ -571,6 +571,7 @@
     });
     refreshUploadIndexes();
   </script>
+  <script src="/js/admin-variant-builder.js?v=1" defer></script>
   <%- include("../../partials/admin-shell-end") %>
 </body>
 </html>
