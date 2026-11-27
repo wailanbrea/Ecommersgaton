@@ -32,6 +32,22 @@ test("checkout serializa compras simultáneas y no vende sobre inventario", {
       { key: "name", label: "Nombre", required: true, maxLength: 20, priceDeltaMinor: 0 }
     ], fontOptions: [{ name: "Clásica" }], basePrice: 10, compareAtPrice: 0
   });
+  const mappedProductId = crypto.randomBytes(12).toString("hex");
+  const mappedProduct = await Product.create({
+    _id: mappedProductId, name: "Fixture con ledger relacional", slug: `prueba-ledger-${mappedProductId}`,
+    active: true, stock: 3, outOfStock: false, featured: false, hasVariants: false,
+    basePrice: 10, compareAtPrice: 0, variants: []
+  });
+  const mappedVariantId = crypto.randomBytes(12).toString("hex");
+  const mappedNow = new Date();
+  await pool.execute(
+    "INSERT INTO product_variants (id,product_id,legacy_key,sku,sku_normalized,label,attributes,price_minor,compare_at_minor,image_url,active,created_at,updated_at) VALUES (?,?,?,NULL,NULL,?,?,?,?,?,1,?,?)",
+    [mappedVariantId, mappedProductId, "base", "Producto base", JSON.stringify({}), 1000, 0, "", mappedNow, mappedNow]
+  );
+  await pool.execute(
+    "INSERT INTO inventory_balances (variant_id,location_id,on_hand,reserved,updated_at) VALUES (?,?,3,0,?)",
+    [mappedVariantId, "000000000000000000000101", mappedNow]
+  );
   const orderIds = [];
   const outsiderSid = crypto.randomBytes(24).toString("hex");
   const tokenOwnerSid = crypto.randomBytes(24).toString("hex");
@@ -44,10 +60,14 @@ test("checkout serializa compras simultáneas y no vende sobre inventario", {
       await fs.rm(privateFile, { force: true });
       await pool.execute("DELETE FROM app_sessions WHERE sid IN (?,?)", [outsiderSid, tokenOwnerSid]);
       if (orderIds.length) await pool.execute(`DELETE FROM orders WHERE id IN (${orderIds.map(() => "?").join(",")})`, orderIds);
-      await pool.execute("DELETE FROM inventory_movements WHERE product_id IN (?,?,?)", [productId, idempotentProductId, multiDesignProductId]);
+      await pool.execute("DELETE FROM inventory_ledger WHERE variant_id=?", [mappedVariantId]);
+      await pool.execute("DELETE FROM inventory_balances WHERE variant_id=?", [mappedVariantId]);
+      await pool.execute("DELETE FROM product_variants WHERE id=?", [mappedVariantId]);
+      await pool.execute("DELETE FROM inventory_movements WHERE product_id IN (?,?,?,?)", [productId, idempotentProductId, multiDesignProductId, mappedProductId]);
       await pool.execute("DELETE FROM products WHERE id=?", [productId]);
       await pool.execute("DELETE FROM products WHERE id=?", [idempotentProductId]);
       await pool.execute("DELETE FROM products WHERE id=?", [multiDesignProductId]);
+      await pool.execute("DELETE FROM products WHERE id=?", [mappedProductId]);
     } finally { await closeDB(); }
   });
 
@@ -97,6 +117,15 @@ test("checkout serializa compras simultáneas y no vende sobre inventario", {
   assert.equal((await Product.findById(multiDesignProductId).lean()).stock, 1, "el rollback conserva el stock inicial");
   const [[multiDesignMovementCount]] = await pool.execute("SELECT COUNT(*) AS count FROM inventory_movements WHERE product_id=? AND action='checkout'", [multiDesignProductId]);
   assert.equal(Number(multiDesignMovementCount.count), 0, "el rechazo no deja movimientos parciales");
+
+  const mappedItem = { ...cartItem, productId: mappedProductId, productName: mappedProduct.name, productSlug: mappedProduct.slug };
+  const mappedOrderId = await storeRoutes.createOrderAndDecrementStock(orderData(mappedItem), [mappedItem]);
+  orderIds.push(mappedOrderId);
+  assert.equal((await Product.findById(mappedProductId).lean()).stock, 2);
+  const [[mappedBalance]] = await pool.execute("SELECT on_hand,reserved,available FROM inventory_balances WHERE variant_id=?", [mappedVariantId]);
+  assert.deepEqual({ onHand: Number(mappedBalance.on_hand), reserved: Number(mappedBalance.reserved), available: Number(mappedBalance.available) }, { onHand: 2, reserved: 0, available: 2 });
+  const [[mappedLedger]] = await pool.execute("SELECT action,quantity_before,quantity_after FROM inventory_ledger WHERE variant_id=?", [mappedVariantId]);
+  assert.deepEqual([mappedLedger.action, Number(mappedLedger.quantity_before), Number(mappedLedger.quantity_after)], ["checkout", 3, 2]);
 
   const { app } = require("../server");
   httpServer = app.listen(0, "127.0.0.1");

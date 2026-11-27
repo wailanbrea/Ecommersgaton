@@ -23,6 +23,7 @@ test("la importación se aplica y compensa por otra carga; un lote obsoleto revi
   const prefix = `qa-inventory-apply-${randomBytes(6).toString("hex")}`;
   const ids = [randomBytes(12).toString("hex"), randomBytes(12).toString("hex"), randomBytes(12).toString("hex"), randomBytes(12).toString("hex")];
   const slugs = ids.map((id) => `${prefix}-${id}`);
+  const mappedVariantId = randomBytes(12).toString("hex");
   const sid = randomBytes(24).toString("hex");
   const otherSid = randomBytes(24).toString("hex");
   const csrf = randomBytes(32).toString("hex");
@@ -32,6 +33,9 @@ test("la importación se aplica y compensa por otra carga; un lote obsoleto revi
   t.after(async () => {
     if (server) await new Promise((resolve) => server.close(resolve));
     await pool.execute(`DELETE FROM inventory_movements WHERE product_id IN (${ids.map(() => "?").join(",")})`, ids);
+    await pool.execute("DELETE FROM inventory_ledger WHERE variant_id=?", [mappedVariantId]);
+    await pool.execute("DELETE FROM inventory_balances WHERE variant_id=?", [mappedVariantId]);
+    await pool.execute("DELETE FROM product_variants WHERE id=?", [mappedVariantId]);
     for (let i = 0; i < ids.length; i++) await pool.execute("DELETE FROM products WHERE id=? AND slug=?", [ids[i], slugs[i]]);
     await pool.execute("DELETE FROM app_sessions WHERE sid IN (?,?)", [sid, otherSid]);
     await closeDB();
@@ -45,6 +49,12 @@ test("la importación se aplica y compensa por otra carga; un lote obsoleto revi
       variants: i === 3 ? [{ optionName: "Talla", optionValue: "M", label: "M", stock: 3, sku: "QA-M" }] : []
     });
   }
+  const mappedAt = new Date();
+  await pool.execute(
+    "INSERT INTO product_variants (id,product_id,legacy_key,sku,sku_normalized,label,attributes,price_minor,compare_at_minor,image_url,active,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+    [mappedVariantId, ids[0], "base", `QA-${ids[0]}`, `QA-${ids[0]}`.toUpperCase(), "Producto base", JSON.stringify({}), 10000, 0, "", 1, mappedAt, mappedAt]
+  );
+  await pool.execute("INSERT INTO inventory_balances (variant_id,location_id,on_hand,reserved,updated_at) VALUES (?,?,4,0,?)", [mappedVariantId, "000000000000000000000101", mappedAt]);
   await pool.execute("INSERT INTO app_sessions (sid,expires,data) VALUES (?,?,?)", [sid, expires, JSON.stringify({
     cookie: { expires: new Date(expires), originalMaxAge: 600_000 },
     adminId: String(admin.id), adminCsrfToken: csrf
@@ -143,6 +153,10 @@ test("la importación se aplica y compensa por otra carga; un lote obsoleto revi
   assert.deepEqual(allMovements.map((row) => [Number(row.quantity_before), Number(row.quantity_after), Number(row.quantity_delta)]), [
     [4, 8, 4], [8, 4, -4], [4, 6, 2], [6, 7, 1], [7, 4, -3]
   ]);
+  const [[canonicalBalance]] = await pool.execute("SELECT on_hand,reserved,available FROM inventory_balances WHERE variant_id=?", [mappedVariantId]);
+  assert.deepEqual([Number(canonicalBalance.on_hand), Number(canonicalBalance.reserved), Number(canonicalBalance.available)], [4, 0, 4]);
+  const [[canonicalImportCount]] = await pool.execute("SELECT COUNT(*) AS count FROM inventory_ledger WHERE variant_id=? AND action='import'", [mappedVariantId]);
+  assert.equal(Number(canonicalImportCount.count), 5, "cada importación debe actualizar el ledger relacional y el legacy en la misma transacción");
 
   token = await previewCsv([[ids[1], 9], [ids[2], 10]]);
   await pool.execute("UPDATE products SET stock=8,payload=JSON_SET(payload,'$.stock',8) WHERE id=?", [ids[2]]);

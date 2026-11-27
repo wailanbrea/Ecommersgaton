@@ -38,7 +38,14 @@ async function exportedInventoryPdf(rows) {
 
 test("importa una fila CSV válida sin perder la identidad del producto", async () => {
   const rows = await inventory.parseUpload(csvFile(`${headers}\n${productId},Brazalete,BR-1,,,12`));
-  assert.deepEqual(rows, [{ productId, variantIndex: null, variantSignature: "", stock: 12, rowNumber: 2 }]);
+  assert.deepEqual(rows, [{ productId, sku: "BR-1", variantIndex: null, variantSignature: "", stock: 12, rowNumber: 2 }]);
+});
+
+test("acepta SKU como identidad primaria y evita duplicados sin distinguir mayúsculas", async () => {
+  const rows = await inventory.parseUpload(csvFile("sku,stock\nBR-100,12"));
+  assert.deepEqual(rows, [{ productId: null, sku: "BR-100", variantIndex: null, variantSignature: "", stock: 12, rowNumber: 2 }]);
+  await assert.rejects(inventory.parseUpload(csvFile("sku,stock\nBR-100,12\nbr-100,13")), /duplicado/i);
+  await assert.rejects(inventory.parseUpload(csvFile("sku,stock\nBR-1?00,12")), /SKU/i);
 });
 
 test("rechaza filas repetidas y fórmulas en el stock del CSV", async () => {
@@ -70,5 +77,12 @@ test("reimporta desde el PDF real que genera la exportación del inventario", as
     variantSignature: "Talla|M|", stock: 9
   }]);
   const rows = await inventory.parseUpload(file);
-  assert.deepEqual(rows, [{ productId, variantIndex: 1, variantSignature: "Talla|M|", stock: 9, rowNumber: 2 }]);
+  assert.deepEqual(rows, [{ productId, sku: "BR-1", variantIndex: 1, variantSignature: "Talla|M|", stock: 9, rowNumber: 2 }]);
+});
+
+test("conserva compatibilidad con el formato PDF v1 con ID legacy", async () => {
+  const signature = Buffer.from("Talla|M|M", "utf8").toString("base64url");
+  const file = await pdfFile(`GATON-INV-V1|${productId}|2|${signature}|8`);
+  const rows = await inventory.parseUpload(file);
+  assert.deepEqual(rows, [{ productId, sku: null, variantIndex: 2, variantSignature: "Talla|M|M", stock: 8, rowNumber: 2 }]);
 });

@@ -16,6 +16,7 @@ const PERMISSIONS = [
   ["inventory.view", "Ver inventario", "Comercio"],
   ["inventory.import", "Importar existencias", "Comercio"],
   ["inventory.export", "Exportar inventario", "Comercio"],
+  ["inventory.adjust", "Ajustar existencias con auditoría", "Comercio"],
   ["categories.view", "Ver categorías", "Catálogo"],
   ["categories.create", "Crear categorías", "Catálogo"],
   ["categories.edit", "Editar categorías", "Catálogo"],
@@ -51,6 +52,7 @@ function permissionForRequest(method, pathname) {
   if (path.startsWith("/sales")) return "sales.view";
   if (path.startsWith("/inventory/export.")) return "inventory.export";
   if (path.startsWith("/inventory/import/")) return "inventory.import";
+  if (path === "/inventory/adjust") return "inventory.adjust";
   if (path.startsWith("/inventory")) return "inventory.view";
   if (path === "/products") return "products.view";
   if (path === "/products/new") return verb === "GET" ? "products.create" : "products.create";

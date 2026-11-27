@@ -18,6 +18,7 @@ const Review = require("../models/Review");
 const SiteSettings = require("../models/SiteSettings");
 const Order = require("../models/Order");
 const { normalizeCustomizationImage } = require("../services/customizationImage");
+const { legacyVariantKey } = require("../services/legacyInventory");
 
 const router = express.Router();
 
@@ -170,13 +171,14 @@ async function createOrderAndDecrementStock(orderData, cart, checkoutKey = null)
         if (variant.outOfStock || before < quantity) throw new Error("El inventario cambió. Revisa las cantidades en el carrito.");
         variant.stock = before - quantity;
         variant.outOfStock = variant.stock <= 0;
-        movementRows.push({ productId: String(item.productId), productName: product.name, variantIndex, before, after: variant.stock, delta: -quantity });
+        const variantSignature = [variant.optionName || "", variant.optionValue || "", variant.label || ""].map((part) => String(part).trim()).join("|");
+        movementRows.push({ productId: String(item.productId), productName: product.name, variantIndex, variantSignature, before, after: variant.stock, delta: -quantity });
       } else {
         const before = Math.max(0, Number(product.stock || 0));
         if (product.outOfStock || before < quantity) throw new Error("El inventario cambió. Revisa las cantidades en el carrito.");
         product.stock = before - quantity;
         product.outOfStock = product.stock <= 0;
-        movementRows.push({ productId: String(item.productId), productName: product.name, variantIndex: null, before, after: product.stock, delta: -quantity });
+        movementRows.push({ productId: String(item.productId), productName: product.name, variantIndex: null, variantSignature: "", before, after: product.stock, delta: -quantity });
       }
     }
 
@@ -198,10 +200,28 @@ async function createOrderAndDecrementStock(orderData, cart, checkoutKey = null)
       "INSERT INTO orders (id,checkout_key,customer_name,phone,email,notes,shipping_method,shipping_description,shipping_cost,subtotal,total,payment_method,status,created_at,updated_at,payload) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
       [orderId, checkoutKey, order.customerName, order.phone, order.email, order.notes, order.shippingMethod, order.shippingDescription, order.shippingCost, order.subtotal, order.total, order.paymentMethod, order.status, now, now, JSON.stringify(order)]
     );
-    for (const movement of movementRows) {
+    for (let movementIndex = 0; movementIndex < movementRows.length; movementIndex++) {
+      const movement = movementRows[movementIndex];
       await connection.execute(
         "INSERT INTO inventory_movements (id,batch_id,product_id,variant_index,variant_signature,product_name,quantity_before,quantity_after,quantity_delta,action,actor_id,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
-        [crypto.randomBytes(12).toString("hex"), batchId, movement.productId, movement.variantIndex, "", movement.productName, movement.before, movement.after, movement.delta, "checkout", "000000000000000000000000", now]
+        [crypto.randomBytes(12).toString("hex"), batchId, movement.productId, movement.variantIndex, movement.variantSignature, movement.productName, movement.before, movement.after, movement.delta, "checkout", "000000000000000000000000", now]
+      );
+      const key = legacyVariantKey(movement.variantIndex, movement.variantSignature);
+      const [mapped] = await connection.execute("SELECT id FROM product_variants WHERE product_id=? AND legacy_key=? FOR UPDATE", [movement.productId, key]);
+      if (!mapped.length) continue;
+      const variantId = mapped[0].id;
+      const [balances] = await connection.execute("SELECT on_hand,reserved FROM inventory_balances WHERE variant_id=? AND location_id=? FOR UPDATE", [variantId, "000000000000000000000101"]);
+      if (!balances.length) {
+        await connection.execute("INSERT INTO inventory_balances (variant_id,location_id,on_hand,reserved,updated_at) VALUES (?,?,?,0,?)", [variantId, "000000000000000000000101", movement.before, now]);
+      } else if (Number(balances[0].on_hand) !== movement.before) {
+        throw new Error("El saldo del ledger no coincide con el stock vigente. Ajusta o reconcilia el inventario antes del checkout.");
+      }
+      const reserved = Number(balances[0]?.reserved || 0);
+      if (movement.after < reserved) throw new Error("El checkout no puede consumir unidades reservadas para otro pedido.");
+      await connection.execute("UPDATE inventory_balances SET on_hand=?,updated_at=? WHERE variant_id=? AND location_id=?", [movement.after, now, variantId, "000000000000000000000101"]);
+      await connection.execute(
+        "INSERT INTO inventory_ledger (id,batch_id,variant_id,location_id,action,quantity_before,quantity_after,quantity_delta,reason,actor_id,idempotency_key,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+        [crypto.randomBytes(12).toString("hex"), batchId, variantId, "000000000000000000000101", "checkout", movement.before, movement.after, movement.delta, `Consumo al crear el pedido ${orderId}`, null, `checkout:${orderId}:${movementIndex}`, now]
       );
     }
     await connection.commit();

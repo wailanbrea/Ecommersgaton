@@ -10,6 +10,12 @@ test("el esquema normalizado protege SKU, disponibilidad y reservas", {
   const { pool, closeDB } = require("../src/config/db");
   const [[database]] = await pool.query("SELECT DATABASE() AS name");
   assert.match(database.name, /^test_gaton_f0_/);
+  const [[systemPermission]] = await pool.execute("SELECT COUNT(*) AS count FROM admin_permissions WHERE code='inventory.adjust'");
+  const [[systemGrant]] = await pool.execute("SELECT COUNT(*) AS count FROM admin_role_permissions WHERE role_id='000000000000000000000001' AND permission_id='inventory.adjust'");
+  const [[ledgerTable]] = await pool.execute("SELECT COUNT(*) AS count FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='inventory_ledger'");
+  assert.equal(Number(systemPermission.count), 1);
+  assert.equal(Number(systemGrant.count), 1);
+  assert.equal(Number(ledgerTable.count), 1);
 
   const productId = randomBytes(12).toString("hex");
   const orderId = randomBytes(12).toString("hex");

@@ -13,6 +13,7 @@ test("el middleware asigna permisos por recurso y método", () => {
   assert.equal(permissionForRequest("POST", "/orders/abc/status"), "orders.edit");
   assert.equal(permissionForRequest("POST", "/sales/orders/abc/payments"), "sales.payments.record");
   assert.equal(permissionForRequest("GET", "/inventory/export.pdf"), "inventory.export");
+  assert.equal(permissionForRequest("POST", "/inventory/adjust"), "inventory.adjust");
   assert.equal(permissionForRequest("POST", "/users/abc/password"), "users.manage");
   assert.equal(permissionForRequest("GET", "/account/password"), "account.password.change");
   assert.equal(permissionForRequest("POST", "/logout"), null);
@@ -52,6 +53,7 @@ test("todas las rutas administrativas declaradas tienen permiso explícito por r
     ["GET", "/inventory/export.pdf", "inventory.export"],
     ["POST", "/inventory/import/preview", "inventory.import"],
     ["POST", "/inventory/import/apply", "inventory.import"],
+    ["POST", "/inventory/adjust", "inventory.adjust"],
     ["GET", "/sales", "sales.view"],
     ["POST", "/sales/orders/abc/payments", "sales.payments.record"],
     ["GET", "/sales/export.csv", "sales.export"],

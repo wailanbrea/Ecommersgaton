@@ -260,3 +260,12 @@ Estos requisitos no son decisiones abiertas y se consideran base de la propuesta
 5. Solo tras revisión de diff y backup restaurable, habilitar en la copia aislada con datos sintéticos; producción requerirá otra autorización y preflight independiente.
 
 **Pendiente del propietario:** facilitar convención SKU y atributos físicos antes del mapeo comercial; confirmar COD, 24 h para transferencia/manual y política de cancelación/devolución. El propietario autorizó el despliegue de esta base estructural, no la activación de medios de pago ni un backfill de productos.
+
+### Progreso implementado y verificado localmente · 27 de noviembre de 2026
+
+- Migración `006_inventory_adjust_permission` registra el permiso de ajuste y lo concede al rol superadministrador sin cambiar cuentas ni el catálogo.
+- El formulario de inventario registra ajustes manuales con motivo, actor e idempotencia; crea el mapeo relacional legacy al momento de operar y solo guarda un SKU que proporcione un administrador. Normaliza el SKU y aplica unicidad de base de datos; no deduce SKU desde nombres.
+- CSV/XLSX aceptan SKU normalizado como identidad primaria cuando no traen identidad legacy; el PDF V2 incluye SKU y conserva lectura del V1. La importación de variantes mapeadas y el checkout mantienen el ledger/saldo relacional consistente con el stock legacy. Los elementos sin mapeo siguen el flujo legacy sin crear SKU automáticamente.
+- Evidencia: `node --test --test-concurrency=1` con `RUN_DB_MUTATION_TESTS=1` en el laboratorio: 44 aprobadas, 0 fallidas, 1 omitida (prueba de esquema ejecutada aparte, 1/1); `npm audit --omit=dev`: 0 vulnerabilidades; build CSS y `git diff --check` correctos.
+- Esta implementación cubre solo ajustes/importaciones/consumo de checkout para artículos mapeados. Reservas en checkout, vencimiento, pagos verificados, cancelación/reposición y devoluciones en cuarentena siguen pendientes; por ello ADR-012 e INV-01–05 no se consideran cerrados. No se hizo backfill ni se añadieron datos demo.
+- La entrega queda autorizada para publicar en Gatón por instrucción del propietario del 27 de noviembre; el resultado productivo se registrará tras completar Auto-Deploy y el smoke HTTP.

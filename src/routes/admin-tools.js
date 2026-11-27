@@ -8,10 +8,12 @@ const { pool } = require("../config/db");
 const Order = require("../models/Order");
 const Product = require("../models/Product");
 const adminCsrf = require("../middlewares/adminCsrf");
+const { adjustLegacyInventory, legacyVariantKey, normalizeSku } = require("../services/legacyInventory");
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024, files: 1 } });
-const PDF_MARKER = "GATON-INV-V1";
+const PDF_MARKER = "GATON-INV-V2";
+const LEGACY_PDF_MARKER = "GATON-INV-V1";
 const pad2 = (n) => String(n).padStart(2, "0");
 const dayString = (date) => `${date.getUTCFullYear()}-${pad2(date.getUTCMonth() + 1)}-${pad2(date.getUTCDate())}`;
 const id = () => crypto.randomBytes(12).toString("hex");
@@ -33,13 +35,32 @@ function inventoryRows(products) {
   }
   return rows;
 }
+async function inventoryRowsWithLedger(products) {
+  const rows = inventoryRows(products);
+  const [registered] = await pool.execute(
+    "SELECT pv.id,pv.product_id,pv.legacy_key,pv.sku,ib.on_hand,ib.reserved,ib.available FROM product_variants pv LEFT JOIN inventory_balances ib ON ib.variant_id=pv.id AND ib.location_id=? WHERE pv.active=1",
+    ["000000000000000000000101"]
+  );
+  const byLegacy = new Map(registered.map((entry) => [`${entry.product_id}:${entry.legacy_key}`, entry]));
+  for (const row of rows) {
+    const legacyKey = row.variantIndex === "" ? "base" : `variant:${crypto.createHash("sha256").update(row.variantSignature).digest("hex")}`;
+    const variant = byLegacy.get(`${row.productId}:${legacyKey}`);
+    row.variantId = variant?.id || "";
+    row.sku = variant?.sku || row.sku || "";
+    row.onHand = variant ? Number(variant.on_hand || 0) : Number(row.stock || 0);
+    row.reserved = Number(variant?.reserved || 0);
+    row.available = variant ? Number(variant.available || 0) : Number(row.stock || 0);
+    if (variant) row.stock = Number(variant.on_hand || 0);
+  }
+  return rows;
+}
 function parseCsv(text) {
   const lines = String(text).replace(/^\uFEFF/, "").split(/\r?\n/).filter((line) => line.trim());
   if (!lines.length) throw new Error("El CSV está vacío.");
   const parseLine = (line) => { const out = []; let current = "", quoted = false; for (let i = 0; i < line.length; i++) { const c = line[i]; if (c === '"' && line[i + 1] === '"' && quoted) { current += '"'; i++; } else if (c === '"') quoted = !quoted; else if (c === "," && !quoted) { out.push(current); current = ""; } else current += c; } out.push(current); if (quoted) throw new Error("El CSV contiene comillas sin cerrar."); return out; };
   const headers = parseLine(lines[0]).map((v) => v.trim());
-  const required = ["productId", "variantIndex", "variantSignature", "stock"];
-  if (required.some((h) => !headers.includes(h))) throw new Error(`Faltan columnas requeridas: ${required.join(", ")}.`);
+  const required = ["stock", ...(headers.includes("sku") ? [] : ["productId", "variantIndex", "variantSignature"])];
+  if (required.some((h) => !headers.includes(h))) throw new Error(`Faltan columnas requeridas: ${required.join(", ")}. Incluye SKU o la identidad legacy completa.`);
   return lines.slice(1).map((line) => { const cells = parseLine(line); return Object.fromEntries(headers.map((h, i) => [h, cells[i] || ""])); });
 }
 async function parseUpload(file) {
@@ -50,8 +71,8 @@ async function parseUpload(file) {
     const workbook = new ExcelJS.Workbook(); await workbook.xlsx.load(file.buffer);
     const sheet = workbook.worksheets[0]; if (!sheet) throw new Error("El Excel no contiene una hoja.");
     const headers = sheet.getRow(1).values.slice(1).map((v) => String(v || "").trim());
-    const required = ["productId", "variantIndex", "variantSignature", "stock"];
-    if (required.some((h) => !headers.includes(h))) throw new Error(`Faltan columnas requeridas: ${required.join(", ")}.`);
+    const required = ["stock", ...(headers.includes("sku") ? [] : ["productId", "variantIndex", "variantSignature"])];
+    if (required.some((h) => !headers.includes(h))) throw new Error(`Faltan columnas requeridas: ${required.join(", ")}. Incluye SKU o la identidad legacy completa.`);
     raw = [];
     sheet.eachRow((row, n) => { if (n === 1) return; const values = row.values.slice(1); raw.push(Object.fromEntries(headers.map((h, i) => [h, values[i]?.text ?? values[i] ?? ""]))); });
   } else if (ext === "pdf") {
@@ -59,9 +80,16 @@ async function parseUpload(file) {
     let parsed;
     try { parsed = await parser.getText(); }
     finally { await parser.destroy(); }
-    raw = parsed.text.split(/\r?\n/).map((line) => line.trim()).filter((line) => line.startsWith(`${PDF_MARKER}|`)).map((line) => {
-      const [, productId, variantIndex, signatureEncoded, stock] = line.split("|");
-      return { productId, variantIndex, variantSignature: Buffer.from(signatureEncoded || "", "base64url").toString("utf8"), stock };
+    raw = parsed.text.split(/\r?\n/).map((line) => line.trim()).filter((line) => line.startsWith(`${PDF_MARKER}|`) || line.startsWith(`${LEGACY_PDF_MARKER}|`)).map((line) => {
+      const [marker, productId, variantIndex, signatureEncoded, skuOrStock, possibleStock] = line.split("|");
+      const version2 = marker === PDF_MARKER;
+      return {
+        productId,
+        variantIndex,
+        variantSignature: Buffer.from(signatureEncoded || "", "base64url").toString("utf8"),
+        sku: version2 ? Buffer.from(skuOrStock || "", "base64url").toString("utf8") : "",
+        stock: version2 ? possibleStock : skuOrStock
+      };
     });
     if (!raw.length) throw new Error("Este PDF no contiene filas del formato oficial GATÓN DO. Exporta la plantilla PDF desde Inventario y edita su sección de datos antes de importarla.");
   } else throw new Error("Formato no permitido. Usa CSV, Excel .xlsx o PDF de inventario GATÓN DO.");
@@ -69,14 +97,16 @@ async function parseUpload(file) {
   const seen = new Set();
   return raw.map((row, index) => {
     const productId = String(row.productId || "").trim();
+    const sku = normalizeSku(row.sku || "");
     const variantIndex = String(row.variantIndex ?? "").trim();
     const variantSignature = String(row.variantSignature || "").trim();
     const stockValue = String(row.stock ?? "").trim();
-    if (!/^[a-f0-9]{24}$/i.test(productId)) throw new Error(`Fila ${index + 2}: productId inválido.`);
+    if (productId && !/^[a-f0-9]{24}$/i.test(productId)) throw new Error(`Fila ${index + 2}: productId inválido.`);
+    if (!sku && !productId) throw new Error(`Fila ${index + 2}: indica un SKU o productId para identificar el inventario.`);
     if (variantIndex !== "" && (!/^\d+$/.test(variantIndex) || Number(variantIndex) > 1000)) throw new Error(`Fila ${index + 2}: variantIndex inválido.`);
     if (!/^\d+$/.test(stockValue) || Number(stockValue) > 1000000) throw new Error(`Fila ${index + 2}: stock debe ser un entero entre 0 y 1,000,000.`);
-    const key = `${productId}:${variantIndex}`; if (seen.has(key)) throw new Error(`Fila ${index + 2}: producto/variante duplicado.`); seen.add(key);
-    return { productId, variantIndex: variantIndex === "" ? null : Number(variantIndex), variantSignature, stock: Number(stockValue), rowNumber: index + 2 };
+    const key = sku && !productId ? `sku:${sku}` : `${productId}:${variantIndex}`; if (seen.has(key)) throw new Error(`Fila ${index + 2}: producto/variante duplicado.`); seen.add(key);
+    return { productId: productId || null, sku, variantIndex: variantIndex === "" ? null : Number(variantIndex), variantSignature, stock: Number(stockValue), rowNumber: index + 2 };
   });
 }
 function csvEscape(value) { return `"${cleanCell(value).replace(/"/g, '""')}"`; }
@@ -87,11 +117,11 @@ async function sendPdf(res, rows, title) {
   doc.fontSize(18).fillColor("#211c18").text("GATÓN DO · Inventario", { align: "left" }).moveDown(.4);
   doc.fontSize(9).fillColor("#756d65").text(`${title} · ${new Date().toLocaleString("es-DO", { timeZone: "America/Santo_Domingo" })}`).moveDown();
   for (let i = 0; i < rows.length; i++) {
-    const r = rows[i]; const sig = Buffer.from(r.variantSignature || "", "utf8").toString("base64url");
+    const r = rows[i]; const sig = Buffer.from(r.variantSignature || "", "utf8").toString("base64url"); const sku = Buffer.from(r.sku || "", "utf8").toString("base64url");
     if (doc.y > 730) doc.addPage();
     doc.fontSize(8).fillColor("#211c18").text(`${r.productName} | ${r.sku || "sin SKU"} | ${r.variantIndex === "" || r.variantIndex == null ? "Producto" : `Variante ${r.variantIndex}`} | Stock: ${r.stock}`, { continued: false });
     // Datos oficiales legibles por máquina para permitir importar este PDF sin inferir identidades.
-    doc.fontSize(4).fillColor("#756d65").text(`${PDF_MARKER}|${r.productId}|${r.variantIndex ?? ""}|${sig}|${r.stock}`, { lineBreak: false });
+    doc.fontSize(4).fillColor("#756d65").text(`${PDF_MARKER}|${r.productId}|${r.variantIndex ?? ""}|${sig}|${sku}|${r.stock}`, { lineBreak: false });
     doc.moveDown(.5);
   }
   doc.end(); await done; res.type("pdf").set("Content-Disposition", 'attachment; filename="gaton-inventario.pdf"').send(Buffer.concat(chunks));
@@ -120,43 +150,118 @@ function getItems(order) { return Array.isArray(order.items) ? order.items : Arr
 
 router.get("/inventory", async (req, res) => {
   const products = await Product.find({ active: true }).sort({ name: 1 }).lean();
-  res.render("admin/inventory/index", { rows: inventoryRows(products), importResult: req.query.imported === "1", error: null });
+  const rows = await inventoryRowsWithLedger(products);
+  for (const row of rows) row.requestKey = crypto.randomBytes(16).toString("hex");
+  res.render("admin/inventory/index", { rows, importResult: req.query.imported === "1", adjusted: String(req.query.adjusted || ""), error: null });
+});
+router.post("/inventory/adjust", async (req, res) => {
+  try {
+    const result = await adjustLegacyInventory({
+      productId: req.body.productId,
+      variantIndex: req.body.variantIndex === "" ? null : req.body.variantIndex,
+      signature: String(req.body.variantSignature || ""),
+      newOnHand: req.body.newOnHand,
+      reason: req.body.reason,
+      sku: req.body.sku,
+      actorId: req.session.adminId,
+      requestKey: req.body.requestKey
+    });
+    return res.redirect(`/admin/inventory?adjusted=${result.duplicate ? "duplicate" : "1"}`);
+  } catch (error) {
+    const message = error.code === "ER_DUP_ENTRY"
+      ? "Ese SKU ya está asignado a otro producto o variante."
+      : error.message;
+    return res.status(400).send(`No se ajustó el inventario: ${message}`);
+  }
 });
 router.get("/inventory/export.csv", async (_req, res) => {
-  const products = await Product.find({ active: true }).sort({ name: 1 }).lean(); const rows = inventoryRows(products);
+  const products = await Product.find({ active: true }).sort({ name: 1 }).lean(); const rows = await inventoryRowsWithLedger(products);
   const headers = ["productId", "productName", "sku", "variantIndex", "variantSignature", "stock"];
   const body = [headers, ...rows.map((r) => headers.map((h) => r[h]))].map((r) => r.map(csvEscape).join(",")).join("\r\n");
   res.type("text/csv; charset=utf-8").set("Content-Disposition", 'attachment; filename="gaton-inventario.csv"').send(`\uFEFF${body}`);
 });
 router.get("/inventory/export.xlsx", async (_req, res) => {
-  const products = await Product.find({ active: true }).sort({ name: 1 }).lean(); const rows = inventoryRows(products);
+  const products = await Product.find({ active: true }).sort({ name: 1 }).lean(); const rows = await inventoryRowsWithLedger(products);
   const wb = new ExcelJS.Workbook(); const ws = wb.addWorksheet("Inventario");
   ws.columns = ["productId", "productName", "sku", "variantIndex", "variantSignature", "stock"].map((key) => ({ header: key, key, width: key === "variantSignature" ? 34 : 22 }));
   ws.addRows(rows.map((row) => ({ ...row, productName: cleanCell(row.productName), sku: cleanCell(row.sku), variantSignature: cleanCell(row.variantSignature) }))); ws.views = [{ state: "frozen", ySplit: 1 }]; const buf = await wb.xlsx.writeBuffer();
   res.type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet").set("Content-Disposition", 'attachment; filename="gaton-inventario.xlsx"').send(Buffer.from(buf));
 });
-router.get("/inventory/export.pdf", async (_req, res) => { const products = await Product.find({ active: true }).sort({ name: 1 }).lean(); return sendPdf(res, inventoryRows(products), "Exportación / formato importable"); });
+router.get("/inventory/export.pdf", async (_req, res) => { const products = await Product.find({ active: true }).sort({ name: 1 }).lean(); return sendPdf(res, await inventoryRowsWithLedger(products), "Exportación / formato importable"); });
 router.post("/inventory/import/preview", upload.single("inventoryFile"), adminCsrf.afterMultipart, async (req, res) => {
   try {
     if (!req.file) throw new Error("Selecciona un archivo CSV, Excel o PDF.");
     const rows = await parseUpload(req.file);
-    const productIds = [...new Set(rows.map((r) => r.productId))];
-    const [products] = await pool.execute("SELECT id, name, stock, payload FROM products WHERE id IN (" + productIds.map(() => "?").join(",") + ")", productIds);
+    const productIds = [...new Set(rows.map((r) => r.productId).filter(Boolean))];
+    const [products] = productIds.length
+      ? await pool.execute("SELECT id, name, stock, payload FROM products WHERE id IN (" + productIds.map(() => "?").join(",") + ")", productIds)
+      : [[]];
     const byId = new Map(products.map((p) => [String(p.id), p]));
-    const preview = rows.map((row) => {
-      const product = byId.get(row.productId); if (!product) throw new Error(`Fila ${row.rowNumber}: el producto ya no existe.`);
-      const data = typeof product.payload === "string" ? JSON.parse(product.payload) : product.payload;
-      let before, variantSig = "";
-      if (row.variantIndex === null) { if (Array.isArray(data.variants) && data.variants.length) throw new Error(`Fila ${row.rowNumber}: falta indicar la variante.`); before = Number(product.stock); }
-      else { const variant = data.variants?.[row.variantIndex]; if (!variant) throw new Error(`Fila ${row.rowNumber}: variante no encontrada.`); variantSig = signature(variant); if (variantSig !== row.variantSignature) throw new Error(`Fila ${row.rowNumber}: identidad de variante cambió; exporta el inventario actualizado.`); before = Number(variant.stock || 0); }
-      if (row.variantIndex === null && row.variantSignature) throw new Error(`Fila ${row.rowNumber}: una línea de producto no debe tener firma de variante.`);
-      return { ...row, productName: data.name || product.name, before, delta: row.stock - before };
-    });
+    const preview = [];
+    const seenTargets = new Set();
+    for (const sourceRow of rows) {
+      const row = { ...sourceRow };
+      let product;
+      let data;
+      let legacySkuFallback = false;
+      if (row.sku) {
+        const [mapped] = await pool.execute("SELECT pv.product_id,pv.legacy_key FROM product_variants pv WHERE pv.sku_normalized=? AND pv.active=1 LIMIT 1", [row.sku]);
+        if (!mapped.length) {
+          if (!row.productId) throw new Error(`Fila ${row.rowNumber}: el SKU ${row.sku} no está registrado; usa una identidad legacy o registra el SKU en Inventario.`);
+          legacySkuFallback = true;
+        } else {
+          const mappedProductId = String(mapped[0].product_id);
+          if (row.productId && String(row.productId) !== mappedProductId) throw new Error(`Fila ${row.rowNumber}: el SKU no pertenece al productId indicado.`);
+          row.productId = mappedProductId;
+          product = byId.get(mappedProductId);
+          if (!product) {
+            const [found] = await pool.execute("SELECT id,name,stock,payload FROM products WHERE id=? AND active=1 LIMIT 1", [mappedProductId]);
+            product = found[0];
+          }
+          if (!product) throw new Error(`Fila ${row.rowNumber}: el producto asociado al SKU ya no está activo.`);
+          data = typeof product.payload === "string" ? JSON.parse(product.payload) : product.payload;
+          if (mapped[0].legacy_key === "base") {
+            if (Array.isArray(data.variants) && data.variants.length) throw new Error(`Fila ${row.rowNumber}: el SKU base ya no coincide con la configuración actual.`);
+            row.variantIndex = null;
+            row.variantSignature = "";
+          } else {
+            const variants = Array.isArray(data.variants) ? data.variants : [];
+            const index = variants.findIndex((variant) => `variant:${crypto.createHash("sha256").update(signature(variant)).digest("hex")}` === mapped[0].legacy_key);
+            if (index < 0) throw new Error(`Fila ${row.rowNumber}: el SKU apunta a una variante que cambió; revisa su configuración antes de importar.`);
+            const currentSignature = signature(variants[index]);
+            if ((row.variantIndex !== null && row.variantIndex !== index) || (row.variantSignature && row.variantSignature !== currentSignature)) throw new Error(`Fila ${row.rowNumber}: el SKU y la identidad de variante no coinciden.`);
+            row.variantIndex = index;
+            row.variantSignature = currentSignature;
+          }
+        }
+      }
+      if (!row.sku || legacySkuFallback) {
+        product = byId.get(String(row.productId));
+        if (!product) throw new Error(`Fila ${row.rowNumber}: el producto ya no existe.`);
+        data = typeof product.payload === "string" ? JSON.parse(product.payload) : product.payload;
+        if (row.variantIndex === null) {
+          if (Array.isArray(data.variants) && data.variants.length) throw new Error(`Fila ${row.rowNumber}: falta indicar la variante.`);
+        } else {
+          const variant = data.variants?.[row.variantIndex];
+          if (!variant) throw new Error(`Fila ${row.rowNumber}: variante no encontrada.`);
+          const variantSig = signature(variant);
+          if (variantSig !== row.variantSignature) throw new Error(`Fila ${row.rowNumber}: identidad de variante cambió; exporta el inventario actualizado.`);
+        }
+        if (row.variantIndex === null && row.variantSignature) throw new Error(`Fila ${row.rowNumber}: una línea de producto no debe tener firma de variante.`);
+      }
+      const targetKey = `${row.productId}:${row.variantIndex ?? ""}`;
+      if (seenTargets.has(targetKey)) throw new Error(`Fila ${row.rowNumber}: producto/variante duplicado.`);
+      seenTargets.add(targetKey);
+      const currentVariant = row.variantIndex === null ? null : data.variants?.[row.variantIndex];
+      const before = currentVariant ? Number(currentVariant.stock || 0) : Number(product.stock || 0);
+      if (!row.variantSignature && currentVariant) row.variantSignature = signature(currentVariant);
+      preview.push({ ...row, productName: data.name || product.name, before, delta: row.stock - before });
+    }
     const token = crypto.randomBytes(24).toString("hex");
     req.session.inventoryPreview = { token, rows: preview, createdAt: Date.now() };
     res.render("admin/inventory/preview", { rows: preview, token, error: null });
   } catch (error) {
-    res.status(400).render("admin/inventory/index", { rows: [], importResult: false, error: error.message });
+    res.status(400).render("admin/inventory/index", { rows: [], importResult: false, adjusted: false, error: error.message });
   }
 });
 router.post("/inventory/import/apply", adminCsrf, async (req, res) => {
@@ -178,6 +283,21 @@ router.post("/inventory/import/apply", adminCsrf, async (req, res) => {
         if (row.variantIndex === null) payload.stock = row.stock;
         else payload.variants[row.variantIndex].stock = row.stock;
         await conn.execute("INSERT INTO inventory_movements (id,batch_id,product_id,variant_index,variant_signature,product_name,quantity_before,quantity_after,quantity_delta,action,actor_id,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,UTC_TIMESTAMP(3))", [id(), batchId, productId, row.variantIndex, row.variantSignature, row.productName, current, row.stock, row.stock - current, "import", req.session.adminId,]);
+        const key = legacyVariantKey(row.variantIndex, row.variantSignature);
+        const [mapped] = await conn.execute("SELECT id FROM product_variants WHERE product_id=? AND legacy_key=? FOR UPDATE", [productId, key]);
+        if (mapped.length) {
+          const variantId = mapped[0].id;
+          const [balances] = await conn.execute("SELECT on_hand,reserved FROM inventory_balances WHERE variant_id=? AND location_id=? FOR UPDATE", [variantId, "000000000000000000000101"]);
+          const reserved = Number(balances[0]?.reserved || 0);
+          if (row.stock < reserved) throw new Error(`El inventario importado de ${row.productName} quedaría por debajo de las ${reserved} unidades reservadas.`);
+          if (!balances.length) await conn.execute("INSERT INTO inventory_balances (variant_id,location_id,on_hand,reserved,updated_at) VALUES (?,?,?,0,UTC_TIMESTAMP(3))", [variantId, "000000000000000000000101", current]);
+          const balanceBefore = Number(balances[0]?.on_hand ?? current);
+          if (balanceBefore !== current) {
+            await conn.execute("INSERT INTO inventory_ledger (id,batch_id,variant_id,location_id,action,quantity_before,quantity_after,quantity_delta,reason,actor_id,idempotency_key,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,UTC_TIMESTAMP(3))", [id(), batchId, variantId, "000000000000000000000101", "legacy_sync", balanceBefore, current, current - balanceBefore, "Conciliación con el saldo legacy antes de importar.", req.session.adminId, `import:${batchId}:${variantId}:sync`]);
+          }
+          await conn.execute("UPDATE inventory_balances SET on_hand=?,updated_at=UTC_TIMESTAMP(3) WHERE variant_id=? AND location_id=?", [row.stock, variantId, "000000000000000000000101"]);
+          await conn.execute("INSERT INTO inventory_ledger (id,batch_id,variant_id,location_id,action,quantity_before,quantity_after,quantity_delta,reason,actor_id,idempotency_key,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,UTC_TIMESTAMP(3))", [id(), batchId, variantId, "000000000000000000000101", "import", current, row.stock, row.stock - current, `Importación de inventario ${batchId}`, req.session.adminId, `import:${batchId}:${variantId}`]);
+        }
       }
       const totalStock = Array.isArray(payload.variants) && payload.variants.length ? payload.variants.reduce((sum, v) => sum + Math.max(0, Number(v.stock || 0)), 0) : Number(payload.stock || 0);
       payload.stock = totalStock; payload.outOfStock = totalStock <= 0;

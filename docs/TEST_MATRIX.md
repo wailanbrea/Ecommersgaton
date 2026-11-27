@@ -89,6 +89,17 @@ El backup automático previo quedó registrado como `pre-8257182-20261126-071303
 | TEST-BASELINE-2026-11-26 | Suite estándar + integraciones sintéticas | Última suite estándar: 21 aprobadas, 0 fallidas, 5 omitidas (opt-in). Integraciones opt-in completas de checkout, grabado, inventario HTTP, aplicación compensatoria/atomicidad y XSS de ficha: 9/9 ejecutadas en serie por compartir MySQL local; fixtures sintéticos limpiados. `npm audit --omit=dev`: 0 vulnerabilidades | VERIFIED · laboratorio |
 | SEC-DEPS-DEV | Auditoría completa de dependencias | `npm audit` y `npm audit --omit=dev`: 0 vulnerabilidades; override de `nodemon` resolvió `minimatch` a 11.0.9, compatible con Node 22 del Dockerfile. Suite serial 41/41 | VERIFIED · dependencias auditadas en laboratorio |
 
+## Inventario · ajustes y SKU · laboratorio local · 27 de noviembre de 2026
+
+| ID | Criterio ejecutado | Resultado observado | Estado |
+|---|---|---|---|
+| INV-01-ADJUST-HTTP | Ajuste manual auditable, permiso, idempotencia, SKU y límite por reservas | `test/inventory-adjustment-http.test.js`: GET de inventario; POST autorizado ajustó 5→9, normalizó SKU, guardó razón/actor y saldo `on_hand=9,reserved=0,available=9`; repetir la clave no duplicó el ajuste; un CSV solo con SKU actualizó 9→11 y el ledger; intento de bajar por debajo de reservas fue rechazado. La prueba limpia sus filas QA por ID exacto. | VERIFIED · flujo HTTP acotado en laboratorio |
+| INV-01-SKU-IMPORT | CSV/XLSX por SKU, duplicados y compatibilidad PDF | Suite de `test/inventory-import.test.js`: SKU es identidad primaria cuando no hay productId; duplicados sin distinguir mayúsculas se rechazan; PDF V2 conserva SKU y round-trip; el parser sigue aceptando PDF V1 legacy. | VERIFIED · parser unitario |
+| INV-01-LEDGER-SYNC | Ajuste, importación aplicada y checkout mantienen saldo/ledger en artículos mapeados | Pruebas de ajuste/importación/checkout comprueban saldo legacy y relacional, ledger auditado y rechazo de desajuste o de saldo menor al reservado. Suite completa serial: 44 aprobadas, 0 fallidas, 1 omitida; `test/inventory-schema.test.js` en `test_gaton_f0_adr12_20261127`: 1/1. | VERIFIED · caminos cubiertos en laboratorio; ciclo integral pendiente |
+| INV-01-PROD-DEPLOY | Auto-Deploy y smoke público de esta entrega | Pendiente: completar después del push, con SHA exacto, estado del auto-deploy, health readiness, home, ficha de producto y redirección del dashboard sin sesión. | PENDING |
+
+Esta evidencia no acredita ciclo de reservas/pago/cancelación/devolución ni aceptación UAT. Las pruebas de mutación corrieron solo contra MySQL local de desarrollo y el esquema de prueba aislado. `npm audit --omit=dev` reportó 0 vulnerabilidades; `npm run build:admin-css` y `git diff --check` finalizaron correctamente.
+
 Las pruebas de mutación no usaron cuentas, productos ni pedidos reales. El primer intento de la suite sin cargar variables falló por configuración ausente antes de acceder a datos; se repitió con el entorno explícito de laboratorio y pasó.
 
 Comandos ejecutados: `npm test` (6/6); `npm run db:migrate` dos veces (segunda sin operaciones); `npm run build:admin-css`; `npm audit --omit=dev` (0 vulnerabilidades); compilación de 30 templates. No se han ejecutado pruebas de concurrencia, backup/restauración, carga o autorización por empleado. La evidencia acredita solo el entorno local.
