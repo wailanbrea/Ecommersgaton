@@ -262,3 +262,25 @@ body.admin-shell-body { min-height: 100vh; margin: 0; background: var(--admin-bg
 @media (prefers-reduced-motion: reduce) {
   .admin-shell *, .admin-shell *::before, .admin-shell *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
+
+/* El título de sección ya se muestra en la barra superior (.admin-topbar-title h1): evitar encabezados duplicados */
+.admin-tool-heading > div:first-child:has(h2) {
+  display: none;
+}
+.admin-tool-heading {
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+.admin-tool-heading:not(:has(a, button)) {
+  display: none;
+}
+.admin-page-slot main > div:has(> div > h2.text-3xl) > div:has(> h2.text-3xl) {
+  display: none;
+}
+.admin-page-slot main > div:has(> div > h2.text-3xl) {
+  justify-content: flex-end;
+  margin-bottom: 18px;
+}
+.admin-page-slot main > div:has(> h2.text-3xl):not(:has(a, button)) {
+  display: none;
+}
