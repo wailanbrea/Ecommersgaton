@@ -6,11 +6,12 @@
   <title>Nuevo producto | Admin</title>
   <link rel="stylesheet" href="/css/app.css">
   <link rel="stylesheet" href="/css/admin-utilities.css">
-  <link rel="stylesheet" href="/css/admin.css">
+  <link rel="stylesheet" href="/css/admin.css?v=2">
 </head>
 <body class="admin-shell-body">
   <%- include("../../partials/admin-shell-start") %>
 <main class="max-w-6xl mx-auto px-4 py-8">
+    <%- include("../../partials/admin-product-guide", { guideOpen: true }) %>
     <div class="mb-8">
       <h2 class="text-3xl font-semibold text-stone-900">Nuevo producto</h2>
       <p class="text-stone-600 mt-2">Formulario mejorado sin JSON manual.</p>
@@ -219,6 +220,7 @@
           <% if (formData.variants && formData.variants.length) { %>
             <% formData.variants.forEach((variant, index) => { %>
               <div class="variant-item bg-stone-50 border border-stone-200 rounded-2xl p-4">
+                <input type="hidden" name="variantAttributesJson" value="<%= Array.isArray(variant.attributes) && variant.attributes.length ? JSON.stringify(variant.attributes) : '' %>">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label class="block text-sm font-medium mb-2">Nombre de la variante</label>
@@ -571,7 +573,7 @@
     });
     refreshUploadIndexes();
   </script>
-  <script src="/js/admin-variant-builder.js?v=1" defer></script>
+  <script src="/js/admin-variant-builder.js?v=2" defer></script>
   <%- include("../../partials/admin-shell-end") %>
 </body>
 </html>

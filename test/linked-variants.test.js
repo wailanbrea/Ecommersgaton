@@ -83,3 +83,50 @@ test("conserva el selector simple cuando las variantes tienen un solo atributo",
   assert.match(html, /id="variantOptions"/);
   assert.doesNotMatch(html, /data-linked-variant-group="primary"/);
 });
+
+test("renderiza tres selectores en cascada (Color -> Tamaño -> Metal) usando attributes[]", () => {
+  const html = renderProductDetail({
+    name: "Brazalete Premium",
+    slug: "brazalete-premium",
+    basePrice: 1490,
+    hasVariants: true,
+    variants: [
+      {
+        label: "Dorado · 18 cm · Acero",
+        optionName: "Color",
+        optionValue: "Dorado",
+        optionName2: "Tamaño",
+        optionValue2: "18 cm",
+        attributes: [
+          { name: "Color", value: "Dorado" },
+          { name: "Tamaño", value: "18 cm" },
+          { name: "Metal", value: "Acero" }
+        ],
+        price: 1490,
+        stock: 5,
+        outOfStock: false
+      },
+      {
+        label: "Plateado · 21 cm · Plata 925",
+        optionName: "Color",
+        optionValue: "Plateado",
+        optionName2: "Tamaño",
+        optionValue2: "21 cm",
+        attributes: [
+          { name: "Color", value: "Plateado" },
+          { name: "Tamaño", value: "21 cm" },
+          { name: "Metal", value: "Plata 925" }
+        ],
+        price: 1890,
+        stock: 3,
+        outOfStock: false
+      }
+    ]
+  });
+
+  assert.match(html, /data-cascade-level="0"/);
+  assert.match(html, /data-cascade-level="1"/);
+  assert.match(html, /data-cascade-level="2"/);
+  assert.match(html, /<legend>Metal<\/legend>/);
+  assert.match(html, /data-value="Plata 925"/);
+});

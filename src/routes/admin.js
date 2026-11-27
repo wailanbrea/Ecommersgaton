@@ -191,6 +191,7 @@ function buildVariantsFromBody(body, req = null) {
   const optionValues = ensureArray(body.variantOptionValue);
   const optionNames2 = ensureArray(body.variantOptionName2);
   const optionValues2 = ensureArray(body.variantOptionValue2);
+  const attributesJsonList = ensureArray(body.variantAttributesJson);
   const prices = ensureArray(body.variantPrice);
   const comparePrices = ensureArray(body.variantCompareAtPrice);
   const stocks = ensureArray(body.variantStock);
@@ -203,6 +204,7 @@ function buildVariantsFromBody(body, req = null) {
     optionValues.length,
     optionNames2.length,
     optionValues2.length,
+    attributesJsonList.length,
     prices.length,
     comparePrices.length,
     stocks.length,
@@ -213,16 +215,33 @@ function buildVariantsFromBody(body, req = null) {
   const variants = [];
 
   for (let i = 0; i < maxLength; i++) {
+    let parsedAttrs = [];
+    if (attributesJsonList[i]) {
+      try {
+        const raw = JSON.parse(String(attributesJsonList[i]));
+        if (Array.isArray(raw)) {
+          parsedAttrs = raw
+            .map((entry) => ({
+              name: String(entry?.name || "").trim(),
+              value: String(entry?.value || "").trim()
+            }))
+            .filter((entry) => entry.name && entry.value);
+        }
+      } catch {}
+    }
+
     const rawLabel = String(labels[i] || "").trim();
-    const optionName = String(optionNames[i] || "").trim();
-    const optionValue = String(optionValues[i] || "").trim();
-    const optionName2 = String(optionNames2[i] || "").trim();
-    const optionValue2 = String(optionValues2[i] || "").trim();
-    const label = rawLabel || (optionValue && optionValue2 ? `${optionValue} · ${optionValue2}` : optionValue);
+    const optionName = String(optionNames[i] || "").trim() || (parsedAttrs[0]?.name || "");
+    const optionValue = String(optionValues[i] || "").trim() || (parsedAttrs[0]?.value || "");
+    const optionName2 = String(optionNames2[i] || "").trim() || (parsedAttrs[1]?.name || "");
+    const optionValue2 = String(optionValues2[i] || "").trim() || (parsedAttrs[1]?.value || "");
+    const label = rawLabel || (parsedAttrs.length
+      ? parsedAttrs.map((a) => a.value).join(" · ")
+      : (optionValue && optionValue2 ? `${optionValue} · ${optionValue2}` : optionValue));
     const uploadedVariantImage = req ? uploadedIndexedFile(req, "variantImageFile", i) : null;
     const imageUrl = uploadedFilePath(uploadedVariantImage) || String(imageUrls[i] || "").trim();
     const hasContent =
-      label || optionName || optionValue || optionName2 || optionValue2 || imageUrl || prices[i] || comparePrices[i] || stocks[i];
+      label || optionName || optionValue || optionName2 || optionValue2 || parsedAttrs.length || imageUrl || prices[i] || comparePrices[i] || stocks[i];
 
     if (!hasContent) continue;
 
@@ -238,6 +257,7 @@ function buildVariantsFromBody(body, req = null) {
     };
     if (optionName2) variantRecord.optionName2 = optionName2;
     if (optionValue2) variantRecord.optionValue2 = optionValue2;
+    if (parsedAttrs.length) variantRecord.attributes = parsedAttrs;
 
     variants.push(variantRecord);
   }

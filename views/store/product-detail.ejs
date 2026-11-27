@@ -124,62 +124,71 @@
             <input type="hidden" name="variantIndex" id="variantIndexInput" value="<%= (defaultVariantIndex !== null && defaultVariantIndex >= 0) ? defaultVariantIndex : '' %>">
 
             <%
-              function splitPair(text) {
+              function splitMulti(text) {
                 const parts = String(text || "").split(/\s*(?:\/|·|\|)\s*/).map((part) => part.trim()).filter(Boolean);
-                return parts.length === 2 ? parts : null;
+                return parts.length >= 2 ? parts : null;
               }
-              function parseLinkedVariant(variant) {
+              function extractVariantAttributes(variant) {
+                if (Array.isArray(variant?.attributes) && variant.attributes.length >= 2) {
+                  const clean = variant.attributes
+                    .map((a) => ({ name: String(a?.name || "").trim(), value: String(a?.value || "").trim() }))
+                    .filter((a) => a.name && a.value);
+                  if (clean.length >= 2) return clean;
+                }
                 const n1 = String(variant?.optionName || "").trim();
                 const v1 = String(variant?.optionValue || "").trim();
                 const n2 = String(variant?.optionName2 || "").trim();
                 const v2 = String(variant?.optionValue2 || "").trim();
                 if (v1 && v2) {
-                  return { primaryName: n1 || "Opción 1", primaryValue: v1, secondaryName: n2 || "Opción 2", secondaryValue: v2 };
+                  return [
+                    { name: n1 || "Opción 1", value: v1 },
+                    { name: n2 || "Opción 2", value: v2 }
+                  ];
                 }
-                const pairVal = splitPair(v1 || variant?.label);
-                const pairName = splitPair(n1);
-                if (pairVal && pairName) {
-                  return { primaryName: pairName[0], primaryValue: pairVal[0], secondaryName: pairName[1], secondaryValue: pairVal[1] };
+                const pairVal = splitMulti(v1 || variant?.label);
+                const pairName = splitMulti(n1);
+                if (pairVal && pairName && pairVal.length === pairName.length) {
+                  return pairName.map((name, idx) => ({ name, value: pairVal[idx] }));
                 }
                 return null;
               }
               const parsedVariants = (product.hasVariants && Array.isArray(product.variants))
-                ? product.variants.map((variant, index) => ({ variant, index, parsed: parseLinkedVariant(variant) }))
+                ? product.variants.map((variant, index) => ({ variant, index, attrs: extractVariantAttributes(variant) }))
                 : [];
-              const hasLinkedVariants = parsedVariants.length > 0 && parsedVariants.every((item) => Boolean(item.parsed));
-              const primaryOptionName = hasLinkedVariants ? parsedVariants[0].parsed.primaryName : "";
-              const secondaryOptionName = hasLinkedVariants ? parsedVariants[0].parsed.secondaryName : "";
-              const primaryValues = hasLinkedVariants
-                ? Array.from(new Set(parsedVariants.map((item) => item.parsed.primaryValue)))
-                : [];
-              const secondaryValues = hasLinkedVariants
-                ? Array.from(new Set(parsedVariants.map((item) => item.parsed.secondaryValue)))
+              const firstAttrCount = parsedVariants[0]?.attrs ? parsedVariants[0].attrs.length : 0;
+              const hasLinkedVariants =
+                parsedVariants.length > 0 &&
+                firstAttrCount >= 2 &&
+                parsedVariants.every((item) => item.attrs && item.attrs.length === firstAttrCount);
+              const cascadeLevels = hasLinkedVariants
+                ? parsedVariants[0].attrs.map((attr, levelIdx) => ({
+                    name: attr.name,
+                    values: Array.from(new Set(parsedVariants.map((item) => item.attrs[levelIdx].value)))
+                  }))
                 : [];
             %>
 
             <% if (hasLinkedVariants) { %>
-              <fieldset class="product-customization-group" data-linked-variant-group="primary">
-                <legend><%= primaryOptionName %></legend>
-                <div class="product-variant-options" id="linkedPrimaryOptions">
-                  <% primaryValues.forEach(function(primaryValue) { %>
-                    <% const allPrimaryUnavailable = parsedVariants.filter((item) => item.parsed.primaryValue === primaryValue).every((item) => isVariantUnavailable(item.variant)); %>
-                    <button type="button" class="variant-btn linked-primary-btn <%= allPrimaryUnavailable ? 'variant-unavailable' : '' %>" data-primary-value="<%= primaryValue %>" <%= allPrimaryUnavailable ? 'disabled' : '' %>>
-                      <%= primaryValue %><% if (allPrimaryUnavailable) { %> · Agotado<% } %>
-                    </button>
-                  <% }) %>
-                </div>
-              </fieldset>
-
-              <fieldset class="product-customization-group" data-linked-variant-group="secondary">
-                <legend><%= secondaryOptionName %></legend>
-                <div class="product-variant-options" id="linkedSecondaryOptions">
-                  <% secondaryValues.forEach(function(secondaryValue) { %>
-                    <button type="button" class="variant-btn linked-secondary-btn" data-secondary-value="<%= secondaryValue %>">
-                      <%= secondaryValue %>
-                    </button>
-                  <% }) %>
-                </div>
-              </fieldset>
+              <% cascadeLevels.forEach(function(level, levelIdx) { %>
+                <fieldset class="product-customization-group" data-linked-variant-group="<%= levelIdx === 0 ? 'primary' : (levelIdx === 1 ? 'secondary' : ('level-' + levelIdx)) %>" data-cascade-level="<%= levelIdx %>">
+                  <legend><%= level.name %></legend>
+                  <div class="product-variant-options" id="linkedOptionsLevel-<%= levelIdx %>">
+                    <% level.values.forEach(function(val) { %>
+                      <% const allUnavailable = levelIdx === 0 && parsedVariants.filter((item) => item.attrs[0].value === val).every((item) => isVariantUnavailable(item.variant)); %>
+                      <button
+                        type="button"
+                        class="variant-btn linked-cascade-btn <%= levelIdx === 0 ? 'linked-primary-btn' : (levelIdx === 1 ? 'linked-secondary-btn' : '') %> <%= allUnavailable ? 'variant-unavailable' : '' %>"
+                        data-level="<%= levelIdx %>"
+                        data-value="<%= val %>"
+                        <% if (levelIdx === 0) { %>data-primary-value="<%= val %>"<% } %>
+                        <% if (levelIdx === 1) { %>data-secondary-value="<%= val %>"<% } %>
+                        <%= allUnavailable ? 'disabled' : '' %>>
+                        <%= val %><% if (allUnavailable) { %> · Agotado<% } %>
+                      </button>
+                    <% }) %>
+                  </div>
+                </fieldset>
+              <% }) %>
             <% } else if (product.hasVariants && product.variants && product.variants.length) { %>
               <fieldset class="product-customization-group">
                 <legend>Opciones disponibles</legend>
@@ -701,90 +710,88 @@
         });
       });
 
-      const linkedPrimaryButtons = document.querySelectorAll(".linked-primary-btn");
-      const linkedSecondaryButtons = document.querySelectorAll(".linked-secondary-btn");
+      const cascadeGroups = Array.from(document.querySelectorAll("[data-cascade-level]"));
 
-      function parseClientPair(text) {
+      function parseClientMulti(text) {
         const parts = String(text || "").split(/\s*(?:\/|·|\|)\s*/).map(function (p) { return p.trim(); }).filter(Boolean);
-        return parts.length === 2 ? parts : null;
+        return parts.length >= 2 ? parts : null;
       }
 
-      function getVariantPair(variant) {
+      function getVariantAttrValues(variant) {
+        if (Array.isArray(variant?.attributes) && variant.attributes.length >= 2) {
+          const vals = variant.attributes.map(function (a) { return String(a?.value || "").trim(); }).filter(Boolean);
+          if (vals.length >= 2) return vals;
+        }
         const v1 = String(variant?.optionValue || "").trim();
         const v2 = String(variant?.optionValue2 || "").trim();
-        if (v1 && v2) return { primary: v1, secondary: v2 };
-        const pv = parseClientPair(v1 || variant?.label);
-        const pn = parseClientPair(variant?.optionName);
-        if (pv && pn) return { primary: pv[0], secondary: pv[1] };
+        if (v1 && v2) return [v1, v2];
+        const pv = parseClientMulti(v1 || variant?.label);
+        const pn = parseClientMulti(variant?.optionName);
+        if (pv && pn && pv.length === pn.length) return pv;
         return null;
       }
 
-      let activePrimaryValue = null;
-      let activeSecondaryValue = null;
+      const activeCascadeValues = [];
 
-      function syncLinkedSelectors(nextPrimary, preferredSecondary) {
-        activePrimaryValue = nextPrimary;
-        const matchingForPrimary = variants
-          .map(function (v, idx) { return { v: v, idx: idx, pair: getVariantPair(v) }; })
-          .filter(function (item) { return item.pair && item.pair.primary === activePrimaryValue; });
+      function syncCascade(fromLevel, chosenValue) {
+        const indexed = variants
+          .map(function (v, idx) { return { v: v, idx: idx, vals: getVariantAttrValues(v) }; })
+          .filter(function (item) { return Array.isArray(item.vals) && item.vals.length === cascadeGroups.length; });
 
-        const availableSecondarySet = new Set(
-          matchingForPrimary
-            .filter(function (item) { return !variantUnavailable(item.v); })
-            .map(function (item) { return item.pair.secondary; })
-        );
-
-        linkedPrimaryButtons.forEach(function (btn) {
-          btn.classList.toggle("active-variant", btn.dataset.primaryValue === activePrimaryValue);
-        });
-
-        let chosenSecondary = preferredSecondary && availableSecondarySet.has(preferredSecondary)
-          ? preferredSecondary
-          : null;
-
-        if (!chosenSecondary) {
-          const firstAvail = matchingForPrimary.find(function (item) { return !variantUnavailable(item.v); });
-          chosenSecondary = firstAvail ? firstAvail.pair.secondary : (matchingForPrimary[0]?.pair.secondary || null);
+        if (!indexed.length) return;
+        if (typeof fromLevel === "number" && chosenValue !== undefined) {
+          activeCascadeValues[fromLevel] = chosenValue;
         }
-        activeSecondaryValue = chosenSecondary;
 
-        linkedSecondaryButtons.forEach(function (btn) {
-          const secVal = btn.dataset.secondaryValue;
-          const match = matchingForPrimary.find(function (item) { return item.pair.secondary === secVal; });
-          const isDisabled = !match || variantUnavailable(match.v);
-          btn.disabled = isDisabled;
-          btn.classList.toggle("variant-unavailable", isDisabled);
-          btn.classList.toggle("active-variant", !isDisabled && secVal === activeSecondaryValue);
-          btn.title = isDisabled ? "No disponible en esta combinación" : "";
+        let pool = indexed;
+        cascadeGroups.forEach(function (group, levelIdx) {
+          const buttons = group.querySelectorAll(".linked-cascade-btn");
+          const availSet = new Set(
+            pool
+              .filter(function (item) { return !variantUnavailable(item.v); })
+              .map(function (item) { return item.vals[levelIdx]; })
+          );
+
+          let selectedVal = activeCascadeValues[levelIdx];
+          if (!selectedVal || !availSet.has(selectedVal)) {
+            const firstAvail = pool.find(function (item) { return !variantUnavailable(item.v); });
+            selectedVal = firstAvail ? firstAvail.vals[levelIdx] : (pool[0]?.vals[levelIdx] || "");
+          }
+          activeCascadeValues[levelIdx] = selectedVal;
+
+          buttons.forEach(function (btn) {
+            const val = btn.dataset.value;
+            const isDisabled = !availSet.has(val);
+            btn.disabled = isDisabled;
+            btn.classList.toggle("variant-unavailable", isDisabled);
+            btn.classList.toggle("active-variant", !isDisabled && val === selectedVal);
+            btn.title = isDisabled ? "No disponible en esta combinación" : "";
+          });
+
+          pool = pool.filter(function (item) { return item.vals[levelIdx] === selectedVal; });
         });
 
-        const selectedEntry = matchingForPrimary.find(function (item) {
-          return item.pair.secondary === activeSecondaryValue;
-        });
-
-        if (selectedEntry) {
-          applyVariant(selectedEntry.v, null, selectedEntry.idx);
+        const matched = pool[0];
+        if (matched) {
+          applyVariant(matched.v, null, matched.idx);
         }
       }
 
-      if (linkedPrimaryButtons.length && linkedSecondaryButtons.length && variants.length) {
-        linkedPrimaryButtons.forEach(function (btn) {
-          btn.addEventListener("click", function () {
-            syncLinkedSelectors(this.dataset.primaryValue, activeSecondaryValue);
-          });
-        });
-
-        linkedSecondaryButtons.forEach(function (btn) {
-          btn.addEventListener("click", function () {
-            if (this.disabled) return;
-            syncLinkedSelectors(activePrimaryValue, this.dataset.secondaryValue);
+      if (cascadeGroups.length >= 2 && variants.length) {
+        cascadeGroups.forEach(function (group, levelIdx) {
+          group.querySelectorAll(".linked-cascade-btn").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+              if (this.disabled) return;
+              syncCascade(levelIdx, this.dataset.value);
+            });
           });
         });
 
         const initialIdx = selectedVariantIndex !== null ? selectedVariantIndex : 0;
-        const initialPair = getVariantPair(variants[initialIdx]) || getVariantPair(variants[0]);
-        if (initialPair) {
-          syncLinkedSelectors(initialPair.primary, initialPair.secondary);
+        const initialVals = getVariantAttrValues(variants[initialIdx]) || getVariantAttrValues(variants[0]);
+        if (initialVals) {
+          initialVals.forEach(function (val, i) { activeCascadeValues[i] = val; });
+          syncCascade(0, initialVals[0]);
         }
       } else if (variantButtons.length && variants.length) {
         const initialButton = selectedVariantIndex !== null ? variantButtons[selectedVariantIndex] : variantButtons[0];
