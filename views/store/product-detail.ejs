@@ -141,23 +141,16 @@
               <fieldset class="product-customization-group">
                 <legend>Personalización</legend>
                 <% engraving.fields.forEach(function(field, index) { %>
-                  <% const fieldId = 'custom-field-' + index; const previewId = fieldId + '-preview'; const limit = field.maxLength; const previewImages = (product.gallery || []).filter(function(item) { return item.type === 'image' && item.url; }); const fieldPreviewImage = index === 0 ? defaultImage : (previewImages[index - 1] && previewImages[index - 1].url); %>
+                  <% const fieldId = 'custom-field-' + index; const previewId = fieldId + '-preview'; const limit = field.maxLength; %>
                   <div class="product-customization-field">
                     <label for="<%= fieldId %>"><%= field.label %><% if (field.required) { %><span class="required-mark"> *</span><% } else { %><span class="text-stone-500"> (opcional)</span><% } %><% if (field.priceDeltaMinor > 0) { %><span class="text-stone-600"> (+RD$ <%= (field.priceDeltaMinor / 100).toFixed(2) %>)</span><% } else { %><span class="text-stone-500"> (incluido)</span><% } %></label>
                     <div class="product-customization-input-wrap">
                       <input id="<%= fieldId %>" type="text" name="<%= field.inputName %>" class="customization-input" data-label="<%= field.label %>" data-required="<%= field.required ? 'true' : 'false' %>" data-price-delta-minor="<%= field.priceDeltaMinor || 0 %>" placeholder="<%= field.placeholder || '' %>" maxlength="<%= limit %>" <% if (field.required) { %>required<% } %> aria-describedby="<%= fieldId %>-count">
                       <span class="product-character-count" id="<%= fieldId %>-count" data-character-count="<%= fieldId %>">0/<%= limit %></span>
                     </div>
-                    <div class="product-customization-live-preview<%= fieldPreviewImage ? ' product-customization-live-preview--image' : '' %>" aria-label="Vista previa ilustrativa de <%= field.label %>">
-                      <span class="product-customization-live-preview__caption">Vista ilustrativa · <%= field.label %></span>
-                      <% if (fieldPreviewImage) { %>
-                        <span class="product-customization-image-preview">
-                          <img src="<%= safePublicUrl(fieldPreviewImage) %>" alt="Imagen del producto para <%= field.label %>">
-                          <span class="product-font-sample product-font-sample--serif product-customization-image-preview__text" id="<%= previewId %>" aria-live="polite">Tu texto</span>
-                        </span>
-                      <% } else { %>
-                        <span class="product-font-sample product-font-sample--serif product-customization-live-preview__text" id="<%= previewId %>" aria-live="polite">Tu texto</span>
-                      <% } %>
+                    <div class="product-customization-live-preview" aria-label="Vista previa de <%= field.label %>">
+                      <span class="product-customization-live-preview__caption">Vista previa · <%= field.label %></span>
+                      <span class="product-font-sample product-font-sample--serif product-customization-live-preview__text" id="<%= previewId %>" aria-live="polite">Tu texto</span>
                     </div>
                   </div>
                 <% }) %>

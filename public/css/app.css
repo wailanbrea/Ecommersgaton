@@ -6207,6 +6207,27 @@ body.ref10-product-page .ref10-detail-main {width:min(100%,1560px);margin:0 auto
 }
 
 /* Encabezado compacto: logo centrado y controles contenidos entre 320 y 1100 px. */
+@media (min-width: 1101px) {
+  .ref10-nav-desktop {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) !important;
+    padding: 0 clamp(24px, 5vw, 180px) !important;
+  }
+  .ref10-logo-center {
+    width: auto !important;
+    min-width: 88px !important;
+    height: 58px !important;
+    margin: 0 clamp(18px, 2.5vw, 42px) !important;
+    flex-shrink: 0 !important;
+  }
+  .ref10-logo-center img {
+    width: auto !important;
+    height: 48px !important;
+    max-width: 140px !important;
+    max-height: 48px !important;
+    object-fit: contain !important;
+    object-position: center !important;
+  }
+}
 @media (max-width:1100px) {
   .ref10-nav-mobile {
     grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) !important;
@@ -6234,10 +6255,10 @@ body.ref10-product-page .ref10-detail-main {width:min(100%,1560px);margin:0 auto
   }
   .ref10-mobile-logo img {
     display:block !important;
-    width:clamp(84px,23.6vw,104px) !important;
-    max-width:100% !important;
-    height:auto !important;
-    max-height:46px !important;
+    width:auto !important;
+    max-width:min(140px,100%) !important;
+    height:44px !important;
+    max-height:44px !important;
     object-fit:contain !important;
     object-position:center !important;
     transform:none !important;
@@ -6262,5 +6283,12 @@ body.ref10-product-page .ref10-detail-main {width:min(100%,1560px);margin:0 auto
   .ref10-mobile-actions .ref10-icon-link svg {
     width:20px !important;
     height:20px !important;
+  }
+}
+@media (min-width: 768px) and (max-width: 1100px) {
+  .ref10-mobile-panel {
+    top: 86px !important;
+    height: calc(100dvh - 86px) !important;
+    max-height: calc(100dvh - 86px) !important;
   }
 }
