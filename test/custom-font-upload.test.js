@@ -4,8 +4,17 @@ const path = require("node:path");
 const fs = require("node:fs");
 const ejs = require("ejs");
 
-const { engravingOptions } = require("../src/services/engraving");
+const { engravingOptions, normalizeFontOptions } = require("../src/services/engraving");
 const adminRoutes = require("../src/routes/admin");
+
+test("normalizeFontOptions con includeInactive conserva tipografías desactivadas para el editor admin", () => {
+  const list = [
+    { name: "Black Jack", active: true },
+    { name: "Lobster", active: false }
+  ];
+  assert.deepEqual(normalizeFontOptions(list).map((f) => f.name), ["Black Jack"]);
+  assert.deepEqual(normalizeFontOptions(list, { includeInactive: true }).map((f) => f.name), ["Black Jack", "Lobster"]);
+});
 
 test("engravingOptions conserva fontFileUrl válido, asigna customFontFamily y excluye tipografías desactivadas", () => {
   const product = {

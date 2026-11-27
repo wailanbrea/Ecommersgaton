@@ -11,9 +11,9 @@ const MOON_CHARM_FONT_PRESET = [
   { name: "Rockwell", previewText: "Aa", sampleStyle: "rockwell" }
 ];
 
-function normalizeFontOptions(fontOptions) {
+function normalizeFontOptions(fontOptions, { includeInactive = false } = {}) {
   const fonts = Array.isArray(fontOptions)
-    ? fontOptions.filter((font) => typeof font?.name === "string" && font.name.trim() && font.active !== false)
+    ? fontOptions.filter((font) => typeof font?.name === "string" && font.name.trim() && (includeInactive || font.active !== false))
     : [];
   const names = fonts.map((font) => font.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase()).sort();
   if (names.length === 3 && names.join("|") === ["clasica", "elegante", "moderna"].sort().join("|")) {

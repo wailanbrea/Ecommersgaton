@@ -954,7 +954,10 @@ router.get("/products", requireAdmin, async (req, res) => {
 
   res.render("admin/products/index", {
     products,
-    categoryMap
+    categoryMap,
+    saved: req.query.saved === "1",
+    created: req.query.created === "1",
+    deleted: req.query.deleted === "1"
   });
 });
 
@@ -1053,7 +1056,7 @@ router.post("/products/new", requireAdmin, upload.any(), adminCsrf.afterMultipar
       gallery: formData.gallery
     });
 
-    return res.redirect("/admin/products");
+    return res.redirect("/admin/products?created=1");
   } catch (error) {
     console.error("❌ Error creando producto:", error);
     return res.status(500).send("Error interno creando producto");
@@ -1074,7 +1077,7 @@ function productAdvancedConfig(product) {
     customizationUploadHelp: config.customizationUploadHelp || "",
     choiceGroups: Array.isArray(config.choiceGroups) ? config.choiceGroups : [],
     customizationFields: Array.isArray(config.customizationFields) ? config.customizationFields : [],
-    fontOptions: normalizeFontOptions(config.fontOptions),
+    fontOptions: normalizeFontOptions(config.fontOptions, { includeInactive: true }),
     gallery: Array.isArray(config.gallery) ? config.gallery : []
   };
 }
@@ -1136,7 +1139,7 @@ router.get("/products/:id/edit", requireAdmin, async (req, res) => {
       tags: Array.isArray(product.tags) ? product.tags.join(", ") : "",
       variants: product.variants || [],
       customizationFields: product.customizationFields || [],
-      fontOptions: normalizeFontOptions(product.fontOptions),
+      fontOptions: normalizeFontOptions(product.fontOptions, { includeInactive: true }),
       gallery: product.gallery || []
     }
   });
@@ -1206,7 +1209,7 @@ router.post("/products/:id/edit", requireAdmin, upload.any(), adminCsrf.afterMul
 
     await existingProduct.save();
 
-    return res.redirect("/admin/products");
+    return res.redirect("/admin/products?saved=1");
   } catch (error) {
     console.error("❌ Error editando producto:", error);
     return res.status(500).send("Error interno editando producto");
@@ -1216,7 +1219,7 @@ router.post("/products/:id/edit", requireAdmin, upload.any(), adminCsrf.afterMul
 router.post("/products/:id/delete", requireAdmin, async (req, res) => {
   try {
     await Product.findByIdAndDelete(req.params.id);
-    return res.redirect("/admin/products");
+    return res.redirect("/admin/products?deleted=1");
   } catch (error) {
     console.error("❌ Error eliminando producto:", error);
     return res.status(500).send("Error interno eliminando producto");
