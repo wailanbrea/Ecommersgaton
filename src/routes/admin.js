@@ -189,6 +189,8 @@ function buildVariantsFromBody(body, req = null) {
   const labels = ensureArray(body.variantLabel);
   const optionNames = ensureArray(body.variantOptionName);
   const optionValues = ensureArray(body.variantOptionValue);
+  const optionNames2 = ensureArray(body.variantOptionName2);
+  const optionValues2 = ensureArray(body.variantOptionValue2);
   const prices = ensureArray(body.variantPrice);
   const comparePrices = ensureArray(body.variantCompareAtPrice);
   const stocks = ensureArray(body.variantStock);
@@ -199,6 +201,8 @@ function buildVariantsFromBody(body, req = null) {
     labels.length,
     optionNames.length,
     optionValues.length,
+    optionNames2.length,
+    optionValues2.length,
     prices.length,
     comparePrices.length,
     stocks.length,
@@ -209,17 +213,20 @@ function buildVariantsFromBody(body, req = null) {
   const variants = [];
 
   for (let i = 0; i < maxLength; i++) {
-    const label = String(labels[i] || "").trim();
+    const rawLabel = String(labels[i] || "").trim();
     const optionName = String(optionNames[i] || "").trim();
     const optionValue = String(optionValues[i] || "").trim();
+    const optionName2 = String(optionNames2[i] || "").trim();
+    const optionValue2 = String(optionValues2[i] || "").trim();
+    const label = rawLabel || (optionValue && optionValue2 ? `${optionValue} · ${optionValue2}` : optionValue);
     const uploadedVariantImage = req ? uploadedIndexedFile(req, "variantImageFile", i) : null;
     const imageUrl = uploadedFilePath(uploadedVariantImage) || String(imageUrls[i] || "").trim();
     const hasContent =
-      label || optionName || optionValue || imageUrl || prices[i] || comparePrices[i] || stocks[i];
+      label || optionName || optionValue || optionName2 || optionValue2 || imageUrl || prices[i] || comparePrices[i] || stocks[i];
 
     if (!hasContent) continue;
 
-    variants.push({
+    const variantRecord = {
       label,
       optionName,
       optionValue,
@@ -228,7 +235,11 @@ function buildVariantsFromBody(body, req = null) {
       stock: toNumber(stocks[i], 0),
       imageUrl,
       outOfStock: String(outOfStocks[i] || "") === "true"
-    });
+    };
+    if (optionName2) variantRecord.optionName2 = optionName2;
+    if (optionValue2) variantRecord.optionValue2 = optionValue2;
+
+    variants.push(variantRecord);
   }
 
   return variants;

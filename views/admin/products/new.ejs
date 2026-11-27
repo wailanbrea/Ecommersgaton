@@ -213,6 +213,7 @@
             Agregar variante
           </button>
         </div>
+        <p class="text-sm text-stone-600 mb-4">Si la pieza combina dos atributos (ej. Color y Tamaño), crea una variante por cada combinación disponible llenando también la Segunda opción y Valor 2. La tienda mostrará dos selectores enlazados y bloqueará automáticamente las combinaciones que no existan o estén agotadas.</p>
 
         <div id="variantsContainer" class="space-y-4">
           <% if (formData.variants && formData.variants.length) { %>
@@ -221,15 +222,23 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label class="block text-sm font-medium mb-2">Nombre de la variante</label>
-                    <input type="text" name="variantLabel" value="<%= variant.label || '' %>" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+                    <input type="text" name="variantLabel" value="<%= variant.label || '' %>" placeholder="Ej. Dorado · 18 cm" class="w-full rounded-xl border border-stone-300 px-4 py-3">
                   </div>
                   <div>
                     <label class="block text-sm font-medium mb-2">Tipo de opción</label>
-                    <input type="text" name="variantOptionName" value="<%= variant.optionName || '' %>" placeholder="Color / Tamaño" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+                    <input type="text" name="variantOptionName" value="<%= variant.optionName || '' %>" placeholder="Color" class="w-full rounded-xl border border-stone-300 px-4 py-3">
                   </div>
                   <div>
                     <label class="block text-sm font-medium mb-2">Valor de la opción</label>
-                    <input type="text" name="variantOptionValue" value="<%= variant.optionValue || '' %>" placeholder="Dorado / M" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+                    <input type="text" name="variantOptionValue" value="<%= variant.optionValue || '' %>" placeholder="Dorado" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-2">Segunda opción (opcional)</label>
+                    <input type="text" name="variantOptionName2" value="<%= variant.optionName2 || '' %>" placeholder="Tamaño" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-2">Valor 2 (opcional)</label>
+                    <input type="text" name="variantOptionValue2" value="<%= variant.optionValue2 || '' %>" placeholder="18 cm" class="w-full rounded-xl border border-stone-300 px-4 py-3">
                   </div>
                   <div>
                     <label class="block text-sm font-medium mb-2">Precio</label>
@@ -402,15 +411,23 @@
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label class="block text-sm font-medium mb-2">Nombre de la variante</label>
-          <input type="text" name="variantLabel" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+          <input type="text" name="variantLabel" placeholder="Ej. Dorado · 18 cm" class="w-full rounded-xl border border-stone-300 px-4 py-3">
         </div>
         <div>
           <label class="block text-sm font-medium mb-2">Tipo de opción</label>
-          <input type="text" name="variantOptionName" placeholder="Color / Tamaño" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+          <input type="text" name="variantOptionName" placeholder="Color" class="w-full rounded-xl border border-stone-300 px-4 py-3">
         </div>
         <div>
           <label class="block text-sm font-medium mb-2">Valor de la opción</label>
-          <input type="text" name="variantOptionValue" placeholder="Dorado / M" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+          <input type="text" name="variantOptionValue" placeholder="Dorado" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Segunda opción (opcional)</label>
+          <input type="text" name="variantOptionName2" placeholder="Tamaño" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Valor 2 (opcional)</label>
+          <input type="text" name="variantOptionValue2" placeholder="18 cm" class="w-full rounded-xl border border-stone-300 px-4 py-3">
         </div>
         <div>
           <label class="block text-sm font-medium mb-2">Precio</label>
