@@ -26,12 +26,44 @@ const cleanCell = (value) => {
 function signature(variant) {
   return [variant?.optionName || "", variant?.optionValue || "", variant?.label || ""].map((part) => String(part).trim()).join("|");
 }
+function formatVariantDisplay(variant) {
+  const label = String(variant?.label || "").trim();
+  if (label) return label;
+  if (Array.isArray(variant?.attributes) && variant.attributes.length) {
+    const vals = variant.attributes.map((a) => String(a?.value || "").trim()).filter(Boolean);
+    if (vals.length) return vals.join(" · ");
+  }
+  const pair = [variant?.optionValue, variant?.optionValue2].map((v) => String(v || "").trim()).filter(Boolean);
+  return pair.length ? pair.join(" · ") : "Variante";
+}
 function inventoryRows(products) {
   const rows = [];
   for (const p of products) {
     const variants = Array.isArray(p.variants) ? p.variants : [];
-    if (variants.length) variants.forEach((v, index) => rows.push({ productId: p._id, productName: p.name, sku: v.sku || p.sku || "", variantIndex: index, variantSignature: signature(v), stock: Math.max(0, Number(v.stock || 0)) }));
-    else rows.push({ productId: p._id, productName: p.name, sku: p.sku || "", variantIndex: "", variantSignature: "", stock: Math.max(0, Number(p.stock || 0)) });
+    const mainImage = String(p.mainImageUrl || "").trim();
+    if (variants.length) {
+      variants.forEach((v, index) => rows.push({
+        productId: p._id,
+        productName: p.name,
+        imageUrl: String(v.imageUrl || mainImage || "").trim(),
+        sku: v.sku || p.sku || "",
+        variantIndex: index,
+        variantSignature: signature(v),
+        variantDisplay: formatVariantDisplay(v),
+        stock: Math.max(0, Number(v.stock || 0))
+      }));
+    } else {
+      rows.push({
+        productId: p._id,
+        productName: p.name,
+        imageUrl: mainImage,
+        sku: p.sku || "",
+        variantIndex: "",
+        variantSignature: "",
+        variantDisplay: "Producto base",
+        stock: Math.max(0, Number(p.stock || 0))
+      });
+    }
   }
   return rows;
 }

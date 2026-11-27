@@ -1,7 +1,366 @@
-<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Inventario | GATÓN DO</title><link rel="stylesheet" href="/css/app.css"><link rel="stylesheet" href="/css/admin-utilities.css"><link rel="stylesheet" href="/css/admin.css"></head><body class="admin-shell-body"><%- include("../../partials/admin-shell-start") %>
-<main class="admin-tool-page"><header class="admin-tool-heading"><a class="admin-tool-button secondary" href="/admin/inventory/movements">Historial de movimientos</a></header>
-<% if (error) { %><div class="admin-alert error"><%= error %></div><% } %><% if (importResult) { %><div class="admin-alert success">La importación se aplicó y quedó registrada en el historial.</div><% } %><% if (adjusted === "1") { %><div class="admin-alert success">El ajuste de existencias se registró con su motivo y usuario responsable.</div><% } %><% if (adjusted === "duplicate") { %><div class="admin-alert success">Este ajuste ya se había aplicado; no se duplicó el movimiento.</div><% } %>
-<section class="admin-tool-card"><h3>Exportar existencias</h3><p>Los archivos conservan los IDs de producto y las firmas de variantes para validar una importación.</p><div class="admin-tool-actions"><a class="admin-tool-button" href="/admin/inventory/export.csv">Descargar CSV</a><a class="admin-tool-button" href="/admin/inventory/export.xlsx">Descargar Excel</a><a class="admin-tool-button" href="/admin/inventory/export.pdf">Descargar PDF importable</a></div></section>
-<section class="admin-tool-card"><h3>Importar inventario</h3><p>CSV y Excel (.xlsx) usan productId, variantIndex, variantSignature y stock. El PDF debe conservar las filas de GATÓN DO. Primero se valida el archivo y después se muestra una vista previa.</p><form class="admin-import-form" method="post" action="/admin/inventory/import/preview" enctype="multipart/form-data"><input type="hidden" name="_csrf" value="<%= adminCsrfToken %>"><label for="inventoryFile">Archivo de inventario</label><input id="inventoryFile" name="inventoryFile" type="file" accept=".csv,.xlsx,.xlsm,.pdf" required><button class="admin-tool-button primary" type="submit">Validar y mostrar vista previa</button></form></section>
-<section class="admin-tool-card"><h3>Existencias actuales <span class="admin-count"><%= rows.length %> líneas</span></h3><p>El saldo disponible descuenta las reservas registradas. Puedes registrar el SKU comercial del producto; los ajustes manuales siempre requieren un motivo y quedan asociados al administrador.</p><div class="admin-table-wrap"><table class="admin-data-table"><thead><tr><th>Producto</th><th>SKU</th><th>Variante</th><th>Existente</th><th>Reservado</th><th>Disponible</th><th>SKU y ajuste</th></tr></thead><tbody><% rows.slice(0,100).forEach((row,index)=>{ %><tr><td><%= row.productName %></td><td><%= row.sku || 'Pendiente' %></td><td><%= row.variantSignature || 'Producto base' %></td><td><strong><%= row.onHand %></strong></td><td><%= row.reserved %></td><td><strong><%= row.available %></strong></td><td><form method="post" action="/admin/inventory/adjust" class="space-y-2 min-w-56"><input type="hidden" name="_csrf" value="<%= adminCsrfToken %>"><input type="hidden" name="productId" value="<%= row.productId %>"><input type="hidden" name="variantIndex" value="<%= row.variantIndex %>"><input type="hidden" name="variantSignature" value="<%= row.variantSignature %>"><input type="hidden" name="requestKey" value="<%= row.requestKey %>"><label class="sr-only" for="sku<%= index %>">SKU comercial</label><input id="sku<%= index %>" name="sku" type="text" maxlength="100" value="<%= row.sku %>" placeholder="SKU comercial (opcional)" class="w-full rounded-lg border border-stone-300 px-3 py-2"><label class="sr-only" for="newOnHand<%= index %>">Nueva existencia</label><input id="newOnHand<%= index %>" name="newOnHand" type="number" min="0" step="1" value="<%= row.onHand %>" required class="w-full rounded-lg border border-stone-300 px-3 py-2"><label class="sr-only" for="reason<%= index %>">Motivo del ajuste</label><input id="reason<%= index %>" name="reason" type="text" minlength="3" maxlength="500" placeholder="Motivo del ajuste" required class="w-full rounded-lg border border-stone-300 px-3 py-2"><button class="admin-tool-button primary" type="submit">Guardar ajuste</button></form></td></tr><% }) %></tbody></table><% if(rows.length>100){ %><p>Mostrando 100 líneas; las exportaciones incluyen todas.</p><% } %></div></section>
-</main><%- include("../../partials/admin-shell-end") %></body></html>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Inventario | GATÓN DO</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="/css/admin-utilities.css">
+  <link rel="stylesheet" href="/css/admin.css">
+  <style>
+    .inv-page { max-width: 1280px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; display: flex; flex-direction: column; gap: 1.5rem; }
+    .inv-top-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; }
+    .inv-tools-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+    @media (max-width: 900px) { .inv-tools-grid { grid-template-columns: 1fr; } }
+    .inv-card { background: #fff; border: 1px solid #e7e5e4; border-radius: 1.15rem; padding: 1.25rem 1.4rem; box-shadow: 0 1px 3px rgba(28,25,23,.04); }
+    .inv-card-title { font-size: 1.05rem; font-weight: 700; color: #1c1917; margin: 0 0 .35rem; display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+    .inv-card-sub { font-size: .84rem; color: #57534e; margin: 0 0 1rem; line-height: 1.45; }
+    .inv-kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .85rem; margin-bottom: 1.15rem; }
+    @media (max-width: 820px) { .inv-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .inv-kpi { background: #fafaf9; border: 1px solid #e7e5e4; border-radius: .95rem; padding: .9rem 1rem; }
+    .inv-kpi-label { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: #78716c; margin-bottom: .25rem; }
+    .inv-kpi-val { font-size: 1.5rem; font-weight: 800; color: #1c1917; font-variant-numeric: tabular-nums; white-space: nowrap; line-height: 1.15; }
+    .inv-kpi--warn .inv-kpi-val { color: #b45309; }
+    .inv-kpi--danger .inv-kpi-val { color: #b91c1c; }
+    .inv-kpi--ok .inv-kpi-val { color: #15803d; }
+    .inv-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: 1rem; }
+    .inv-search { flex: 1 1 260px; max-width: 420px; border: 1px solid #d6d3d1; border-radius: .75rem; padding: .6rem .9rem; font-size: .88rem; color: #1c1917; background: #fff; }
+    .inv-search:focus { outline: 2px solid #292524; outline-offset: 1px; border-color: #292524; }
+    .inv-filters { display: flex; flex-wrap: wrap; gap: .45rem; }
+    .inv-filter-btn { border: 1px solid #d6d3d1; background: #fff; color: #44403c; border-radius: 999px; padding: .42rem .85rem; font-size: .8rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all .15s ease; }
+    .inv-filter-btn:hover { background: #f5f5f4; }
+    .inv-filter-btn.is-active { background: #1c1917; color: #fff; border-color: #1c1917; }
+    .inv-table-wrap { overflow-x: auto; border: 1px solid #e7e5e4; border-radius: .95rem; }
+    .inv-table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+    .inv-table th { background: #fafaf9; color: #57534e; font-weight: 700; font-size: .74rem; text-transform: uppercase; letter-spacing: .04em; text-align: left; padding: .8rem .95rem; border-bottom: 1px solid #e7e5e4; white-space: nowrap; }
+    .inv-table th.num, .inv-table td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .inv-table td { padding: .8rem .95rem; border-bottom: 1px solid #f5f5f4; vertical-align: middle; color: #292524; }
+    .inv-table tbody tr:hover { background: #fafaf9; }
+    .inv-table tbody tr:last-child td { border-bottom: none; }
+    .inv-prod-cell { display: flex; align-items: center; gap: .85rem; min-width: 240px; }
+    .inv-thumb { width: 52px; height: 52px; border-radius: .75rem; object-fit: cover; border: 1px solid #e7e5e4; background: #f5f5f4; flex-shrink: 0; }
+    .inv-thumb-empty { width: 52px; height: 52px; border-radius: .75rem; border: 1px dashed #d6d3d1; background: #fafaf9; color: #a8a29e; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: .7rem; font-weight: 600; }
+    .inv-prod-name { font-weight: 700; color: #1c1917; line-height: 1.3; margin-bottom: .2rem; }
+    .inv-prod-meta { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; font-size: .76rem; }
+    .inv-variant-pill { display: inline-flex; align-items: center; background: #f5f5f4; color: #44403c; border: 1px solid #e7e5e4; border-radius: 999px; padding: .15rem .55rem; font-weight: 600; }
+    .inv-edit-link { color: #78716c; text-decoration: none; font-weight: 500; }
+    .inv-edit-link:hover { color: #1c1917; text-decoration: underline; }
+    .inv-sku { display: inline-block; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .78rem; background: #f5f5f4; color: #292524; padding: .2rem .5rem; border-radius: .45rem; white-space: nowrap; }
+    .inv-sku--empty { color: #a8a29e; background: transparent; padding: 0; font-family: inherit; font-style: italic; }
+    .inv-status { display: inline-flex; align-items: center; gap: .35rem; font-size: .75rem; font-weight: 700; padding: .24rem .62rem; border-radius: 999px; white-space: nowrap; }
+    .inv-status--ok { background: #dcfce7; color: #166534; }
+    .inv-status--low { background: #fef3c7; color: #92400e; }
+    .inv-status--out { background: #fee2e2; color: #991b1b; }
+    .inv-avail-num { font-size: 1rem; font-weight: 800; color: #1c1917; }
+    .inv-adjust-btn { display: inline-flex; align-items: center; gap: .35rem; background: #1c1917; color: #fff; border: none; border-radius: .65rem; padding: .48rem .85rem; font-size: .8rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background .15s ease; }
+    .inv-adjust-btn:hover { background: #44403c; }
+    .inv-dialog { border: none; border-radius: 1.25rem; padding: 0; max-width: 480px; width: calc(100% - 2rem); box-shadow: 0 24px 60px rgba(0,0,0,.22); max-height: 90vh; overflow-y: auto; }
+    .inv-dialog::backdrop { background: rgba(28,25,23,.5); backdrop-filter: blur(2px); }
+    .inv-dialog-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: 1.15rem 1.35rem; border-bottom: 1px solid #e7e5e4; }
+    .inv-dialog-title { font-size: 1.05rem; font-weight: 700; color: #1c1917; margin: 0; }
+    .inv-dialog-close { border: none; background: #f5f5f4; color: #44403c; width: 32px; height: 32px; border-radius: 999px; font-size: 1.1rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+    .inv-dialog-body { padding: 1.25rem 1.35rem; display: flex; flex-direction: column; gap: 1rem; }
+    .inv-dialog-product { display: flex; align-items: center; gap: .85rem; background: #fafaf9; border: 1px solid #e7e5e4; border-radius: .9rem; padding: .8rem; }
+    .inv-dialog-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; text-align: center; }
+    .inv-dialog-stat { background: #fff; border: 1px solid #e7e5e4; border-radius: .7rem; padding: .55rem .4rem; }
+    .inv-dialog-stat small { display: block; font-size: .7rem; color: #78716c; font-weight: 600; text-transform: uppercase; }
+    .inv-dialog-stat strong { display: block; font-size: 1.1rem; color: #1c1917; font-variant-numeric: tabular-nums; margin-top: .1rem; }
+    .inv-field label { display: block; font-size: .82rem; font-weight: 600; color: #44403c; margin-bottom: .35rem; }
+    .inv-field input { width: 100%; border: 1px solid #d6d3d1; border-radius: .75rem; padding: .65rem .85rem; font-size: .9rem; color: #1c1917; box-sizing: border-box; }
+    .inv-dialog-actions { display: flex; justify-content: flex-end; gap: .6rem; padding-top: .5rem; }
+    .inv-btn-cancel { border: 1px solid #d6d3d1; background: #fff; color: #44403c; border-radius: .7rem; padding: .6rem 1rem; font-size: .85rem; font-weight: 600; cursor: pointer; }
+    .inv-btn-save { border: none; background: #1c1917; color: #fff; border-radius: .7rem; padding: .6rem 1.15rem; font-size: .85rem; font-weight: 600; cursor: pointer; }
+    .inv-empty-filter { text-align: center; padding: 2.25rem 1rem; color: #78716c; font-size: .9rem; }
+  </style>
+</head>
+<body class="admin-shell-body">
+  <%- include("../../partials/admin-shell-start") %>
+  <%
+    const totalLines = rows.length;
+    const totalAvailable = rows.reduce((sum, r) => sum + Math.max(0, Number(r.available || 0)), 0);
+    const lowStockCount = rows.filter((r) => Number(r.available || 0) > 0 && Number(r.available || 0) <= 3).length;
+    const outOfStockCount = rows.filter((r) => Number(r.available || 0) <= 0).length;
+  %>
+  <main class="inv-page">
+    <div class="inv-top-bar">
+      <div></div>
+      <a class="admin-tool-button secondary" href="/admin/inventory/movements">Historial de movimientos</a>
+    </div>
+
+    <% if (error) { %><div class="admin-alert error"><%= error %></div><% } %>
+    <% if (importResult) { %><div class="admin-alert success">La importación se aplicó y quedó registrada en el historial.</div><% } %>
+    <% if (adjusted === "1") { %><div class="admin-alert success">El ajuste de existencias se registró con su motivo y usuario responsable.</div><% } %>
+    <% if (adjusted === "duplicate") { %><div class="admin-alert success">Este ajuste ya se había aplicado; no se duplicó el movimiento.</div><% } %>
+
+    <section class="inv-card">
+      <h3 class="inv-card-title">
+        Existencias actuales
+        <span class="admin-count"><%= totalLines %> líneas</span>
+      </h3>
+      <p class="inv-card-sub">
+        El saldo disponible descuenta las reservas registradas. Usa el botón <strong>Ajustar</strong> en cualquier línea para actualizar el SKU comercial o registrar un ajuste con motivo auditable.
+      </p>
+
+      <div class="inv-kpi-grid">
+        <div class="inv-kpi">
+          <div class="inv-kpi-label">Líneas registradas</div>
+          <div class="inv-kpi-val"><%= totalLines %></div>
+        </div>
+        <div class="inv-kpi inv-kpi--ok">
+          <div class="inv-kpi-label">Unidades disponibles</div>
+          <div class="inv-kpi-val"><%= totalAvailable.toLocaleString("es-DO") %></div>
+        </div>
+        <div class="inv-kpi inv-kpi--warn">
+          <div class="inv-kpi-label">Stock bajo (1–3)</div>
+          <div class="inv-kpi-val"><%= lowStockCount %></div>
+        </div>
+        <div class="inv-kpi inv-kpi--danger">
+          <div class="inv-kpi-label">Agotados</div>
+          <div class="inv-kpi-val"><%= outOfStockCount %></div>
+        </div>
+      </div>
+
+      <div class="inv-toolbar">
+        <input type="search" id="invSearchInput" class="inv-search" placeholder="Buscar por producto, variante o SKU..." aria-label="Buscar en existencias">
+        <div class="inv-filters" role="group" aria-label="Filtrar por estado de stock">
+          <button type="button" class="inv-filter-btn is-active" data-inv-filter="all">Todos (<%= totalLines %>)</button>
+          <button type="button" class="inv-filter-btn" data-inv-filter="ok">En stock</button>
+          <button type="button" class="inv-filter-btn" data-inv-filter="low">Stock bajo (<%= lowStockCount %>)</button>
+          <button type="button" class="inv-filter-btn" data-inv-filter="out">Agotados (<%= outOfStockCount %>)</button>
+        </div>
+      </div>
+
+      <div class="inv-table-wrap">
+        <table class="inv-table">
+          <thead>
+            <tr>
+              <th>Producto y variante</th>
+              <th>SKU</th>
+              <th>Estado</th>
+              <th class="num">Existente</th>
+              <th class="num">Reservado</th>
+              <th class="num">Disponible</th>
+              <th class="num">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="invTableBody">
+            <% rows.slice(0, 150).forEach((row) => { %>
+              <%
+                const avail = Number(row.available || 0);
+                const statusKey = avail <= 0 ? "out" : (avail <= 3 ? "low" : "ok");
+                const statusLabel = avail <= 0 ? "Agotado" : (avail <= 3 ? "Stock bajo" : "En stock");
+                const thumbSrc = row.imageUrl ? safePublicUrl(row.imageUrl) : "";
+                const searchBlob = [row.productName, row.variantDisplay, row.sku].join(" ").toLowerCase();
+              %>
+              <tr data-inv-row data-status="<%= statusKey %>" data-search="<%= searchBlob %>">
+                <td>
+                  <div class="inv-prod-cell">
+                    <% if (thumbSrc) { %>
+                      <img src="<%= thumbSrc %>" alt="<%= row.productName %>" class="inv-thumb" loading="lazy">
+                    <% } else { %>
+                      <div class="inv-thumb-empty" aria-hidden="true">Sin foto</div>
+                    <% } %>
+                    <div>
+                      <div class="inv-prod-name"><%= row.productName %></div>
+                      <div class="inv-prod-meta">
+                        <span class="inv-variant-pill"><%= row.variantDisplay || "Producto base" %></span>
+                        <a href="/admin/products/<%= row.productId %>/edit" class="inv-edit-link">Editar ficha</a>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <% if (row.sku) { %>
+                    <span class="inv-sku"><%= row.sku %></span>
+                  <% } else { %>
+                    <span class="inv-sku inv-sku--empty">Sin SKU</span>
+                  <% } %>
+                </td>
+                <td>
+                  <span class="inv-status inv-status--<%= statusKey %>"><%= statusLabel %></span>
+                </td>
+                <td class="num"><%= row.onHand %></td>
+                <td class="num"><%= row.reserved %></td>
+                <td class="num"><span class="inv-avail-num"><%= row.available %></span></td>
+                <td class="num">
+                  <button
+                    type="button"
+                    class="inv-adjust-btn"
+                    data-open-adjust
+                    data-product-id="<%= row.productId %>"
+                    data-product-name="<%= row.productName %>"
+                    data-variant-display="<%= row.variantDisplay || 'Producto base' %>"
+                    data-variant-index="<%= row.variantIndex %>"
+                    data-variant-signature="<%= row.variantSignature %>"
+                    data-request-key="<%= row.requestKey %>"
+                    data-sku="<%= row.sku || '' %>"
+                    data-on-hand="<%= row.onHand %>"
+                    data-reserved="<%= row.reserved %>"
+                    data-available="<%= row.available %>"
+                    data-image-url="<%= thumbSrc %>">
+                    Ajustar
+                  </button>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+        <div id="invEmptyFilter" class="inv-empty-filter" hidden>No hay líneas que coincidan con tu búsqueda o filtro.</div>
+      </div>
+      <% if (rows.length > 150) { %>
+        <p class="inv-card-sub" style="margin-top:.75rem;margin-bottom:0;">Mostrando 150 líneas en pantalla; las exportaciones incluyen todas (<%= rows.length %>).</p>
+      <% } %>
+    </section>
+
+    <div class="inv-tools-grid">
+      <section class="inv-card">
+        <h3 class="inv-card-title">Exportar existencias</h3>
+        <p class="inv-card-sub">Los archivos conservan los IDs de producto y las firmas de variantes para validar una importación posterior.</p>
+        <div class="admin-tool-actions">
+          <a class="admin-tool-button" href="/admin/inventory/export.csv">Descargar CSV</a>
+          <a class="admin-tool-button" href="/admin/inventory/export.xlsx">Descargar Excel</a>
+          <a class="admin-tool-button" href="/admin/inventory/export.pdf">Descargar PDF importable</a>
+        </div>
+      </section>
+
+      <section class="inv-card">
+        <h3 class="inv-card-title">Importar inventario</h3>
+        <p class="inv-card-sub">CSV y Excel (.xlsx) usan <code>productId</code>, <code>variantIndex</code>, <code>variantSignature</code> y <code>stock</code>. Primero validamos el archivo y mostramos vista previa.</p>
+        <form class="admin-import-form" method="post" action="/admin/inventory/import/preview" enctype="multipart/form-data">
+          <input type="hidden" name="_csrf" value="<%= adminCsrfToken %>">
+          <label for="inventoryFile">Archivo de inventario</label>
+          <input id="inventoryFile" name="inventoryFile" type="file" accept=".csv,.xlsx,.xlsm,.pdf" required>
+          <button class="admin-tool-button primary" type="submit">Validar y mostrar vista previa</button>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <dialog id="adjustInventoryDialog" class="inv-dialog" aria-labelledby="adjustDialogTitle">
+    <div class="inv-dialog-head">
+      <h4 id="adjustDialogTitle" class="inv-dialog-title">Ajustar existencias y SKU</h4>
+      <button type="button" class="inv-dialog-close" data-close-adjust aria-label="Cerrar">×</button>
+    </div>
+    <form method="post" action="/admin/inventory/adjust" class="inv-dialog-body" id="adjustInventoryForm">
+      <input type="hidden" name="_csrf" value="<%= adminCsrfToken %>">
+      <input type="hidden" name="productId" id="adjProductId">
+      <input type="hidden" name="variantIndex" id="adjVariantIndex">
+      <input type="hidden" name="variantSignature" id="adjVariantSignature">
+      <input type="hidden" name="requestKey" id="adjRequestKey">
+
+      <div class="inv-dialog-product">
+        <img id="adjProductImg" src="" alt="" class="inv-thumb" hidden>
+        <div id="adjProductNoImg" class="inv-thumb-empty">Sin foto</div>
+        <div>
+          <div id="adjProductName" class="inv-prod-name"></div>
+          <span id="adjVariantDisplay" class="inv-variant-pill"></span>
+        </div>
+      </div>
+
+      <div class="inv-dialog-stats">
+        <div class="inv-dialog-stat"><small>Existente</small><strong id="adjStatOnHand">0</strong></div>
+        <div class="inv-dialog-stat"><small>Reservado</small><strong id="adjStatReserved">0</strong></div>
+        <div class="inv-dialog-stat"><small>Disponible</small><strong id="adjStatAvailable">0</strong></div>
+      </div>
+
+      <div class="inv-field">
+        <label for="adjSku">SKU comercial (opcional)</label>
+        <input id="adjSku" name="sku" type="text" maxlength="100" placeholder="Ej. BRZ-ORY-DOR-18">
+      </div>
+
+      <div class="inv-field">
+        <label for="adjNewOnHand">Nueva existencia física</label>
+        <input id="adjNewOnHand" name="newOnHand" type="number" min="0" step="1" required>
+      </div>
+
+      <div class="inv-field">
+        <label for="adjReason">Motivo del ajuste</label>
+        <input id="adjReason" name="reason" type="text" minlength="3" maxlength="500" placeholder="Ej. Conteo físico, reposición de proveedor..." required>
+      </div>
+
+      <div class="inv-dialog-actions">
+        <button type="button" class="inv-btn-cancel" data-close-adjust>Cancelar</button>
+        <button type="submit" class="inv-btn-save">Guardar ajuste</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    (function () {
+      const searchInput = document.getElementById("invSearchInput");
+      const filterButtons = document.querySelectorAll("[data-inv-filter]");
+      const rows = Array.from(document.querySelectorAll("[data-inv-row]"));
+      const emptyEl = document.getElementById("invEmptyFilter");
+      let activeFilter = "all";
+
+      function applyFilters() {
+        const q = (searchInput?.value || "").trim().toLowerCase();
+        let visible = 0;
+        rows.forEach(function (tr) {
+          const matchesStatus = activeFilter === "all" || tr.dataset.status === activeFilter;
+          const matchesQuery = !q || (tr.dataset.search || "").includes(q);
+          const show = matchesStatus && matchesQuery;
+          tr.hidden = !show;
+          if (show) visible += 1;
+        });
+        if (emptyEl) emptyEl.hidden = visible > 0 || rows.length === 0;
+      }
+
+      if (searchInput) searchInput.addEventListener("input", applyFilters);
+      filterButtons.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          activeFilter = btn.dataset.invFilter || "all";
+          filterButtons.forEach(function (b) { b.classList.toggle("is-active", b === btn); });
+          applyFilters();
+        });
+      });
+
+      const dialog = document.getElementById("adjustInventoryDialog");
+      const imgEl = document.getElementById("adjProductImg");
+      const noImgEl = document.getElementById("adjProductNoImg");
+
+      document.querySelectorAll("[data-open-adjust]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          document.getElementById("adjProductId").value = btn.dataset.productId || "";
+          document.getElementById("adjVariantIndex").value = btn.dataset.variantIndex || "";
+          document.getElementById("adjVariantSignature").value = btn.dataset.variantSignature || "";
+          document.getElementById("adjRequestKey").value = btn.dataset.requestKey || "";
+          document.getElementById("adjProductName").textContent = btn.dataset.productName || "";
+          document.getElementById("adjVariantDisplay").textContent = btn.dataset.variantDisplay || "Producto base";
+          document.getElementById("adjStatOnHand").textContent = btn.dataset.onHand || "0";
+          document.getElementById("adjStatReserved").textContent = btn.dataset.reserved || "0";
+          document.getElementById("adjStatAvailable").textContent = btn.dataset.available || "0";
+          document.getElementById("adjSku").value = btn.dataset.sku || "";
+          document.getElementById("adjNewOnHand").value = btn.dataset.onHand || "0";
+          document.getElementById("adjReason").value = "";
+
+          const src = btn.dataset.imageUrl || "";
+          if (src) {
+            imgEl.src = src;
+            imgEl.alt = btn.dataset.productName || "";
+            imgEl.hidden = false;
+            noImgEl.hidden = true;
+          } else {
+            imgEl.hidden = true;
+            noImgEl.hidden = false;
+          }
+
+          if (dialog && typeof dialog.showModal === "function") dialog.showModal();
+        });
+      });
+
+      document.querySelectorAll("[data-close-adjust]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          if (dialog) dialog.close();
+        });
+      });
+      if (dialog) {
+        dialog.addEventListener("click", function (event) {
+          if (event.target === dialog) dialog.close();
+        });
+      }
+    })();
+  </script>
+  <%- include("../../partials/admin-shell-end") %>
+</body>
+</html>
