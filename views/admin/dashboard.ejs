@@ -11,11 +11,6 @@
 <body class="admin-shell-body">
   <%- include("../partials/admin-shell-start") %>
   <main class="admin-dashboard-main">
-    <section class="admin-dashboard-heading">
-      <h2>Dashboard</h2>
-      <p>Desde aquí administras productos, pedidos, reseñas y configuración del sitio.</p>
-    </section>
-
     <section class="admin-stat-grid" aria-label="Resumen de la tienda">
       <a class="admin-stat-card" href="/admin/products"><span class="admin-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="M3 8v9l9 5 9-5V8M12 13v9"/></svg></span><span><span class="admin-stat-label">Productos</span><strong class="admin-stat-value"><%= productCount %></strong></span></a>
       <a class="admin-stat-card" href="/admin/categories"><span class="admin-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span><span><span class="admin-stat-label">Categorías</span><strong class="admin-stat-value"><%= categoryCount %></strong></span></a>
