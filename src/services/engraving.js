@@ -61,10 +61,13 @@ function engravingOptions(product) {
     }))
     .filter((field) => field.label);
   const fonts = (enabled ? normalizeFontOptions(product.fontOptions) : [])
-    .map((font) => {
+    .map((font, idx) => {
       const name = font.name.trim().toLowerCase();
       const sampleStyle = font.sampleStyle || FONT_SAMPLE_STYLES.get(name) || (name.includes("eleg") ? "script" : name.includes("modern") ? "sans" : "serif");
-      return { ...font, sampleStyle };
+      const rawFontFile = String(font.fontFileUrl || "").trim();
+      const validFontFile = /^\/uploads\/fonts\/[a-z0-9._-]+\.(?:ttf|otf|woff2|woff)$/i.test(rawFontFile) ? rawFontFile : "";
+      const customFontFamily = validFontFile ? `gaton-custom-font-${idx}` : "";
+      return { ...font, sampleStyle, fontFileUrl: validFontFile, customFontFamily };
     });
   return {
     photo,

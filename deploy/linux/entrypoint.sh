@@ -4,6 +4,7 @@ set -eu
 mkdir -p \
   /app/public/uploads/images \
   /app/public/uploads/videos \
+  /app/public/uploads/fonts \
   /app/public/uploads/reviews \
   /app/public/uploads/customizations \
   /app/storage

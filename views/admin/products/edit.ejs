@@ -332,29 +332,37 @@
       </section>
 
       <section>
-        <div class="flex items-center justify-between gap-4 mb-4">
+        <div class="flex items-center justify-between gap-4 mb-2">
           <h3 class="text-xl font-semibold text-stone-900">Tipografías</h3>
-          <p class="mt-1 text-sm text-stone-600">Configura al menos una tipografía para vender piezas con grabado de texto. Puedes subir una muestra fija de cada letra.</p>
           <button type="button" id="addFontBtn" class="rounded-xl bg-stone-900 text-white px-4 py-2 text-sm font-medium hover:bg-stone-800">
             Agregar tipografía
           </button>
         </div>
+        <p class="text-sm text-stone-600 mb-4">Configura al menos una tipografía para vender piezas con grabado de texto. Puedes usar las fuentes integradas o subir tu propio archivo de fuente (<code>.ttf</code>, <code>.otf</code>, <code>.woff2</code>, <code>.woff</code>).</p>
 
         <div id="fontsContainer" class="space-y-4">
           <% if (formData.fontOptions && formData.fontOptions.length) { %>
             <% formData.fontOptions.forEach((font, index) => { %>
               <div class="font-item bg-stone-50 border border-stone-200 rounded-2xl p-4">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label class="block text-sm font-medium mb-2">Nombre</label>
-                    <input type="text" name="fontName" value="<%= font.name || '' %>" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+                    <input type="text" name="fontName" value="<%= font.name || '' %>" placeholder="Ej. Dancing Script o Mi Fuente" class="w-full rounded-xl border border-stone-300 px-4 py-3">
                   </div>
                   <div>
                     <label class="block text-sm font-medium mb-2">Texto de vista previa</label>
-                    <input type="text" name="fontPreviewText" value="<%= font.previewText || '' %>" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+                    <input type="text" name="fontPreviewText" value="<%= font.previewText || '' %>" placeholder="Aa" class="w-full rounded-xl border border-stone-300 px-4 py-3">
                   </div>
                   <div>
-                    <label class="block text-sm font-medium mb-2">Imagen de vista previa</label>
+                    <label class="block text-sm font-medium mb-2">Archivo de fuente (.ttf, .otf, .woff2)</label>
+                    <input type="hidden" name="fontFileUrl" value="<%= font.fontFileUrl || '' %>">
+                    <input type="file" name="fontFile<%= index %>" accept=".ttf,.otf,.woff2,.woff" data-upload-prefix="fontFile" class="w-full rounded-xl border border-stone-300 px-4 py-3 bg-white">
+                    <% if (font.fontFileUrl) { %>
+                      <p class="text-xs text-stone-500 mt-2">Fuente actual: <%= font.fontFileUrl %></p>
+                    <% } %>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-2">Imagen de vista previa (opcional)</label>
                     <input type="hidden" name="fontPreviewImageUrl" value="<%= font.previewImageUrl || '' %>">
                     <input type="file" name="fontPreviewImageFile<%= index %>" accept="image/*" data-upload-prefix="fontPreviewImageFile" class="w-full rounded-xl border border-stone-300 px-4 py-3 bg-white">
                     <% if (font.previewImageUrl) { %>
@@ -501,17 +509,22 @@
 
   <template id="fontTemplate">
     <div class="font-item bg-stone-50 border border-stone-200 rounded-2xl p-4">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label class="block text-sm font-medium mb-2">Nombre</label>
-          <input type="text" name="fontName" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+          <input type="text" name="fontName" placeholder="Ej. Dancing Script o Mi Fuente" class="w-full rounded-xl border border-stone-300 px-4 py-3">
         </div>
         <div>
           <label class="block text-sm font-medium mb-2">Texto de vista previa</label>
-          <input type="text" name="fontPreviewText" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+          <input type="text" name="fontPreviewText" placeholder="Aa" class="w-full rounded-xl border border-stone-300 px-4 py-3">
         </div>
         <div>
-          <label class="block text-sm font-medium mb-2">Imagen de vista previa</label>
+          <label class="block text-sm font-medium mb-2">Archivo de fuente (.ttf, .otf, .woff2)</label>
+          <input type="hidden" name="fontFileUrl">
+          <input type="file" name="fontFile0" accept=".ttf,.otf,.woff2,.woff" data-upload-prefix="fontFile" class="w-full rounded-xl border border-stone-300 px-4 py-3 bg-white">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Imagen de vista previa (opcional)</label>
           <input type="hidden" name="fontPreviewImageUrl">
           <input type="file" name="fontPreviewImageFile0" accept="image/*" data-upload-prefix="fontPreviewImageFile" class="w-full rounded-xl border border-stone-300 px-4 py-3 bg-white">
         </div>
@@ -533,6 +546,9 @@
       document.querySelectorAll(".font-item").forEach(function (item, index) {
         item.querySelectorAll('[data-upload-prefix="fontPreviewImageFile"]').forEach(function (input) {
           input.name = "fontPreviewImageFile" + index;
+        });
+        item.querySelectorAll('[data-upload-prefix="fontFile"]').forEach(function (input) {
+          input.name = "fontFile" + index;
         });
       });
     }

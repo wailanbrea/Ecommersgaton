@@ -12,6 +12,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Anton&family=Dancing+Script&family=Great+Vibes&family=Life+Savers&family=Libre+Baskerville&family=Lobster&family=Roboto+Slab&family=Satisfy&display=swap">
   <link rel="stylesheet" href="/css/app.css?v=tipografias-grabado-1">
+  <% const customFonts = (engraving.fonts || []).filter(function(f) { return f.fontFileUrl && f.customFontFamily; }); %>
+  <% if (customFonts.length) { %>
+    <style>
+      <% customFonts.forEach(function(cf) { %>
+        @font-face {
+          font-family: '<%= cf.customFontFamily %>';
+          src: url('<%= safePublicUrl(cf.fontFileUrl) %>');
+          font-display: swap;
+        }
+      <% }) %>
+    </style>
+  <% } %>
 </head>
 <body class="ref10-body ref10-product-page">
   <%- include("../partials/header") %>
@@ -225,8 +237,8 @@
                         <div class="product-font-options" id="fontPicker-<%= index %>">
                           <% engraving.fonts.forEach(function(font, fontIndex) { %>
                             <label class="product-font-option">
-                              <input type="radio" name="<%= field.fontInputName %>" value="<%= font.name %>" class="font-option" data-font-for="<%= index %>" data-preview-style="<%= font.sampleStyle %>" <%= fontIndex === 0 ? 'checked' : '' %>>
-                              <% if (font.previewImageUrl) { %><img src="<%= safePublicUrl(font.previewImageUrl) %>" alt=""><% } else { %><span class="product-font-sample product-font-sample--<%= font.sampleStyle %>" aria-hidden="true"><%= font.previewText || 'Aa' %></span><% } %>
+                              <input type="radio" name="<%= field.fontInputName %>" value="<%= font.name %>" class="font-option" data-font-for="<%= index %>" data-preview-style="<%= font.sampleStyle %>" data-custom-font-family="<%= font.customFontFamily || '' %>" <%= fontIndex === 0 ? 'checked' : '' %>>
+                              <% if (font.previewImageUrl) { %><img src="<%= safePublicUrl(font.previewImageUrl) %>" alt=""><% } else { %><span class="product-font-sample product-font-sample--<%= font.sampleStyle %>" <% if (font.customFontFamily) { %>style="font-family: '<%= font.customFontFamily %>', Georgia, serif;"<% } %> aria-hidden="true"><%= font.previewText || 'Aa' %></span><% } %>
                               <span><%= font.name %></span>
                             </label>
                           <% }) %>
@@ -484,6 +496,7 @@
           const selectedFont = document.querySelector('.font-option[data-font-for="' + index + '"]:checked');
           const previewStyle = selectedFont?.dataset.previewStyle || "serif";
           const safeStyle = /^[a-z0-9-]{1,40}$/i.test(previewStyle) ? previewStyle : "serif";
+          const customFamily = selectedFont?.dataset.customFontFamily || "";
           const preview = document.getElementById(input.id + "-preview");
           if (!preview) return;
 
@@ -492,6 +505,11 @@
             .filter(function (className) { return className.startsWith("product-font-sample--"); })
             .forEach(function (className) { preview.classList.remove(className); });
           preview.classList.add("product-font-sample--" + safeStyle);
+          if (customFamily && /^[a-z0-9-]{1,60}$/i.test(customFamily)) {
+            preview.style.fontFamily = "'" + customFamily + "', Georgia, serif";
+          } else {
+            preview.style.fontFamily = "";
+          }
           fitImagePreviewText(preview);
         });
       }

@@ -28,10 +28,31 @@ const ALLOWED_UPLOAD_TYPES = new Set([
   "video/webm",
   "video/quicktime"
 ]);
+const ALLOWED_FONT_EXTS = new Set([".ttf", ".otf", ".woff2", ".woff"]);
+const ALLOWED_FONT_MIMES = new Set([
+  "font/ttf",
+  "font/otf",
+  "font/woff",
+  "font/woff2",
+  "application/font-sfnt",
+  "application/x-font-ttf",
+  "application/x-font-opentype",
+  "application/font-woff",
+  "application/font-woff2",
+  "application/octet-stream"
+]);
+
+function isFontUpload(file) {
+  if (!file) return false;
+  const field = String(file.fieldname || "");
+  const ext = path.extname(String(file.originalname || "")).toLowerCase();
+  return field.startsWith("fontFile") && ALLOWED_FONT_EXTS.has(ext) && ALLOWED_FONT_MIMES.has(String(file.mimetype || ""));
+}
 
 function ensureUploadDirs() {
   fs.mkdirSync(path.join(UPLOAD_ROOT, "images"), { recursive: true });
   fs.mkdirSync(path.join(UPLOAD_ROOT, "videos"), { recursive: true });
+  fs.mkdirSync(path.join(UPLOAD_ROOT, "fonts"), { recursive: true });
 }
 
 function safeFilename(originalName = "archivo") {
@@ -55,7 +76,11 @@ function extensionFromMime(mimeType = "") {
     "image/gif": ".gif",
     "video/mp4": ".mp4",
     "video/webm": ".webm",
-    "video/quicktime": ".mov"
+    "video/quicktime": ".mov",
+    "font/ttf": ".ttf",
+    "font/otf": ".otf",
+    "font/woff": ".woff",
+    "font/woff2": ".woff2"
   };
 
   return map[mimeType] || "";
@@ -65,13 +90,15 @@ ensureUploadDirs();
 
 const uploadStorage = multer.diskStorage({
   destination(req, file, cb) {
-    const folder = String(file.mimetype || "").startsWith("video/") ? "videos" : "images";
+    const folder = isFontUpload(file)
+      ? "fonts"
+      : (String(file.mimetype || "").startsWith("video/") ? "videos" : "images");
     const destination = path.join(UPLOAD_ROOT, folder);
     fs.mkdirSync(destination, { recursive: true });
     cb(null, destination);
   },
   filename(req, file, cb) {
-    const ext = path.extname(file.originalname || "") || extensionFromMime(file.mimetype);
+    const ext = path.extname(file.originalname || "").toLowerCase() || extensionFromMime(file.mimetype);
     const name = safeFilename(file.originalname);
     const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
     cb(null, `${name}-${unique}${ext}`);
@@ -82,11 +109,12 @@ const upload = multer({
   storage: uploadStorage,
   limits: {
     fileSize: UPLOAD_MAX_SIZE_MB * 1024 * 1024,
-    files: 30
+    files: 40
   },
   fileFilter(req, file, cb) {
+    if (isFontUpload(file)) return cb(null, true);
     if (!ALLOWED_UPLOAD_TYPES.has(file.mimetype)) {
-      return cb(new Error("Tipo de archivo no permitido. Usa imágenes JPG, PNG, WEBP, GIF o videos MP4/WEBM/MOV."));
+      return cb(new Error("Tipo de archivo no permitido. Usa imágenes JPG, PNG, WEBP, GIF, videos MP4/WEBM/MOV o fuentes TTF/OTF/WOFF2."));
     }
 
     return cb(null, true);
@@ -96,7 +124,9 @@ const upload = multer({
 function uploadedFilePath(file) {
   if (!file) return "";
 
-  const folder = String(file.mimetype || "").startsWith("video/") ? "videos" : "images";
+  const folder = isFontUpload(file)
+    ? "fonts"
+    : (String(file.mimetype || "").startsWith("video/") ? "videos" : "images");
   return `/uploads/${folder}/${file.filename}`;
 }
 
@@ -317,8 +347,9 @@ function buildFontOptionsFromBody(body, req = null) {
   const names = ensureArray(body.fontName);
   const previews = ensureArray(body.fontPreviewText);
   const imageUrls = ensureArray(body.fontPreviewImageUrl);
+  const fontFileUrls = ensureArray(body.fontFileUrl);
 
-  const maxLength = Math.max(names.length, previews.length, imageUrls.length);
+  const maxLength = Math.max(names.length, previews.length, imageUrls.length, fontFileUrls.length);
   const fonts = [];
 
   for (let i = 0; i < maxLength; i++) {
@@ -326,14 +357,18 @@ function buildFontOptionsFromBody(body, req = null) {
     const previewText = String(previews[i] || "").trim();
     const uploadedFontImage = req ? uploadedIndexedFile(req, "fontPreviewImageFile", i) : null;
     const previewImageUrl = uploadedFilePath(uploadedFontImage) || String(imageUrls[i] || "").trim();
+    const uploadedFontFile = req ? uploadedIndexedFile(req, "fontFile", i) : null;
+    const fontFileUrl = uploadedFilePath(uploadedFontFile) || String(fontFileUrls[i] || "").trim();
 
-    if (!name && !previewText && !previewImageUrl) continue;
+    if (!name && !previewText && !previewImageUrl && !fontFileUrl) continue;
 
-    fonts.push({
+    const record = {
       name,
       previewText,
       previewImageUrl
-    });
+    };
+    if (fontFileUrl) record.fontFileUrl = fontFileUrl;
+    fonts.push(record);
   }
 
   return fonts;
