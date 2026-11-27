@@ -1,6 +1,6 @@
 <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Usuarios | GATÓN DO</title><link rel="stylesheet" href="/css/app.css"><link rel="stylesheet" href="/css/admin-utilities.css"><link rel="stylesheet" href="/css/admin.css"></head><body class="admin-shell-body"><%- include("../../partials/admin-shell-start") %>
 <main class="admin-tool-page admin-access-page">
-  <header class="admin-tool-heading"><div><span class="admin-eyebrow">ACCESO Y SEGURIDAD</span><h2>Usuarios</h2><p>Crea cuentas, asigna roles y administra el acceso al panel.</p></div><a class="admin-tool-button primary" href="/admin/users/new">Agregar usuario</a></header>
+  <header class="admin-tool-heading"><a class="admin-tool-button primary" href="/admin/users/new">Agregar usuario</a></header>
   <% if (error) { %><div class="admin-alert error"><%= error %></div><% } %>
   <% if (message) { %><div class="admin-alert success"><%= message %></div><% } %>
   <section class="admin-tool-card"><div class="admin-access-intro"><div><h3>Acceso actual</h3><p>El usuario recibe solo los permisos incluidos en sus roles. Las rutas del servidor validan cada operación.</p></div><a class="admin-tool-button secondary" href="/admin/roles">Administrar roles y permisos</a></div>
