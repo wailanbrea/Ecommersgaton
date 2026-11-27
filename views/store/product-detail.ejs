@@ -218,26 +218,24 @@
                       <span class="product-customization-live-preview__caption">Vista previa · <%= field.label %></span>
                       <span class="product-font-sample product-font-sample--serif product-customization-live-preview__text" id="<%= previewId %>" aria-live="polite">Tu texto</span>
                     </div>
+
+                    <% if (engraving.fonts.length) { %>
+                      <fieldset class="product-customization-group product-font-group" data-font-group-for="<%= field.inputName %>" <% if (index > 0) { %>hidden<% } %>>
+                        <legend>Tipografía · <%= field.label %></legend>
+                        <div class="product-font-options" id="fontPicker-<%= index %>">
+                          <% engraving.fonts.forEach(function(font, fontIndex) { %>
+                            <label class="product-font-option">
+                              <input type="radio" name="<%= field.fontInputName %>" value="<%= font.name %>" class="font-option" data-font-for="<%= index %>" data-preview-style="<%= font.sampleStyle %>" <%= fontIndex === 0 ? 'checked' : '' %>>
+                              <% if (font.previewImageUrl) { %><img src="<%= safePublicUrl(font.previewImageUrl) %>" alt=""><% } else { %><span class="product-font-sample product-font-sample--<%= font.sampleStyle %>" aria-hidden="true"><%= font.previewText || 'Aa' %></span><% } %>
+                              <span><%= font.name %></span>
+                            </label>
+                          <% }) %>
+                        </div>
+                      </fieldset>
+                    <% } %>
                   </div>
                 <% }) %>
               </fieldset>
-            <% } %>
-
-            <% if (engraving.fields.length && engraving.fonts.length) { %>
-              <% engraving.fields.forEach(function(field, fieldIndex) { %>
-                <fieldset class="product-customization-group product-font-group" data-font-group-for="<%= field.inputName %>" <% if (fieldIndex > 0) { %>hidden<% } %>>
-                  <legend>Tipografía · <%= field.label %></legend>
-                  <div class="product-font-options" id="fontPicker-<%= fieldIndex %>">
-                    <% engraving.fonts.forEach(function(font, fontIndex) { %>
-                      <label class="product-font-option">
-                        <input type="radio" name="<%= field.fontInputName %>" value="<%= font.name %>" class="font-option" data-font-for="<%= fieldIndex %>" data-preview-style="<%= font.sampleStyle %>" <%= fontIndex === 0 ? 'checked' : '' %>>
-                        <% if (font.previewImageUrl) { %><img src="<%= safePublicUrl(font.previewImageUrl) %>" alt=""><% } else { %><span class="product-font-sample product-font-sample--<%= font.sampleStyle %>" aria-hidden="true"><%= font.previewText || 'Aa' %></span><% } %>
-                        <span><%= font.name %></span>
-                      </label>
-                    <% }) %>
-                  </div>
-                </fieldset>
-              <% }) %>
             <% } %>
 
             <% if (engraving.photo) { %>
