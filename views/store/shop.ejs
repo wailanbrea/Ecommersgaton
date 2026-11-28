@@ -84,10 +84,11 @@
   <%- include("../partials/header") %>
 
   <main class="ref10-shop-main">
+    <% const inFragrances = Boolean(typeof isFragranceSection !== "undefined" && isFragranceSection); %>
     <section class="ref10-shop-hero">
-      <span>Catálogo</span>
-      <h1><%= selectedCategory ? t(selectedCategory.name) : t(siteSettings?.catalogTitle, "Joyería") %></h1>
-      <p><%= t(siteSettings?.catalogText, "Cada pieza está pensada para acompañarte. Selecciona, agrega al carrito y finaliza tu pedido por WhatsApp.") %></p>
+      <span><%= inFragrances ? "Fragancias de autor" : "Catálogo" %></span>
+      <h1><%= inFragrances ? (selectedCategory ? t(selectedCategory.name) : "Fragancias") : (selectedCategory ? t(selectedCategory.name) : t(siteSettings?.catalogTitle, "Joyería")) %></h1>
+      <p><%= inFragrances ? t(siteSettings?.fragranceText, "Aromas envolventes que complementan tu estilo. Edición limitada, embotellados con intención.") : t(siteSettings?.catalogText, "Cada pieza está pensada para acompañarte. Selecciona, agrega al carrito y finaliza tu pedido por WhatsApp.") %></p>
     </section>
 
     <section class="ref10-shop-filter-wrap">
@@ -100,7 +101,7 @@
         <div class="ref10-filter-field">
           <label>Categoría</label>
           <select name="category">
-            <option value="">Todas</option>
+            <% if (!inFragrances) { %><option value="">Todas</option><% } %>
             <% (categories || []).forEach(category => { %>
               <option value="<%= category.slug %>" <%= currentCategorySlug === category.slug ? "selected" : "" %>><%= t(category.name) %></option>
             <% }) %>
@@ -119,22 +120,24 @@
 
         <div class="ref10-filter-actions">
           <button type="submit"><%= siteSettings?.filterLabel || "Filtrar" %></button>
-          <a href="/shop"><%= siteSettings?.clearLabel || "Limpiar" %></a>
+          <a href="<%= inFragrances ? '/shop?category=fragancias' : '/shop' %>"><%= siteSettings?.clearLabel || "Limpiar" %></a>
         </div>
       </form>
     </section>
 
-    <section class="ref10-shop-chips">
-      <a href="<%= shopUrl({ q: currentQuery, gender: currentGender }) %>" class="<%= !currentCategorySlug ? 'active' : '' %>">Todo</a>
-      <% (categories || []).forEach(category => { %>
-        <a href="<%= shopUrl({ q: currentQuery, category: category.slug, gender: currentGender }) %>" class="<%= currentCategorySlug === category.slug ? 'active' : '' %>"><%= t(category.name) %></a>
-      <% }) %>
-    </section>
+    <% if (!inFragrances) { %>
+      <section class="ref10-shop-chips">
+        <a href="<%= shopUrl({ q: currentQuery, gender: currentGender }) %>" class="<%= !currentCategorySlug ? 'active' : '' %>">Todo</a>
+        <% (categories || []).forEach(category => { %>
+          <a href="<%= shopUrl({ q: currentQuery, category: category.slug, gender: currentGender }) %>" class="<%= currentCategorySlug === category.slug ? 'active' : '' %>"><%= t(category.name) %></a>
+        <% }) %>
+      </section>
+    <% } %>
 
     <section class="ref10-shop-gender-chips" aria-label="Filtrar por género o público">
-      <a href="<%= shopUrl({ q: currentQuery, category: currentCategorySlug }) %>" class="<%= !currentGender ? 'active' : '' %>">Todos los géneros</a>
+      <a href="<%= shopUrl({ q: currentQuery, category: inFragrances ? (currentCategorySlug || 'fragancias') : currentCategorySlug }) %>" class="<%= !currentGender ? 'active' : '' %>">Todos los géneros</a>
       <% (genderOptions || []).filter(o => o.value).forEach(option => { %>
-        <a href="<%= shopUrl({ q: currentQuery, category: currentCategorySlug, gender: option.value }) %>" class="<%= currentGender === option.value ? 'active' : '' %>"><%= option.label %></a>
+        <a href="<%= shopUrl({ q: currentQuery, category: inFragrances ? (currentCategorySlug || 'fragancias') : currentCategorySlug, gender: option.value }) %>" class="<%= currentGender === option.value ? 'active' : '' %>"><%= option.label %></a>
       <% }) %>
     </section>
 

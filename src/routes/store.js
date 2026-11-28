@@ -535,16 +535,6 @@ router.get("/shop", async (req, res) => {
 
   const filter = { active: true };
   const currentGender = normalizeGender(gender);
-  let selectedCategory = null;
-  let allowedCategoryIds = null;
-
-  if (category) {
-    selectedCategory = await Category.findOne({ slug: String(category), active: true }).lean();
-    if (selectedCategory && !isGenderCategory(selectedCategory)) {
-      const childCategories = await Category.find({ parentId: String(selectedCategory._id), active: true }).select("_id").lean();
-      allowedCategoryIds = new Set([String(selectedCategory._id)].concat(childCategories.map((item) => String(item._id))));
-    }
-  }
 
   if (q && String(q).trim()) {
     filter.$or = [
@@ -560,13 +550,68 @@ router.get("/shop", async (req, res) => {
     Product.find(filter).sort({ createdAt: -1 }).lean()
   ]);
 
+  const normText = (v = "") =>
+    String(v || "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+  const fragranceCatIds = new Set(
+    categories
+      .filter((c) => /fragancia|perfume|feromona/.test(normText(`${c.slug || ""} ${c.name || ""}`)))
+      .map((c) => String(c._id))
+  );
+  categories.forEach((c) => {
+    if (c.parentId && fragranceCatIds.has(String(c.parentId))) {
+      fragranceCatIds.add(String(c._id));
+    }
+  });
+
+  function isFragranceProduct(product) {
+    const ids = Array.isArray(product.categoryIds) && product.categoryIds.length
+      ? product.categoryIds.map(String)
+      : (product.categoryId ? [String(product.categoryId)] : []);
+    if (ids.some((id) => fragranceCatIds.has(id))) return true;
+    return /fragancia|perfume|feromona/.test(normText(product.name || ""));
+  }
+
+  const selectedCategory = category
+    ? categories.find((c) => String(c.slug || "") === String(category) && !isGenderCategory(c)) || null
+    : null;
+  const isFragranceSection = Boolean(
+    selectedCategory && fragranceCatIds.has(String(selectedCategory._id))
+  ) || /fragancia|perfume|feromona/.test(normText(category));
+
+  const isGeneralJewelryCategory = Boolean(
+    selectedCategory && normText(selectedCategory.slug || selectedCategory.name) === "joyeria"
+  );
+
+  let allowedCategoryIds = null;
+  if (selectedCategory && !isGeneralJewelryCategory) {
+    const childIds = categories
+      .filter((c) => String(c.parentId || "") === String(selectedCategory._id))
+      .map((c) => String(c._id));
+    allowedCategoryIds = new Set([String(selectedCategory._id), ...childIds]);
+  }
+
   const products = (rawProducts || []).filter((product) => {
-    if (allowedCategoryIds) {
+    const prodIsFrag = isFragranceProduct(product);
+    if (isFragranceSection && !prodIsFrag) return false;
+    if (!isFragranceSection && prodIsFrag) return false;
+
+    if (allowedCategoryIds && !isFragranceSection) {
+      const pCats = Array.isArray(product.categoryIds) && product.categoryIds.length
+        ? product.categoryIds.map(String)
+        : (product.categoryId ? [String(product.categoryId)] : []);
+      if (!pCats.some((id) => allowedCategoryIds.has(id))) return false;
+    } else if (allowedCategoryIds && isFragranceSection && selectedCategory && !fragranceCatIds.has(String(selectedCategory._id))) {
       const pCats = Array.isArray(product.categoryIds) && product.categoryIds.length
         ? product.categoryIds.map(String)
         : (product.categoryId ? [String(product.categoryId)] : []);
       if (!pCats.some((id) => allowedCategoryIds.has(id))) return false;
     }
+
     if (currentGender) {
       const pGenders = Array.isArray(product.genders) && product.genders.length
         ? product.genders.map((g) => normalizeGender(g)).filter(Boolean)
@@ -576,14 +621,17 @@ router.get("/shop", async (req, res) => {
     return true;
   });
 
-  const publicCategories = categories.filter((category) => !isGenderCategory(category));
-  const visibleShopCategories = publicCategories.filter((category) => !category.parentId);
+  const publicCategories = categories.filter((c) => !isGenderCategory(c));
+  const visibleShopCategories = isFragranceSection
+    ? publicCategories.filter((c) => fragranceCatIds.has(String(c._id)))
+    : publicCategories.filter((c) => !c.parentId && !fragranceCatIds.has(String(c._id)));
   const categoryMap = Object.fromEntries(categories.map((c) => [String(c._id), c]));
 
   res.render("store/shop", {
     categories: visibleShopCategories,
     products,
     selectedCategory,
+    isFragranceSection,
     currentQuery: String(q || ""),
     currentCategorySlug: String(category || ""),
     currentGender,
