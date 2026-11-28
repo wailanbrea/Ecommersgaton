@@ -6044,8 +6044,8 @@ body.ref10-product-page .ref10-detail-main {width:min(100%,1560px);margin:0 auto
 .product-detail-grid {display:grid;grid-template-columns:minmax(0,1.08fr) minmax(440px,.98fr);align-items:start;gap:18px}
 .product-detail-gallery-column,.product-detail-info-column {min-width:0}
 .product-gallery-frame {padding:0;border:1px solid #e8dfd3;border-radius:14px;background:#fff;overflow:hidden}
-.product-gallery-stage {position:relative;display:grid;place-items:center;aspect-ratio:1.34;container-type:inline-size;background:#f4eee5;overflow:hidden}
-.product-gallery-image {display:block;width:100%;height:100%;object-fit:cover}
+.product-gallery-stage {position:relative;display:grid;place-items:center;aspect-ratio:1/1;container-type:inline-size;background:#faf8f4;overflow:hidden}
+.product-gallery-image {display:block;width:100%;height:100%;object-fit:contain;object-position:center}
 .product-gallery-stage--bracelet-plate {aspect-ratio:1.5;background:#fff}
 .product-gallery-image--bracelet-plate {object-fit:contain}
 .product-gallery-placeholder {display:grid;place-items:center;width:100%;height:100%;color:#756d65;font-size:15px}

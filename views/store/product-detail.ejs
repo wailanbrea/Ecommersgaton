@@ -11,7 +11,27 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Anton&family=Dancing+Script&family=Great+Vibes&family=Life+Savers&family=Libre+Baskerville&family=Lobster&family=Roboto+Slab&family=Satisfy&display=swap">
-  <link rel="stylesheet" href="/css/app.css?v=tipografias-grabado-1">
+  <link rel="stylesheet" href="/css/app.css?v=tipografias-grabado-2">
+  <style>
+    .product-gallery-stage {
+      aspect-ratio: 1 / 1 !important;
+      background: #faf8f4 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+    .product-gallery-image {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: contain !important;
+      object-position: center !important;
+    }
+    .product-gallery-thumbnails img {
+      object-fit: contain !important;
+      object-position: center !important;
+      background: #faf8f4 !important;
+    }
+  </style>
   <% const customFonts = (engraving.fonts || []).filter(function(f) { return f.fontFileUrl && f.customFontFamily; }); %>
   <% if (customFonts.length) { %>
     <style>
