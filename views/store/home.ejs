@@ -23,6 +23,12 @@
     }
 
     function productCategoryName(product) {
+      const map = typeof categoryMap === "object" && categoryMap ? categoryMap : {};
+      const ids = Array.isArray(product?.categoryIds) && product.categoryIds.length
+        ? product.categoryIds.map(String)
+        : (product?.categoryId ? [String(product.categoryId)] : []);
+      const names = ids.map((id) => map[id]?.name || "").filter(Boolean);
+      if (names.length) return names.join(" · ");
       if (product?.category?.name) return product.category.name;
       if (product?.categoryName) return product.categoryName;
       if (product?.categorySlug) return product.categorySlug;
@@ -50,11 +56,8 @@
     const heroVideo = siteSettings?.heroVideoUrl || "";
     const heroImage = siteSettings?.heroImageUrl || "";
     const heroBg = heroImage;
-    const featuredList = (featuredProducts && featuredProducts.length ? featuredProducts : latestProducts || []).slice(0, 8);
-    const fragranceProducts = (latestProducts || [])
-      .filter((product) => comparable(productCategoryName(product)).includes("fragancia") || comparable(product.name).includes("fragancia") || comparable(product.name).includes("perfume"))
-      .slice(0, 4);
-    const fragranceList = fragranceProducts.slice(0, 4);
+    const featuredList = (typeof jewelryProducts !== "undefined" && Array.isArray(jewelryProducts) ? jewelryProducts : (featuredProducts && featuredProducts.length ? featuredProducts : latestProducts || [])).slice(0, 8);
+    const fragranceList = (typeof fragranceProducts !== "undefined" && Array.isArray(fragranceProducts) ? fragranceProducts : []).slice(0, 4);
     const whatsappDigits = String(siteSettings?.whatsapp || siteSettings?.phone || "").replace(/\D/g, "");
     const whatsappLink = whatsappDigits ? `https://wa.me/${whatsappDigits}` : "";
   %>

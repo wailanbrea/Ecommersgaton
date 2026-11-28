@@ -450,12 +450,45 @@ async function enrichCartWithStock(cart) {
 }
 
 router.get("/", async (req, res) => {
-  const [categories, featuredProducts, latestProducts, reviews] = await Promise.all([
+  const [categories, allActiveProducts, reviews] = await Promise.all([
     Category.find({ active: true }).sort({ sortOrder: 1, name: 1 }).lean(),
-    Product.find({ active: true, featured: true }).sort({ createdAt: -1 }).limit(8).lean(),
-    Product.find({ active: true }).sort({ createdAt: -1 }).limit(8).lean(),
+    Product.find({ active: true }).sort({ createdAt: -1 }).lean(),
     Review.find({ approved: true, visible: true }).sort({ createdAt: -1 }).limit(6).lean()
   ]);
+
+  const categoryMap = Object.fromEntries(categories.map((c) => [String(c._id), c]));
+  const normText = (v = "") =>
+    String(v || "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+  const fragranceRootIds = new Set(
+    categories
+      .filter((c) => /fragancia|perfume|feromona/.test(normText(`${c.slug || ""} ${c.name || ""}`)))
+      .map((c) => String(c._id))
+  );
+  categories.forEach((c) => {
+    if (c.parentId && fragranceRootIds.has(String(c.parentId))) {
+      fragranceRootIds.add(String(c._id));
+    }
+  });
+
+  function isFragranceProduct(product) {
+    const ids = Array.isArray(product.categoryIds) && product.categoryIds.length
+      ? product.categoryIds.map(String)
+      : (product.categoryId ? [String(product.categoryId)] : []);
+    if (ids.some((id) => fragranceRootIds.has(id))) return true;
+    return /fragancia|perfume|feromona/.test(normText(product.name || ""));
+  }
+
+  const fragranceProducts = allActiveProducts.filter(isFragranceProduct).slice(0, 4);
+  const nonFragranceProducts = allActiveProducts.filter((p) => !isFragranceProduct(p));
+  const featuredJewelry = nonFragranceProducts.filter((p) => p.featured).slice(0, 8);
+  const jewelryProducts = (featuredJewelry.length ? featuredJewelry : nonFragranceProducts).slice(0, 8);
+  const featuredProducts = featuredJewelry;
+  const latestProducts = nonFragranceProducts.slice(0, 8);
 
   const publicCategories = categories.filter((category) => !isGenderCategory(category));
   const featuredCollectionCategories = publicCategories
@@ -486,9 +519,12 @@ router.get("/", async (req, res) => {
 
   res.render("store/home", {
     categories: publicCategories,
+    categoryMap,
     homeCategories,
     featuredProducts,
     latestProducts,
+    jewelryProducts,
+    fragranceProducts,
     reviews,
     reviewProductMap
   });
