@@ -303,15 +303,51 @@
           <div class="set-field"><label>Contacto · Texto pequeño</label><input type="text" name="contactEyebrow" value="<%= formData.contactEyebrow || 'Contáctanos' %>"></div>
           <div class="set-field"><label>Contacto · Título</label><input type="text" name="contactTitle" value="<%= formData.contactTitle || 'Hablemos de tu próxima joya' %>"></div>
           <div class="set-field set-full"><label>Texto de contacto</label><textarea name="contactText" rows="2"><%= formData.contactText || '' %></textarea></div>
-          <div class="set-field"><label>Correo</label><input type="email" name="email" value="<%= formData.email || '' %>"></div>
-          <div class="set-field"><label>Teléfono llamadas</label><input type="text" name="phone" value="<%= formData.phone || '' %>"></div>
-          <div class="set-field"><label>WhatsApp</label><input type="text" name="whatsapp" value="<%= formData.whatsapp || '' %>"></div>
-          <div class="set-field"><label>Instagram URL</label><input type="text" name="instagram" value="<%= formData.instagram || '' %>"></div>
-          <div class="set-field"><label>Instagram usuario visible</label><input type="text" name="instagramHandle" value="<%= formData.instagramHandle || '@gaton.do' %>"></div>
-          <div class="set-field"><label>TikTok URL</label><input type="text" name="tiktok" value="<%= formData.tiktok || '' %>"></div>
-          <div class="set-field"><label>Facebook URL</label><input type="text" name="facebook" value="<%= formData.facebook || '' %>"></div>
-          <div class="set-field"><label>Ubicación</label><input type="text" name="locationText" value="<%= formData.locationText || 'Santo Domingo, RD' %>"></div>
-          <div class="set-field"><label>Texto de envíos</label><input type="text" name="shippingText" value="<%= formData.shippingText || 'A todo el país DO' %>"></div>
+          <div class="set-field">
+            <label>Correo</label>
+            <input type="email" name="email" value="<%= formData.email || '' %>" placeholder="Ej. contacto@gaton.do">
+            <small class="text-xs text-stone-500">Si lo llenas, aparecerá en la sección “Contáctanos” de la página de inicio.</small>
+          </div>
+          <div class="set-field">
+            <label>Teléfono llamadas</label>
+            <input type="text" name="phone" value="<%= formData.phone || '' %>" placeholder="Ej. +1 (849) 330-6269">
+            <small class="text-xs text-stone-500">Número visible en la sección “Contáctanos”.</small>
+          </div>
+          <div class="set-field">
+            <label>WhatsApp</label>
+            <input type="text" name="whatsapp" value="<%= formData.whatsapp || '' %>" placeholder="Ej. +18493306269">
+            <small class="text-xs text-stone-500">Número usado para los botones “Enviar por WhatsApp” y el enlace del pie de página.</small>
+          </div>
+          <div class="set-field">
+            <label>Instagram URL</label>
+            <input type="text" name="instagram" value="<%= formData.instagram || '' %>" placeholder="Por defecto: https://www.instagram.com/gaton.do">
+            <small class="text-xs text-stone-500">Si lo dejas vacío, el icono del pie de página usa https://www.instagram.com/gaton.do.</small>
+          </div>
+          <div class="set-field">
+            <label>Instagram usuario visible</label>
+            <input type="text" name="instagramHandle" value="<%= formData.instagramHandle || '@gaton.do' %>" placeholder="Ej. @gaton.do">
+            <small class="text-xs text-stone-500">Usuario visible en la sección “Contáctanos”.</small>
+          </div>
+          <div class="set-field">
+            <label>TikTok URL</label>
+            <input type="text" name="tiktok" value="<%= formData.tiktok || '' %>" placeholder="Por defecto: https://www.tiktok.com/@gaton.do">
+            <small class="text-xs text-stone-500">Si lo dejas vacío, el icono del pie de página usa https://www.tiktok.com/@gaton.do.</small>
+          </div>
+          <div class="set-field">
+            <label>Facebook URL</label>
+            <input type="text" name="facebook" value="<%= formData.facebook || '' %>" placeholder="Ej. https://www.facebook.com/gatondo">
+            <small class="text-xs text-stone-500">Pega aquí la URL de tu página de Facebook para el icono del pie de página.</small>
+          </div>
+          <div class="set-field">
+            <label>Ubicación</label>
+            <input type="text" name="locationText" value="<%= formData.locationText || 'Santo Domingo, RD' %>" placeholder="Ej. Av. Independencia, Km. 11, Santo Domingo">
+            <small class="text-xs text-stone-500">Dirección mostrada en “Contáctanos” y al final del pie de página.</small>
+          </div>
+          <div class="set-field">
+            <label>Texto de envíos</label>
+            <input type="text" name="shippingText" value="<%= formData.shippingText || 'A todo el país DO' %>" placeholder="Ej. Realizamos envíos a todo el país DO">
+            <small class="text-xs text-stone-500">Texto mostrado en la fila “Envíos” de la sección “Contáctanos”.</small>
+          </div>
         </div>
       </section>
 

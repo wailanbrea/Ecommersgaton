@@ -281,6 +281,7 @@
           <p style="white-space: pre-line;"><%= t(siteSettings?.contactText, "Cada pieza comienza con una historia. Te acompañamos desde tu primera idea hasta el resultado final para crear una joya personalizada que represente momentos, personas y recuerdos importantes.\n\nCuéntanos lo que imaginas, recibe asesoría personalizada y juntos crearemos una pieza hecha especialmente para ti.") %></p>
           <dl>
             <div><dt>WhatsApp</dt><dd><%= t(siteSettings?.phone || siteSettings?.whatsapp, '+1 (849) 330-6269') %></dd></div>
+            <% if (siteSettings?.email) { %><div><dt>Correo</dt><dd><a href="mailto:<%= siteSettings.email %>" style="color:inherit;text-decoration:underline;text-underline-offset:3px;"><%= siteSettings.email %></a></dd></div><% } %>
             <div><dt>Instagram</dt><dd><%= t(siteSettings?.instagramHandle, '@gaton.do') %></dd></div>
             <div><dt>Ubicación</dt><dd><%= t(siteSettings?.locationText, "Av. Independencia, Km. 11, Distrito Nacional, Santo Domingo, Rep. Dom.") %></dd></div>
             <div><dt>Envíos</dt><dd><%= t(siteSettings?.shippingText, "Realizamos envíos a todo el país DO") %></dd></div>
