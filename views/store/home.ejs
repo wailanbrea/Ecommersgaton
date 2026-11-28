@@ -128,7 +128,7 @@
           <p><%= t(siteSettings?.catalogText, "Cada pieza está pensada para acompañarte. Selecciona, agrega al carrito y finaliza tu pedido por WhatsApp.") %></p>
         </div>
 
-        <nav class="ref10-shop-chips" aria-label="Colecciones"><a href="/shop">Todo</a><% allPublicCategories.forEach(category => { %><a href="<%= safePublicUrl(category.destinationUrl, '/shop?category=' + encodeURIComponent(category.slug || '')) %>"><%= category.name %></a><% }) %></nav>
+        <nav class="ref10-shop-chips" aria-label="Colecciones"><a href="/shop">Todo</a><% allPublicCategories.filter(category => !/fragancia|perfume|feromona/.test(comparable((category.slug || '') + ' ' + (category.name || '')))).forEach(category => { %><a href="<%= safePublicUrl(category.destinationUrl, '/shop?category=' + encodeURIComponent(category.slug || '')) %>"><%= category.name %></a><% }) %></nav>
         <div class="ref10-product-grid">
           <% featuredList.slice(0, 8).forEach((product, index) => { %>
             <a href="/product/<%= product.slug %>" class="ref10-product-card">
