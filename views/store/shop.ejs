@@ -86,9 +86,9 @@
   <main class="ref10-shop-main">
     <% const inFragrances = Boolean(typeof isFragranceSection !== "undefined" && isFragranceSection); %>
     <section class="ref10-shop-hero">
-      <span><%= inFragrances ? "Fragancias de autor" : "Catálogo" %></span>
+      <span><%= inFragrances ? "Fragancias" : "Catálogo" %></span>
       <h1><%= inFragrances ? (selectedCategory ? t(selectedCategory.name) : "Fragancias") : (selectedCategory ? t(selectedCategory.name) : t(siteSettings?.catalogTitle, "Joyería")) %></h1>
-      <p><%= inFragrances ? t(siteSettings?.fragranceText, "Aromas envolventes que complementan tu estilo. Edición limitada, embotellados con intención.") : t(siteSettings?.catalogText, "Cada pieza está pensada para acompañarte. Selecciona, agrega al carrito y finaliza tu pedido por WhatsApp.") %></p>
+      <p><%= inFragrances ? t(siteSettings?.fragranceText, "Descubre feromonas, perfumes y accesorios para fragancias cuidadosamente seleccionados para complementar tu estilo, expresar tu personalidad y dejar una impresión inolvidable.") : t(siteSettings?.catalogText, "Cada pieza está pensada para acompañarte. Selecciona, agrega al carrito y finaliza tu pedido por WhatsApp.") %></p>
     </section>
 
     <section class="ref10-shop-filter-wrap">

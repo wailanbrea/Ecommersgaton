@@ -75,12 +75,13 @@
       <% } %>
       <div class="ref10-hero-overlay"></div>
       <div class="ref10-hero-content">
-        <img src="<%= safePublicUrl(siteSettings?.heroLogoUrl, '/images/logo-gatondo-white.png') %>" alt="<%= t(siteSettings?.brandName, 'GATON DO') %>" class="ref10-hero-logo">
+        <img src="<%= safePublicUrl(siteSettings?.heroLogoUrl, '/images/logo-gatondo-white.png?v=2026-logos') %>" alt="<%= t(siteSettings?.brandName, 'GATON DO') %>" class="ref10-hero-logo">
+        <p style="letter-spacing:.22em;font-size:.76rem;text-transform:uppercase;opacity:.92;margin:-4px 0 10px;font-weight:600;">PERSONALIZACIÓN · JOYERÍA · FRAGANCIAS</p>
         <h1><%= t(siteSettings?.heroTitle, "Joyas con intención") %></h1>
         <p><%= t(siteSettings?.heroSubtitle, "Piezas hechas a mano que cuentan tu historia. Plata, oro y fragancias de autor, diseñadas en República Dominicana.") %></p>
         <div class="ref10-hero-actions">
           <a href="<%= safePublicUrl(siteSettings?.heroButtonUrl, '/shop') %>" class="ref10-btn ref10-btn-primary"><%= t(siteSettings?.heroButtonText, "Ver la colección") %></a>
-          <a href="<%= safePublicUrl(siteSettings?.heroSecondaryButtonUrl, '#historia') %>" class="ref10-btn ref10-btn-outline"><%= t(siteSettings?.heroSecondaryButtonText, "Nuestra esencia") %></a>
+          <a href="<%= safePublicUrl(siteSettings?.heroSecondaryButtonUrl, '#historia') %>" class="ref10-btn ref10-btn-outline"><%= t(siteSettings?.heroSecondaryButtonText, "Nuestra Filosofía") %></a>
         </div>
       </div>
     </section>
@@ -107,7 +108,7 @@
               <% if (category.imageUrl) { %>
                 <img src="<%= safePublicUrl(category.imageUrl) %>" alt="<%= t(category.name) %>">
               <% } else { %>
-                <img src="/images/logo-gatondo-white.png" alt="<%= t(category.name) %>" class="ref10-card-logo">
+                <img src="/images/logo-gatondo-white.png?v=2026-logos" alt="<%= t(category.name) %>" class="ref10-card-logo">
               <% } %>
               <div class="ref10-collection-shade"></div>
               <div class="ref10-collection-copy">
@@ -137,7 +138,7 @@
                 <% if (product.mainImageUrl) { %>
                   <img src="<%= safePublicUrl(product.mainImageUrl) %>" alt="<%= t(product.name) %>">
                 <% } else { %>
-                  <img src="/images/logo-gatondo-color.png" alt="GATON DO" class="ref10-product-placeholder">
+                  <img src="/images/logo-gatondo-color.png?v=2026-logos" alt="GATON DO" class="ref10-product-placeholder">
                 <% } %>
               </div>
               <div class="ref10-product-copy">
@@ -159,9 +160,9 @@
     <section class="ref10-section ref10-fragrances" id="fragancias">
       <div class="ref10-container">
         <div class="ref10-heading ref10-heading-center ref10-heading-dark">
-          <span><%= t(siteSettings?.fragranceEyebrow, "Fragancias de autor") %></span>
-          <h2><%= t(siteSettings?.fragranceTitle, "Una esencia para cada historia") %></h2>
-          <p><%= t(siteSettings?.fragranceText, "Aromas envolventes que complementan tu estilo. Edición limitada, embotellados con intención.") %></p>
+          <span><%= t(siteSettings?.fragranceEyebrow, "Fragancias") %></span>
+          <h2><%= t(siteSettings?.fragranceTitle, "La esencia perfecta para cada momento.") %></h2>
+          <p><%= t(siteSettings?.fragranceText, "Descubre feromonas, perfumes y accesorios para fragancias cuidadosamente seleccionados para complementar tu estilo, expresar tu personalidad y dejar una impresión inolvidable.") %></p>
         </div>
 
         <p style="text-align:center"><a class="ref10-btn" href="<%= safePublicUrl(siteSettings?.fragranceButtonUrl, '/shop?category=fragancias') %>"><%= t(siteSettings?.fragranceButtonText, "Explorar Fragancias") %></a></p>
@@ -174,7 +175,7 @@
                   <% if (product.mainImageUrl) { %>
                     <img src="<%= safePublicUrl(product.mainImageUrl) %>" alt="<%= t(product.name) %>">
                   <% } else { %>
-                    <img src="/images/logo-gatondo-white.png" alt="GATON DO" class="ref10-product-placeholder">
+                    <img src="/images/logo-gatondo-white.png?v=2026-logos" alt="GATON DO" class="ref10-product-placeholder">
                   <% } %>
                 </div>
                 <div class="ref10-product-copy">
@@ -201,22 +202,22 @@
           <% if (siteSettings?.aboutImageUrl) { %>
             <img src="<%= safePublicUrl(siteSettings.aboutImageUrl) %>" alt="Historia GATON DO">
           <% } else { %>
-            <img src="/images/logo-gatondo-color.png" alt="GATON DO" class="ref10-story-logo">
+            <img src="/images/logo-gatondo-color.png?v=2026-logos" alt="GATON DO" class="ref10-story-logo">
           <% } %>
           <em>EST · 2024</em>
         </div>
 
         <div class="ref10-story-copy">
-          <span><%= t(siteSettings?.aboutSubtitle, "Nuestra esencia") %></span>
-          <h2><%= t(siteSettings?.aboutTitle, "Joyas que nacen de una idea") %></h2>
-          <p><%= t(siteSettings?.aboutText, "GATON nace de la creencia de que cada accesorio debe tener un significado. No vendemos solo joyas: creamos piezas con intención, pensadas para marcar momentos, personas y recuerdos.") %></p>
-          <p>Trabajamos con plata 925, oro laminado y fragancias de autor. Todo hecho a mano y con la posibilidad de personalizarlo a tu manera.</p>
+          <span><%= t(siteSettings?.aboutSubtitle, "Nuestra Filosofía") %></span>
+          <h2><%= t(siteSettings?.aboutTitle, "Hay momentos que merecen permanecer para siempre.") %></h2>
+          <p><%= t(siteSettings?.aboutText, "En GATON DO transformamos ideas en piezas con significado. Personalizamos joyas, accesorios y otros productos mediante grabado láser de alta precisión, convirtiendo nombres, fechas, fotografías, frases y diseños en recuerdos únicos que acompañan cada historia.") %></p>
+          <p>Complementamos esta experiencia con una selección de fragancias pensadas para dejar una impresión inolvidable, porque creemos que los detalles son los que hacen especiales los grandes momentos.</p>
           <div class="ref10-pills">
-            <span>✦ Hecho a mano</span>
-            <span>✦ Materiales nobles</span>
-            <span>✦ Personalizable</span>
+            <span>✦ Grabado láser de alta precisión</span>
+            <span>✦ Personalización con nombres, fechas, fotos y más</span>
+            <span>✦ Creado para conservar recuerdos únicos</span>
           </div>
-          <a href="<%= safePublicUrl(siteSettings?.storyButtonUrl, '/shop') %>" class="ref10-btn ref10-btn-primary"><%= t(siteSettings?.storyButtonText, "Descubre la colección") %></a>
+          <a href="<%= safePublicUrl(siteSettings?.storyButtonUrl, '/shop') %>" class="ref10-btn ref10-btn-primary"><%= t(siteSettings?.storyButtonText, "Explorar Colección") %></a>
         </div>
       </div>
     </section>
@@ -224,14 +225,14 @@
     <section class="ref10-section ref10-steps">
       <div class="ref10-container">
         <div class="ref10-heading ref10-heading-center">
-          <span><%= t(siteSettings?.stepsEyebrow, "¿Cómo pedir?") %></span>
-          <h2><%= t(siteSettings?.stepsTitle, "Tu pedido en 3 pasos") %></h2>
+          <span><%= t(siteSettings?.stepsEyebrow, "¿Cómo funciona?") %></span>
+          <h2><%= t(siteSettings?.stepsTitle, "Tu pieza única, en solo 3 pasos.") %></h2>
         </div>
         <%
           const defaultSteps = [
-            { number: "01", title: "Elige tu pieza", text: "Explora el catálogo y agrega tus favoritos al carrito." },
-            { number: "02", title: "Finaliza por WhatsApp", text: "Tu pedido puede enviarse automáticamente a nuestro WhatsApp." },
-            { number: "03", title: "Recíbelo en casa", text: "Coordinamos el pago y enviamos a todo el país RD." }
+            { number: "01", title: "Elige tu pieza", text: "Explora nuestra colección y selecciona la pieza que deseas personalizar." },
+            { number: "02", title: "Finaliza por WhatsApp", text: "Comparte tu idea con nosotros. Te asesoramos, preparamos un boceto y confirmamos cada detalle antes del grabado." },
+            { number: "03", title: "Recibe tu pieza", text: "Una vez aprobada, la personalizamos con grabado láser de alta precisión y la enviamos a cualquier lugar de República Dominicana." }
           ];
           const stepsToShow = (siteSettings?.steps && siteSettings.steps.length ? siteSettings.steps : defaultSteps).slice(0, 3);
         %>
@@ -276,13 +277,13 @@
       <div class="ref10-container ref10-contact-grid">
         <div class="ref10-contact-copy">
           <span><%= t(siteSettings?.contactEyebrow, "Contáctanos") %></span>
-          <h2><%= t(siteSettings?.contactTitle, "Hablemos de tu próxima joya") %></h2>
-          <p><%= t(siteSettings?.contactText, "¿Quieres una pieza personalizada o tienes dudas sobre un producto? Escríbenos y te respondemos en breve.") %></p>
+          <h2><%= t(siteSettings?.contactTitle, "Tu idea, convertida en una joya única") %></h2>
+          <p style="white-space: pre-line;"><%= t(siteSettings?.contactText, "Cada pieza comienza con una historia. Te acompañamos desde tu primera idea hasta el resultado final para crear una joya personalizada que represente momentos, personas y recuerdos importantes.\n\nCuéntanos lo que imaginas, recibe asesoría personalizada y juntos crearemos una pieza hecha especialmente para ti.") %></p>
           <dl>
             <div><dt>WhatsApp</dt><dd><%= t(siteSettings?.phone || siteSettings?.whatsapp, '+1 (849) 330-6269') %></dd></div>
-            <div><dt>Instagram</dt><dd>@gaton.do</dd></div>
+            <div><dt>Instagram</dt><dd><%= t(siteSettings?.instagramHandle, '@gaton.do') %></dd></div>
             <div><dt>Ubicación</dt><dd><%= t(siteSettings?.locationText, "Av. Independencia, Km. 11, Distrito Nacional, Santo Domingo, Rep. Dom.") %></dd></div>
-            <div><dt>Envíos</dt><dd>A todo el país DO</dd></div>
+            <div><dt>Envíos</dt><dd><%= t(siteSettings?.shippingText, "Realizamos envíos a todo el país DO") %></dd></div>
           </dl>
         </div>
 
