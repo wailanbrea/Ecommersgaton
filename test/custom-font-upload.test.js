@@ -183,3 +183,71 @@ test("engravingOptions y product-detail.ejs soportan 1 imagen por lado o 1 image
   assert.match(html, /Añadir archivo/);
   assert.match(html, /No grabamos imágenes de baja calidad, en blanco y negro o pixeladas\./);
 });
+
+test("soporta hasta 4 lados independientes con texto, tipografía e imagen por cada lado", () => {
+  const viewPath = path.join(__dirname, "..", "views", "store", "product-detail.ejs");
+  const template = fs.readFileSync(viewPath, "utf8");
+  const product = {
+    name: "Dije 4 Caras",
+    slug: "dije-4-caras",
+    basePrice: 1800,
+    compareAtPrice: 0,
+    mainImageUrl: "/images/test.jpg",
+    gallery: [],
+    hasVariants: false,
+    variants: [],
+    hasCustomization: true,
+    allowPhotoCustomization: true,
+    allowPhotoPerField: true,
+    customizationFields: [
+      { key: "lado_1", label: "Lado 1 · Frontal", maxLength: 20, required: true, allowPhoto: true },
+      { key: "lado_2", label: "Lado 2 · Posterior", maxLength: 20, required: false, allowPhoto: true },
+      { key: "lado_3", label: "Lado 3 · Lateral 1", maxLength: 20, required: false, allowPhoto: true },
+      { key: "lado_4", label: "Lado 4 · Lateral 2", maxLength: 20, required: false, allowPhoto: true }
+    ],
+    fontOptions: [{ name: "Black Jack", previewText: "Aa", active: true }]
+  };
+
+  const engraving = engravingOptions(product);
+  assert.equal(engraving.fields.length, 4);
+  assert.deepEqual(
+    engraving.fields.map((f) => f.photoInputName),
+    ["customizationPhoto_0", "customizationPhoto_1", "customizationPhoto_2", "customizationPhoto_3"]
+  );
+
+  const html = ejs.render(template, {
+    filename: viewPath,
+    product,
+    category: null,
+    engraving,
+    defaultImage: product.mainImageUrl,
+    defaultPrice: 1800,
+    defaultCompareAt: 0,
+    defaultStock: 5,
+    defaultVariantIndex: null,
+    productUnavailable: false,
+    cartAdded: false,
+    stockLimited: false,
+    stockUnavailable: false,
+    engravingInvalid: false,
+    engravingUploadInvalid: false,
+    initialWhatsAppUrl: "https://wa.me/18090000000",
+    reviews: [],
+    reviewSubmitted: false,
+    reviewInvalid: false,
+    reviewError: false,
+    relatedProducts: [],
+    siteSettings: { brandName: "GATON DO", menuItems: [] },
+    cartCount: 0,
+    currentPath: "/product/dije-4-caras",
+    safePublicUrl: (u) => u,
+    isVariantUnavailable: () => false,
+    getVariantStock: () => 5
+  });
+
+  for (let i = 0; i < 4; i++) {
+    assert.match(html, new RegExp(`name="engraving_${i}"`));
+    assert.match(html, new RegExp(`name="engravingFont_${i}"`));
+    assert.match(html, new RegExp(`name="customizationPhoto_${i}"`));
+  }
+});

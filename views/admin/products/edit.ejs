@@ -288,14 +288,19 @@
       </section>
 
       <section>
-        <div class="flex items-center justify-between gap-4 mb-4">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
           <h3 class="text-xl font-semibold text-stone-900">Campos de personalización</h3>
-          <button type="button" id="addCustomFieldBtn" class="rounded-xl bg-stone-900 text-white px-4 py-2 text-sm font-medium hover:bg-stone-800">
-            Agregar campo
-          </button>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" id="load4SidesBtn" class="rounded-xl bg-white border border-stone-300 text-stone-800 px-4 py-2 text-sm font-medium hover:bg-stone-50">
+              Cargar 4 lados
+            </button>
+            <button type="button" id="addCustomFieldBtn" class="rounded-xl bg-stone-900 text-white px-4 py-2 text-sm font-medium hover:bg-stone-800">
+              Agregar campo / lado
+            </button>
+          </div>
         </div>
 
-        <p class="text-sm text-stone-600 mb-4">Para joyas con varias caras, agrega un campo por cada una y nómbralo, por ejemplo, “Grabado frontal” y “Grabado posterior”. El cliente tendrá una vista previa independiente para cada texto.</p>
+        <p class="text-sm text-stone-600 mb-4">Puedes agregar <strong>1, 2, 3, 4 o más lados</strong> (ej. Frontal, Posterior, Lateral 1, Lateral 2). Cada lado tendrá su propio campo de texto, vista previa en vivo, selector de tipografía y opción independiente para subir imagen.</p>
 
         <div class="mb-5 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 space-y-3">
           <label class="flex items-start gap-3 cursor-pointer">
@@ -629,6 +634,30 @@
 
     document.getElementById("addCustomFieldBtn").addEventListener("click", function () {
       appendTemplate("customTemplate", "customFieldsContainer");
+    });
+
+    document.getElementById("load4SidesBtn")?.addEventListener("click", function () {
+      const container = document.getElementById("customFieldsContainer");
+      const template = document.getElementById("customTemplate");
+      if (!container || !template) return;
+      const sides = [
+        { key: "lado_1", label: "Lado 1 · Frontal", required: true },
+        { key: "lado_2", label: "Lado 2 · Posterior", required: false },
+        { key: "lado_3", label: "Lado 3 · Lateral 1", required: false },
+        { key: "lado_4", label: "Lado 4 · Lateral 2", required: false }
+      ];
+      const existingCount = container.querySelectorAll(".custom-item").length;
+      sides.slice(existingCount).forEach(function (side) {
+        const clone = template.content.cloneNode(true);
+        const keyInput = clone.querySelector('input[name="customKey"]');
+        const labelInput = clone.querySelector('input[name="customLabel"]');
+        const reqCb = clone.querySelector('input[type="checkbox"][name="customRequired"]');
+        if (keyInput) keyInput.value = side.key;
+        if (labelInput) labelInput.value = side.label;
+        if (reqCb) reqCb.checked = side.required;
+        container.appendChild(clone);
+      });
+      refreshUploadIndexes();
     });
 
     document.getElementById("addFontBtn").addEventListener("click", function () {
