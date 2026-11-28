@@ -158,12 +158,13 @@
                 <small><%= t(categoryLabel(product)) %></small>
                 <h3><%= t(product.name) %></h3>
                 <% if (product.shortDescription) { %><p><%= t(product.shortDescription) %></p><% } %>
+                <% const sPricing = typeof resolveProductDisplayPricing === 'function' ? resolveProductDisplayPricing(product) : { salePrice: Number(product.basePrice || 0), regularPrice: Number(product.compareAtPrice || 0), hasOffer: Number(product.compareAtPrice || 0) > Number(product.basePrice || 0) }; %>
                 <div class="ref10-product-bottom">
-                  <strong><%= formatCurrency ? formatCurrency(product.basePrice || 0) : ('RD$ ' + Number(product.basePrice || 0).toLocaleString('en-US')) %></strong>
+                  <strong><%= formatCurrency ? formatCurrency(sPricing.salePrice || 0) : ('RD$ ' + Number(sPricing.salePrice || 0).toLocaleString('en-US')) %></strong>
                   <span>+</span>
                 </div>
-                <% if (product.compareAtPrice && product.compareAtPrice > product.basePrice) { %>
-                  <div class="ref10-old-price"><%= formatCurrency(product.compareAtPrice || 0) %></div>
+                <% if (sPricing.hasOffer) { %>
+                  <div class="ref10-old-price"><%= formatCurrency(sPricing.regularPrice || 0) %></div>
                 <% } %>
               </div>
             </a>

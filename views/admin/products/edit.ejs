@@ -102,8 +102,9 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-stone-700 mb-2">Precio de oferta / compareAt</label>
-            <input type="text" inputmode="decimal" name="compareAtPrice" value="<%= formData.compareAtPrice %>" placeholder="RD$1,500.00" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+            <label class="block text-sm font-medium text-stone-700 mb-2">Precio de oferta (opcional)</label>
+            <input type="text" inputmode="decimal" name="compareAtPrice" value="<%= formData.compareAtPrice %>" placeholder="Ej. 990.00" class="w-full rounded-xl border border-stone-300 px-4 py-3">
+            <p class="mt-1 text-xs text-stone-500">Si es menor al precio base, se cobrará este precio de oferta y el precio base saldrá tachado.</p>
           </div>
 
           <div>
@@ -135,13 +136,8 @@
           </label>
 
           <label class="inline-flex items-center gap-3">
-            <input type="checkbox" name="hasCustomization" <%= formData.hasCustomization ? "checked" : "" %>>
+            <input type="checkbox" name="hasCustomization" id="hasCustomizationCheckbox" <%= formData.hasCustomization ? "checked" : "" %>>
             <span class="text-sm text-stone-700">Permite personalización</span>
-          </label>
-
-          <label class="inline-flex items-center gap-3">
-            <input type="checkbox" name="allowPhotoCustomization" <%= formData.allowPhotoCustomization ? "checked" : "" %>>
-            <span class="text-sm text-stone-700">Permite cargar foto para fotograbado</span>
           </label>
         </div>
       </section>
@@ -300,6 +296,17 @@
         </div>
 
         <p class="text-sm text-stone-600 mb-4">Para joyas con varias caras, agrega un campo por cada una y nómbralo, por ejemplo, “Grabado frontal” y “Grabado posterior”. El cliente tendrá una vista previa independiente para cada texto.</p>
+
+        <div class="mb-5 rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
+          <label class="flex items-start gap-3 cursor-pointer">
+            <input type="checkbox" name="allowPhotoCustomization" id="allowPhotoCustomizationCheckbox" <%= formData.allowPhotoCustomization ? "checked" : "" %> class="mt-1 rounded border-stone-300">
+            <span>
+              <strong class="block text-sm font-semibold text-stone-900">Permitir carga de imágenes del cliente (Fotograbado)</strong>
+              <span class="block text-xs text-stone-600 mt-0.5">Habilita en la tienda la casilla para que el cliente adjunte hasta 6 fotos (JPG, PNG o WEBP), por ejemplo una imagen por cada lado de la joya.</span>
+            </span>
+          </label>
+        </div>
+
         <div id="customFieldsContainer" class="space-y-4">
           <% if (formData.customizationFields && formData.customizationFields.length) { %>
             <% formData.customizationFields.forEach((field) => { %>
@@ -655,6 +662,12 @@
         }
       }
     });
+
+    document.getElementById("allowPhotoCustomizationCheckbox")?.addEventListener("change", function () {
+      const custCb = document.querySelector('input[name="hasCustomization"]');
+      if (this.checked && custCb) custCb.checked = true;
+    });
+
     refreshUploadIndexes();
   </script>
   <script src="/js/admin-variant-builder.js?v=2" defer></script>

@@ -32,6 +32,7 @@ function normalizeComparable(value = "") {
 
 const isGenderCategory = require("../utils/hiddenCategory");
 const safePublicUrl = require("../utils/safePublicUrl");
+const { resolveEffectivePricing, resolveProductDisplayPricing } = require("../utils/pricing");
 
 function displayText(value = "") {
   return String(value || "")
@@ -149,6 +150,8 @@ module.exports = async function globals(req, res, next) {
     res.locals.displayText = displayText;
     res.locals.formatCurrency = formatCurrency;
     res.locals.safePublicUrl = safePublicUrl;
+    res.locals.resolveEffectivePricing = resolveEffectivePricing;
+    res.locals.resolveProductDisplayPricing = resolveProductDisplayPricing;
     res.locals.isAdminLoggedIn = Boolean(req.session && req.session.adminId);
     res.locals.currentAdminEmail = req.session?.adminEmail || null;
     res.locals.adminUnseenOrdersCount = adminUnseenOrdersCount;
@@ -169,6 +172,8 @@ module.exports = async function globals(req, res, next) {
     res.locals.displayText = displayText;
     res.locals.formatCurrency = formatCurrency;
     res.locals.safePublicUrl = safePublicUrl;
+    res.locals.resolveEffectivePricing = resolveEffectivePricing;
+    res.locals.resolveProductDisplayPricing = resolveProductDisplayPricing;
     res.locals.isAdminLoggedIn = Boolean(req.session && req.session.adminId);
     res.locals.currentAdminEmail = req.session?.adminEmail || null;
     res.locals.cartCount = cartCount;

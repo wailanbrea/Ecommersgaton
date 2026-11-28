@@ -3,159 +3,265 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Configuración | Admin</title>  <link rel="stylesheet" href="/css/app.css?v=ref10b1">
+  <title>Configuración | Admin</title>
+  <link rel="stylesheet" href="/css/app.css?v=ref10b1">
   <link rel="stylesheet" href="/css/admin-utilities.css">
   <link rel="stylesheet" href="/css/admin.css">
+  <style>
+    .set-page { max-width: 1180px; margin: 0 auto; padding: 1.5rem 1.25rem 4rem; display: flex; flex-direction: column; gap: 1.25rem; }
+    .set-nav { position: sticky; top: .5rem; z-index: 15; background: rgba(255,255,255,.94); backdrop-filter: blur(8px); border: 1px solid #e7e5e4; border-radius: 1rem; padding: .65rem .85rem; display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; box-shadow: 0 4px 16px rgba(28,25,23,.06); }
+    .set-nav a { display: inline-flex; align-items: center; padding: .42rem .85rem; border-radius: 999px; font-size: .79rem; font-weight: 700; color: #44403c; background: #f5f5f4; text-decoration: none; white-space: nowrap; transition: all .15s ease; }
+    .set-nav a:hover { background: #1c1917; color: #fff; }
+    .set-card { background: #fff; border: 1px solid #e7e5e4; border-radius: 1.2rem; padding: 1.5rem; box-shadow: 0 1px 3px rgba(28,25,23,.04); scroll-margin-top: 5.5rem; }
+    .set-card-head { margin-bottom: 1.15rem; padding-bottom: .85rem; border-bottom: 1px solid #f5f5f4; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; }
+    .set-card-head h3 { font-size: 1.15rem; font-weight: 800; color: #1c1917; margin: 0; }
+    .set-card-head p { font-size: .84rem; color: #57534e; margin: .25rem 0 0; }
+    .set-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 1.15rem; }
+    .set-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    @media (max-width: 820px) { .set-grid, .set-grid--3 { grid-template-columns: 1fr; } }
+    .set-full { grid-column: 1 / -1; }
+    .set-field { display: flex; flex-direction: column; gap: .35rem; }
+    .set-field label { font-size: .8rem; font-weight: 700; color: #44403c; }
+    .set-field input[type="text"], .set-field input[type="email"], .set-field textarea, .set-field select { width: 100%; border: 1px solid #d6d3d1; border-radius: .75rem; padding: .62rem .85rem; font-size: .88rem; color: #1c1917; background: #fff; box-sizing: border-box; }
+    .set-field input[type="file"] { width: 100%; border: 1px dashed #a8a29e; border-radius: .75rem; padding: .55rem .75rem; font-size: .83rem; background: #fafaf9; box-sizing: border-box; }
+    .set-field input:focus, .set-field textarea:focus { outline: 2px solid #1c1917; outline-offset: 1px; border-color: #1c1917; }
+    .set-media-box { border: 1px solid #e7e5e4; background: #fafaf9; border-radius: 1rem; padding: 1rem; display: flex; flex-direction: column; gap: .75rem; }
+    .set-media-preview { width: 100%; height: 190px; border-radius: .8rem; border: 1px solid #e7e5e4; background: #f5f5f4; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; }
+    .set-media-preview img, .set-media-preview video { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .set-media-preview img[hidden], .set-media-preview video[hidden], .set-media-empty[hidden] { display: none !important; }
+    .set-media-empty { text-align: center; padding: 1rem; color: #78716c; font-size: .82rem; font-weight: 600; }
+    .set-media-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; }
+    .set-clear-btn { border: 1px solid #fecaca; background: #fef2f2; color: #b91c1c; border-radius: .6rem; padding: .35rem .7rem; font-size: .76rem; font-weight: 700; cursor: pointer; }
+    .set-clear-btn:hover { background: #fee2e2; }
+    .set-save-bar { position: sticky; bottom: .75rem; z-index: 20; background: rgba(28,25,23,.95); color: #fff; border-radius: 1rem; padding: .85rem 1.2rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; box-shadow: 0 12px 30px rgba(0,0,0,.18); }
+  </style>
 </head>
 <body class="admin-shell-body">
   <%- include("../../partials/admin-shell-start") %>
-<main class="max-w-6xl mx-auto px-4 py-8">
-    <div class="mb-6 flex justify-end gap-4">
-      <a href="/admin/dashboard" class="rounded-xl bg-white border border-stone-300 px-5 py-3 text-sm font-medium hover:bg-stone-50">Volver</a>
-    </div>
-
+  <main class="set-page">
     <% if (error) { %>
-      <div class="mb-6 rounded-xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm"><%= error %></div>
+      <div class="rounded-2xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm font-medium"><%= error %></div>
     <% } %>
 
     <% if (success) { %>
-      <div class="mb-6 rounded-xl bg-green-50 border border-green-200 text-green-700 px-4 py-3 text-sm">Configuración guardada correctamente.</div>
+      <div role="status" class="rounded-2xl bg-green-50 border border-green-200 text-green-800 px-4 py-3 text-sm font-medium">Configuración guardada correctamente.</div>
     <% } %>
 
-    <form action="/admin/settings" method="post" enctype="multipart/form-data" class="admin-settings-form bg-white border border-stone-200 rounded-2xl p-6 shadow-sm space-y-10">
+    <nav class="set-nav" aria-label="Secciones de configuración">
+      <a href="#heroSection">Portada principal</a>
+      <a href="#identitySection">Identidad y textos</a>
+      <a href="#storySection">Historia / Esencia</a>
+      <a href="#homeSections">Colecciones y pasos</a>
+      <a href="#contactSection">Contacto y redes</a>
+      <a href="#defaultFontsSection">Tipografías predeterminadas</a>
+      <a href="#shippingSection">Envíos</a>
+    </nav>
+
+    <form action="/admin/settings" method="post" enctype="multipart/form-data" class="space-y-6">
       <input type="hidden" name="_csrf" value="<%= adminCsrfToken %>">
-      <section class="admin-form-section">
-        <h3>Identidad y barra superior</h3>
-        <p>Esta parte controla el logo, eslogan y la barra verde superior que se desplaza.</p>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
-          <label>Nombre de marca<input type="text" name="brandName" value="<%= formData.brandName || '' %>"></label>
-          <label>Eslogan<input type="text" name="slogan" value="<%= formData.slogan || '' %>"></label>
-          <label class="md:col-span-2">Texto de barra superior<input type="text" name="topbarText" value="<%= formData.topbarText || '' %>" placeholder="Envíos disponibles en RD • Joyas con intención • Personalizados con estilo"></label>
-          <label class="md:col-span-2">Franja después del hero<input type="text" name="marqueeText" value="<%= formData.marqueeText || '' %>" placeholder="Joyas con intención ✦ Hecho a mano ✦ GATON ✦ Personalizados"></label>
-          <label>Texto del enlace de las tarjetas<input name="collectionLinkText" value="<%= formData.collectionLinkText || '' %>"></label>
-          <label>Texto del botón de fragancias<input name="fragranceButtonText" value="<%= formData.fragranceButtonText || '' %>"></label>
-          <label>Destino del botón de fragancias<input name="fragranceButtonUrl" value="<%= formData.fragranceButtonUrl || '' %>"></label>
-          <label>Botón de filtrar<input name="filterLabel" value="<%= formData.filterLabel || '' %>"></label>
-          <label>Enlace para limpiar filtros<input name="clearLabel" value="<%= formData.clearLabel || '' %>"></label>
-          <label>Ayuda del buscador<input name="searchHint" value="<%= formData.searchHint || '' %>"></label>
-          <label>Logo de portada (URL)<input name="heroLogoUrl" value="<%= formData.heroLogoUrl || '' %>"></label>
-          <label>Logo del pie (URL)<input name="footerLogoUrl" value="<%= formData.footerLogoUrl || '' %>"></label>
-          <label>URL logo opcional<input type="text" name="logoUrl" value="<%= formData.logoUrl || '' %>" placeholder="/images/logo-gatondo-color.png"></label>
-          <label>Fuente principal<input type="text" name="primaryFont" value="<%= formData.primaryFont || 'Times New Roman' %>"></label>
-          <label>Fuente secundaria<input type="text" name="secondaryFont" value="<%= formData.secondaryFont || 'Open Sans' %>"></label>
-        </div>
-      </section>
 
-      <section class="admin-form-section">
-        <h3>Hero / portada principal</h3>
-        <p>La portada puede mostrar video o imagen. Si hay video, el video tiene prioridad.</p>
-        <div class="grid grid-cols-1 gap-5 mt-5">
-          <label>Título principal<input type="text" name="heroTitle" value="<%= formData.heroTitle || '' %>" placeholder="Joyas con intención"></label>
-          <label>Subtítulo<textarea name="heroSubtitle" rows="3"><%= formData.heroSubtitle || '' %></textarea></label>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <label>Texto botón principal<input type="text" name="heroButtonText" value="<%= formData.heroButtonText || 'Ver la colección' %>"></label>
-            <label>URL botón principal<input type="text" name="heroButtonUrl" value="<%= formData.heroButtonUrl || '/shop' %>"></label>
-            <label>Texto botón secundario<input type="text" name="heroSecondaryButtonText" value="<%= formData.heroSecondaryButtonText || 'Nuestra esencia' %>"></label>
-            <label>URL botón secundario<input type="text" name="heroSecondaryButtonUrl" value="<%= formData.heroSecondaryButtonUrl || '#historia' %>"></label>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <label>Imagen portada<input type="file" name="heroImageFile" accept="image/jpeg,image/png,image/webp,image/gif"><input type="text" name="heroImageUrl" value="<%= formData.heroImageUrl || '' %>" placeholder="O URL actual de imagen"></label>
-            <label>Video/GIF portada<input type="file" name="heroVideoFile" accept="video/mp4,video/webm,video/quicktime,image/gif"><input type="text" name="heroVideoUrl" value="<%= formData.heroVideoUrl || '' %>" placeholder="O URL actual de video"></label>
+      <section id="heroSection" class="set-card">
+        <div class="set-card-head">
+          <div>
+            <h3>Portada principal (Hero)</h3>
+            <p>Sube la imagen o video de portada de la tienda. Si no hay imagen ni video cargado, la portada se mostrará limpia sin tomar fotos de productos automáticamente.</p>
           </div>
         </div>
-      </section>
 
-      <section class="admin-form-section">
-        <h3>Colecciones principales</h3>
-        <p>Estos textos aparecen sobre los 4 cuadros grandes. Los cuadros se eligen desde Categorías marcando “Mostrar en inicio”.</p>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
-          <label>Texto pequeño<input type="text" name="collectionsEyebrow" value="<%= formData.collectionsEyebrow || 'Explora' %>"></label>
-          <label>Título<input type="text" name="collectionsTitle" value="<%= formData.collectionsTitle || 'Nuestras colecciones' %>"></label>
-          <label class="md:col-span-2">Título antiguo DESCUBRE<input type="text" name="discoverTitle" value="<%= formData.discoverTitle || '' %>"></label>
-          <label class="md:col-span-2">Texto antiguo DESCUBRE<textarea name="discoverText" rows="3"><%= formData.discoverText || '' %></textarea></label>
+        <div class="set-grid">
+          <div class="set-media-box">
+            <div class="set-media-actions">
+              <strong class="text-sm text-stone-900">Imagen de portada actual</strong>
+              <button type="button" class="set-clear-btn" data-clear-media="heroImage">Quitar imagen</button>
+            </div>
+            <div class="set-media-preview">
+              <img id="heroImagePreview" src="<%= formData.heroImageUrl ? safePublicUrl(formData.heroImageUrl) : '' %>" alt="Vista previa de portada" <%= formData.heroImageUrl ? '' : 'hidden' %>>
+              <div id="heroImageEmpty" class="set-media-empty" <%= formData.heroImageUrl ? 'hidden' : '' %>>Sin imagen de portada cargada</div>
+            </div>
+            <div class="set-field">
+              <label for="heroImageFile">Subir nueva imagen de portada (JPG, PNG, WEBP)</label>
+              <input id="heroImageFile" type="file" name="heroImageFile" accept="image/jpeg,image/png,image/webp,image/gif" data-preview-target="heroImage">
+            </div>
+            <div class="set-field">
+              <label for="heroImageUrl">URL / ruta guardada</label>
+              <input id="heroImageUrl" type="text" name="heroImageUrl" value="<%= formData.heroImageUrl || '' %>" placeholder="Vacío = sin imagen de portada">
+            </div>
+          </div>
+
+          <div class="set-media-box">
+            <div class="set-media-actions">
+              <strong class="text-sm text-stone-900">Video / GIF de portada (opcional · tiene prioridad)</strong>
+              <button type="button" class="set-clear-btn" data-clear-media="heroVideo">Quitar video</button>
+            </div>
+            <div class="set-media-preview">
+              <video id="heroVideoPreview" src="<%= formData.heroVideoUrl ? safePublicUrl(formData.heroVideoUrl) : '' %>" muted loop controls <%= formData.heroVideoUrl ? '' : 'hidden' %>></video>
+              <div id="heroVideoEmpty" class="set-media-empty" <%= formData.heroVideoUrl ? 'hidden' : '' %>>Sin video de portada cargado</div>
+            </div>
+            <div class="set-field">
+              <label for="heroVideoFile">Subir video o GIF (MP4, WEBM, MOV, GIF)</label>
+              <input id="heroVideoFile" type="file" name="heroVideoFile" accept="video/mp4,video/webm,video/quicktime,image/gif">
+            </div>
+            <div class="set-field">
+              <label for="heroVideoUrl">URL / ruta guardada</label>
+              <input id="heroVideoUrl" type="text" name="heroVideoUrl" value="<%= formData.heroVideoUrl || '' %>" placeholder="Vacío = sin video de portada">
+            </div>
+          </div>
+
+          <div class="set-field set-full">
+            <label>Título principal</label>
+            <input type="text" name="heroTitle" value="<%= formData.heroTitle || '' %>" placeholder="Joyas con intención">
+          </div>
+          <div class="set-field set-full">
+            <label>Subtítulo</label>
+            <textarea name="heroSubtitle" rows="3"><%= formData.heroSubtitle || '' %></textarea>
+          </div>
+          <div class="set-field">
+            <label>Texto botón principal</label>
+            <input type="text" name="heroButtonText" value="<%= formData.heroButtonText || 'Ver la colección' %>">
+          </div>
+          <div class="set-field">
+            <label>URL botón principal</label>
+            <input type="text" name="heroButtonUrl" value="<%= formData.heroButtonUrl || '/shop' %>">
+          </div>
+          <div class="set-field">
+            <label>Texto botón secundario</label>
+            <input type="text" name="heroSecondaryButtonText" value="<%= formData.heroSecondaryButtonText || 'Nuestra esencia' %>">
+          </div>
+          <div class="set-field">
+            <label>URL botón secundario</label>
+            <input type="text" name="heroSecondaryButtonUrl" value="<%= formData.heroSecondaryButtonUrl || '#historia' %>">
+          </div>
         </div>
       </section>
 
-      <section class="admin-form-section">
-        <h3>Sección historia / esencia</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
-          <label>Texto pequeño<input type="text" name="aboutSubtitle" value="<%= formData.aboutSubtitle || 'Nuestra esencia' %>"></label>
-          <label>Título<input type="text" name="aboutTitle" value="<%= formData.aboutTitle || '' %>"></label>
-          <label class="md:col-span-2">Texto<textarea name="aboutText" rows="5"><%= formData.aboutText || '' %></textarea></label>
-          <label>Imagen de la sección<input type="file" name="aboutImageFile" accept="image/jpeg,image/png,image/webp,image/gif"><input type="text" name="aboutImageUrl" value="<%= formData.aboutImageUrl || '' %>" placeholder="O URL actual de imagen"></label>
-          <label>Texto botón<input type="text" name="storyButtonText" value="<%= formData.storyButtonText || 'Descubre la colección' %>"><input type="text" name="storyButtonUrl" value="<%= formData.storyButtonUrl || '/shop' %>" placeholder="URL del botón"></label>
+      <section id="identitySection" class="set-card">
+        <div class="set-card-head">
+          <div>
+            <h3>Identidad, logos y barra superior</h3>
+            <p>Controla el nombre de marca, eslogan, barra superior y etiquetas generales de la tienda.</p>
+          </div>
+        </div>
+        <div class="set-grid">
+          <div class="set-field"><label>Nombre de marca</label><input type="text" name="brandName" value="<%= formData.brandName || '' %>"></div>
+          <div class="set-field"><label>Eslogan</label><input type="text" name="slogan" value="<%= formData.slogan || '' %>"></div>
+          <div class="set-field set-full"><label>Texto de barra superior</label><input type="text" name="topbarText" value="<%= formData.topbarText || '' %>" placeholder="Envíos disponibles en RD • Joyas con intención • Personalizados con estilo"></div>
+          <div class="set-field set-full"><label>Franja después de la portada</label><input type="text" name="marqueeText" value="<%= formData.marqueeText || '' %>" placeholder="Joyas con intención ✦ Hecho a mano ✦ GATON ✦ Personalizados"></div>
+          <div class="set-field"><label>Logo de portada (URL)</label><input type="text" name="heroLogoUrl" value="<%= formData.heroLogoUrl || '' %>"></div>
+          <div class="set-field"><label>Logo del pie (URL)</label><input type="text" name="footerLogoUrl" value="<%= formData.footerLogoUrl || '' %>"></div>
+          <div class="set-field"><label>URL logo opcional</label><input type="text" name="logoUrl" value="<%= formData.logoUrl || '' %>" placeholder="/images/logo-gatondo-color.png"></div>
+          <div class="set-field"><label>Texto enlace de tarjetas</label><input type="text" name="collectionLinkText" value="<%= formData.collectionLinkText || '' %>"></div>
+          <div class="set-field"><label>Texto botón fragancias</label><input type="text" name="fragranceButtonText" value="<%= formData.fragranceButtonText || '' %>"></div>
+          <div class="set-field"><label>Destino botón fragancias</label><input type="text" name="fragranceButtonUrl" value="<%= formData.fragranceButtonUrl || '' %>"></div>
+          <div class="set-field"><label>Botón de filtrar</label><input type="text" name="filterLabel" value="<%= formData.filterLabel || '' %>"></div>
+          <div class="set-field"><label>Enlace limpiar filtros</label><input type="text" name="clearLabel" value="<%= formData.clearLabel || '' %>"></div>
+          <div class="set-field"><label>Ayuda del buscador</label><input type="text" name="searchHint" value="<%= formData.searchHint || '' %>"></div>
+          <div class="set-field"><label>Fuente principal del sitio</label><input type="text" name="primaryFont" value="<%= formData.primaryFont || 'Times New Roman' %>"></div>
+          <div class="set-field"><label>Fuente secundaria del sitio</label><input type="text" name="secondaryFont" value="<%= formData.secondaryFont || 'Open Sans' %>"></div>
         </div>
       </section>
 
-      <section class="admin-form-section">
-        <h3>Sección catálogo en inicio</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
-          <label>Texto pequeño<input type="text" name="catalogEyebrow" value="<%= formData.catalogEyebrow || 'Catálogo' %>"></label>
-          <label>Título<input type="text" name="catalogTitle" value="<%= formData.catalogTitle || 'Joyería' %>"></label>
-          <label class="md:col-span-2">Texto<textarea name="catalogText" rows="3"><%= formData.catalogText || '' %></textarea></label>
+      <section id="storySection" class="set-card">
+        <div class="set-card-head">
+          <div>
+            <h3>Sección historia / esencia</h3>
+            <p>Presentación de la marca en la página de inicio.</p>
+          </div>
+        </div>
+        <div class="set-grid">
+          <div class="set-field"><label>Texto pequeño</label><input type="text" name="aboutSubtitle" value="<%= formData.aboutSubtitle || 'Nuestra esencia' %>"></div>
+          <div class="set-field"><label>Título</label><input type="text" name="aboutTitle" value="<%= formData.aboutTitle || '' %>"></div>
+          <div class="set-field set-full"><label>Texto</label><textarea name="aboutText" rows="4"><%= formData.aboutText || '' %></textarea></div>
+          <div class="set-media-box">
+            <div class="set-media-actions">
+              <strong class="text-sm text-stone-900">Imagen de Historia / Esencia</strong>
+              <button type="button" class="set-clear-btn" data-clear-media="aboutImage">Quitar imagen</button>
+            </div>
+            <div class="set-media-preview">
+              <img id="aboutImagePreview" src="<%= formData.aboutImageUrl ? safePublicUrl(formData.aboutImageUrl) : '' %>" alt="Imagen de historia" <%= formData.aboutImageUrl ? '' : 'hidden' %>>
+              <div id="aboutImageEmpty" class="set-media-empty" <%= formData.aboutImageUrl ? 'hidden' : '' %>>Sin imagen cargada</div>
+            </div>
+            <div class="set-field">
+              <label for="aboutImageFile">Subir nueva imagen</label>
+              <input id="aboutImageFile" type="file" name="aboutImageFile" accept="image/jpeg,image/png,image/webp,image/gif" data-preview-target="aboutImage">
+            </div>
+            <div class="set-field">
+              <label for="aboutImageUrl">URL / ruta guardada</label>
+              <input id="aboutImageUrl" type="text" name="aboutImageUrl" value="<%= formData.aboutImageUrl || '' %>" placeholder="O URL actual de imagen">
+            </div>
+          </div>
+          <div class="space-y-4">
+            <div class="set-field"><label>Texto botón</label><input type="text" name="storyButtonText" value="<%= formData.storyButtonText || 'Descubre la colección' %>"></div>
+            <div class="set-field"><label>URL botón</label><input type="text" name="storyButtonUrl" value="<%= formData.storyButtonUrl || '/shop' %>"></div>
+          </div>
         </div>
       </section>
 
-      <section class="admin-form-section">
-        <h3>Sección fragancias</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
-          <label>Texto pequeño<input type="text" name="fragranceEyebrow" value="<%= formData.fragranceEyebrow || 'Fragancias de autor' %>"></label>
-          <label>Título<input type="text" name="fragranceTitle" value="<%= formData.fragranceTitle || 'Una esencia para cada historia' %>"></label>
-          <label class="md:col-span-2">Texto<textarea name="fragranceText" rows="3"><%= formData.fragranceText || '' %></textarea></label>
+      <section id="homeSections" class="set-card">
+        <div class="set-card-head">
+          <div>
+            <h3>Secciones de inicio (Colecciones, Catálogo, Fragancias y 3 Pasos)</h3>
+            <p>Textos de apoyo que aparecen en la página principal.</p>
+          </div>
         </div>
-      </section>
+        <div class="set-grid">
+          <div class="set-field"><label>Colecciones · Texto pequeño</label><input type="text" name="collectionsEyebrow" value="<%= formData.collectionsEyebrow || 'Explora' %>"></div>
+          <div class="set-field"><label>Colecciones · Título</label><input type="text" name="collectionsTitle" value="<%= formData.collectionsTitle || 'Nuestras colecciones' %>"></div>
+          <div class="set-field"><label>Catálogo · Texto pequeño</label><input type="text" name="catalogEyebrow" value="<%= formData.catalogEyebrow || 'Catálogo' %>"></div>
+          <div class="set-field"><label>Catálogo · Título</label><input type="text" name="catalogTitle" value="<%= formData.catalogTitle || 'Joyería' %>"></div>
+          <div class="set-field set-full"><label>Catálogo · Descripción</label><textarea name="catalogText" rows="2"><%= formData.catalogText || '' %></textarea></div>
+          <div class="set-field"><label>Fragancias · Texto pequeño</label><input type="text" name="fragranceEyebrow" value="<%= formData.fragranceEyebrow || 'Fragancias de autor' %>"></div>
+          <div class="set-field"><label>Fragancias · Título</label><input type="text" name="fragranceTitle" value="<%= formData.fragranceTitle || 'Una esencia para cada historia' %>"></div>
+          <div class="set-field set-full"><label>Fragancias · Descripción</label><textarea name="fragranceText" rows="2"><%= formData.fragranceText || '' %></textarea></div>
+          <div class="set-field"><label>Pasos · Texto pequeño</label><input type="text" name="stepsEyebrow" value="<%= formData.stepsEyebrow || '¿Cómo pedir?' %>"></div>
+          <div class="set-field"><label>Pasos · Título</label><input type="text" name="stepsTitle" value="<%= formData.stepsTitle || 'Tu pedido en 3 pasos' %>"></div>
+          <input type="hidden" name="discoverTitle" value="<%= formData.discoverTitle || '' %>">
+          <input type="hidden" name="discoverText" value="<%= formData.discoverText || '' %>">
+        </div>
 
-      <section class="admin-form-section">
-        <h3>Tu pedido en 3 pasos</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
-          <label>Texto pequeño<input type="text" name="stepsEyebrow" value="<%= formData.stepsEyebrow || '¿Cómo pedir?' %>"></label>
-          <label>Título<input type="text" name="stepsTitle" value="<%= formData.stepsTitle || 'Tu pedido en 3 pasos' %>"></label>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mt-5">
+        <div class="set-grid set-grid--3 mt-5">
           <% const defaultSteps = [{number:'01',title:'Elige tu pieza',text:'Explora el catálogo y agrega tus favoritos al carrito.'},{number:'02',title:'Finaliza por WhatsApp',text:'Tu pedido puede enviarse automáticamente a nuestro WhatsApp.'},{number:'03',title:'Recíbelo en casa',text:'Coordinamos el pago y enviamos a todo el país RD.'}]; %>
           <% for (let i = 0; i < 3; i++) { const step = (formData.steps || [])[i] || defaultSteps[i]; %>
             <div class="rounded-2xl border border-stone-200 p-4 bg-stone-50 space-y-3">
-              <label>Número<input type="text" name="stepNumber" value="<%= step.number || defaultSteps[i].number %>"></label>
-              <label>Título<input type="text" name="stepTitle" value="<%= step.title || defaultSteps[i].title %>"></label>
-              <label>Texto<textarea name="stepText" rows="3"><%= step.text || defaultSteps[i].text %></textarea></label>
+              <div class="set-field"><label>Número</label><input type="text" name="stepNumber" value="<%= step.number || defaultSteps[i].number %>"></div>
+              <div class="set-field"><label>Título</label><input type="text" name="stepTitle" value="<%= step.title || defaultSteps[i].title %>"></div>
+              <div class="set-field"><label>Texto</label><textarea name="stepText" rows="2"><%= step.text || defaultSteps[i].text %></textarea></div>
             </div>
           <% } %>
         </div>
       </section>
 
-      <section class="admin-form-section">
-        <h3>Testimonios y contacto</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
-          <label>Texto pequeño testimonios<input type="text" name="testimonialsEyebrow" value="<%= formData.testimonialsEyebrow || 'Clientes' %>"></label>
-          <label>Título testimonios<input type="text" name="testimonialsTitle" value="<%= formData.testimonialsTitle || 'Lo que dicen de GATON' %>"></label>
-          <label>Texto pequeño contacto<input type="text" name="contactEyebrow" value="<%= formData.contactEyebrow || 'Contáctanos' %>"></label>
-          <label>Título contacto<input type="text" name="contactTitle" value="<%= formData.contactTitle || 'Hablemos de tu próxima joya' %>"></label>
-          <label class="md:col-span-2">Texto contacto<textarea name="contactText" rows="3"><%= formData.contactText || '' %></textarea></label>
+      <section id="contactSection" class="set-card">
+        <div class="set-card-head">
+          <div>
+            <h3>Contacto, testimonios y redes</h3>
+            <p>Datos de contacto, WhatsApp y enlaces sociales mostrados en la tienda.</p>
+          </div>
+        </div>
+        <div class="set-grid">
+          <div class="set-field"><label>Testimonios · Texto pequeño</label><input type="text" name="testimonialsEyebrow" value="<%= formData.testimonialsEyebrow || 'Clientes' %>"></div>
+          <div class="set-field"><label>Testimonios · Título</label><input type="text" name="testimonialsTitle" value="<%= formData.testimonialsTitle || 'Lo que dicen de GATON' %>"></div>
+          <div class="set-field"><label>Contacto · Texto pequeño</label><input type="text" name="contactEyebrow" value="<%= formData.contactEyebrow || 'Contáctanos' %>"></div>
+          <div class="set-field"><label>Contacto · Título</label><input type="text" name="contactTitle" value="<%= formData.contactTitle || 'Hablemos de tu próxima joya' %>"></div>
+          <div class="set-field set-full"><label>Texto de contacto</label><textarea name="contactText" rows="2"><%= formData.contactText || '' %></textarea></div>
+          <div class="set-field"><label>Correo</label><input type="email" name="email" value="<%= formData.email || '' %>"></div>
+          <div class="set-field"><label>Teléfono llamadas</label><input type="text" name="phone" value="<%= formData.phone || '' %>"></div>
+          <div class="set-field"><label>WhatsApp</label><input type="text" name="whatsapp" value="<%= formData.whatsapp || '' %>"></div>
+          <div class="set-field"><label>Instagram URL</label><input type="text" name="instagram" value="<%= formData.instagram || '' %>"></div>
+          <div class="set-field"><label>Instagram usuario visible</label><input type="text" name="instagramHandle" value="<%= formData.instagramHandle || '@gaton.do' %>"></div>
+          <div class="set-field"><label>TikTok URL</label><input type="text" name="tiktok" value="<%= formData.tiktok || '' %>"></div>
+          <div class="set-field"><label>Facebook URL</label><input type="text" name="facebook" value="<%= formData.facebook || '' %>"></div>
+          <div class="set-field"><label>Ubicación</label><input type="text" name="locationText" value="<%= formData.locationText || 'Santo Domingo, RD' %>"></div>
+          <div class="set-field"><label>Texto de envíos</label><input type="text" name="shippingText" value="<%= formData.shippingText || 'A todo el país DO' %>"></div>
         </div>
       </section>
 
-      <section class="admin-form-section">
-        <h3>Contacto, redes y footer</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
-          <label>Correo<input type="email" name="email" value="<%= formData.email || '' %>"></label>
-          <label>Teléfono llamadas<input type="text" name="phone" value="<%= formData.phone || '' %>"></label>
-          <label>WhatsApp<input type="text" name="whatsapp" value="<%= formData.whatsapp || '' %>"></label>
-          <label>Instagram URL<input type="text" name="instagram" value="<%= formData.instagram || '' %>"></label>
-          <label>Instagram texto visible<input type="text" name="instagramHandle" value="<%= formData.instagramHandle || '@gaton.do' %>"></label>
-          <label>TikTok URL<input type="text" name="tiktok" value="<%= formData.tiktok || '' %>"></label>
-          <label>Facebook URL<input type="text" name="facebook" value="<%= formData.facebook || '' %>"></label>
-          <label>Ubicación<input type="text" name="locationText" value="<%= formData.locationText || 'Santo Domingo, RD' %>"></label>
-          <label>Texto de envíos<input type="text" name="shippingText" value="<%= formData.shippingText || 'A todo el país DO' %>"></label>
-        </div>
-      </section>
-
-      <section id="defaultFontsSection" class="admin-form-section">
-        <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+      <section id="defaultFontsSection" class="set-card">
+        <div class="set-card-head">
           <div>
             <h3>Tipografías predeterminadas para productos</h3>
-            <p>Edita, reemplaza o agrega nuevas fuentes (<code>.ttf</code>, <code>.otf</code>, <code>.woff2</code>, <code>.woff</code>). Cuando pulses <strong>“Cargar tipografías predeterminadas”</strong> al crear o editar un producto, se cargarán todas estas automáticamente.</p>
+            <p>Edita, reemplaza o agrega nuevas fuentes (<code>.ttf</code>, <code>.otf</code>, <code>.woff2</code>, <code>.woff</code>). Cuando pulses <strong>“Cargar tipografías predeterminadas”</strong> en cualquier producto, se cargarán todas estas automáticamente.</p>
           </div>
-          <button type="button" id="addDefaultFontBtn" class="rounded-xl bg-stone-900 text-white px-4 py-2 text-sm font-medium">Agregar tipografía</button>
+          <button type="button" id="addDefaultFontBtn" class="rounded-xl bg-stone-900 text-white px-4 py-2 text-sm font-medium hover:bg-stone-800">+ Agregar tipografía</button>
         </div>
 
         <div id="defaultFontsContainer" class="space-y-4">
@@ -169,29 +275,29 @@
                 </label>
                 <button type="button" class="remove-default-font rounded-xl bg-red-600 text-white px-3 py-1.5 text-xs font-medium">Quitar</button>
               </div>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-sm font-medium mb-1">Nombre</label>
-                  <input type="text" name="fontName" value="<%= font.name || '' %>" placeholder="Ej. Dancing Script o Mi Fuente" class="w-full rounded-xl border border-stone-300 px-3 py-2 bg-white">
+              <div class="set-grid">
+                <div class="set-field">
+                  <label>Nombre</label>
+                  <input type="text" name="fontName" value="<%= font.name || '' %>" placeholder="Ej. Dancing Script o Mi Fuente">
                 </div>
-                <div>
-                  <label class="block text-sm font-medium mb-1">Texto de vista previa</label>
-                  <input type="text" name="fontPreviewText" value="<%= font.previewText || 'Aa' %>" placeholder="Aa" class="w-full rounded-xl border border-stone-300 px-3 py-2 bg-white">
+                <div class="set-field">
+                  <label>Texto de vista previa</label>
+                  <input type="text" name="fontPreviewText" value="<%= font.previewText || 'Aa' %>" placeholder="Aa">
                 </div>
-                <div>
-                  <label class="block text-sm font-medium mb-1">Archivo de fuente (.ttf, .otf, .woff2)</label>
+                <div class="set-field">
+                  <label>Archivo de fuente (.ttf, .otf, .woff2)</label>
                   <input type="hidden" name="fontFileUrl" value="<%= font.fontFileUrl || '' %>">
-                  <input type="file" name="fontFile<%= index %>" accept=".ttf,.otf,.woff2,.woff" data-default-font-prefix="fontFile" class="w-full rounded-xl border border-stone-300 px-3 py-2 bg-white">
+                  <input type="file" name="fontFile<%= index %>" accept=".ttf,.otf,.woff2,.woff" data-default-font-prefix="fontFile">
                   <% if (font.fontFileUrl) { %>
-                    <p class="text-xs text-stone-500 mt-1 break-all">Fuente actual: <%= font.fontFileUrl %></p>
+                    <p class="text-xs text-stone-500 break-all">Fuente actual: <%= font.fontFileUrl %></p>
                   <% } %>
                 </div>
-                <div>
-                  <label class="block text-sm font-medium mb-1">Imagen de vista previa (opcional)</label>
+                <div class="set-field">
+                  <label>Imagen de vista previa (opcional)</label>
                   <input type="hidden" name="fontPreviewImageUrl" value="<%= font.previewImageUrl || '' %>">
-                  <input type="file" name="fontPreviewImageFile<%= index %>" accept="image/*" data-default-font-prefix="fontPreviewImageFile" class="w-full rounded-xl border border-stone-300 px-3 py-2 bg-white">
+                  <input type="file" name="fontPreviewImageFile<%= index %>" accept="image/*" data-default-font-prefix="fontPreviewImageFile">
                   <% if (font.previewImageUrl) { %>
-                    <p class="text-xs text-stone-500 mt-1 break-all">Imagen actual: <%= font.previewImageUrl %></p>
+                    <p class="text-xs text-stone-500 break-all">Imagen actual: <%= font.previewImageUrl %></p>
                   <% } %>
                 </div>
               </div>
@@ -200,27 +306,33 @@
         </div>
       </section>
 
-      <section class="admin-form-section">
-        <div class="flex items-center justify-between gap-4 mb-4">
-          <div><h3>Opciones de envío</h3><p>Estas opciones se usarán en checkout y en el mensaje de WhatsApp.</p></div>
-          <button type="button" id="addShippingBtn" class="rounded-xl bg-stone-900 text-white px-4 py-2 text-sm font-medium">Agregar envío</button>
+      <section id="shippingSection" class="set-card">
+        <div class="set-card-head">
+          <div>
+            <h3>Opciones de envío</h3>
+            <p>Estas opciones se usarán en checkout y en el mensaje de WhatsApp.</p>
+          </div>
+          <button type="button" id="addShippingBtn" class="rounded-xl bg-stone-900 text-white px-4 py-2 text-sm font-medium hover:bg-stone-800">+ Agregar envío</button>
         </div>
-        <div id="shippingOptionsWrap" class="space-y-4">
+        <div id="shippingOptionsWrap" class="space-y-3">
           <% const shippings = formData.shippingOptions && formData.shippingOptions.length ? formData.shippingOptions : [{name:'Delivery Santo Domingo',description:'Entrega dentro de Santo Domingo',price:0,active:true},{name:'Envío al interior',description:'Coordinación a provincia',price:0,active:true},{name:'Retiro / coordinar por WhatsApp',description:'Coordinar directamente con la tienda',price:0,active:true}]; %>
           <% shippings.forEach((option) => { %>
             <div class="shipping-row grid grid-cols-1 md:grid-cols-4 gap-3 rounded-2xl border border-stone-200 p-4 bg-stone-50">
-              <input type="text" name="shippingName" value="<%= option.name || '' %>" placeholder="Nombre">
-              <input type="text" name="shippingDescription" value="<%= option.description || '' %>" placeholder="Descripción">
-              <input type="text" name="shippingPrice" value="<%= option.price || 0 %>" placeholder="Costo">
-              <label class="flex items-center gap-2"><input type="checkbox" name="shippingActive" value="true" <%= option.active !== false ? 'checked' : '' %>> Activo</label>
+              <input type="text" name="shippingName" value="<%= option.name || '' %>" placeholder="Nombre" class="rounded-xl border border-stone-300 px-3 py-2 bg-white text-sm">
+              <input type="text" name="shippingDescription" value="<%= option.description || '' %>" placeholder="Descripción" class="rounded-xl border border-stone-300 px-3 py-2 bg-white text-sm">
+              <input type="text" name="shippingPrice" value="<%= option.price || 0 %>" placeholder="Costo (RD$)" class="rounded-xl border border-stone-300 px-3 py-2 bg-white text-sm">
+              <label class="flex items-center gap-2 text-sm font-medium text-stone-700"><input type="checkbox" name="shippingActive" value="true" <%= option.active !== false ? 'checked' : '' %>> Activo</label>
             </div>
           <% }) %>
         </div>
       </section>
 
-      <div class="sticky bottom-0 bg-white/90 backdrop-blur border-t border-stone-200 py-4 flex justify-end gap-3">
-        <a href="/admin/dashboard" class="rounded-xl bg-white border border-stone-300 px-5 py-3 text-sm font-medium">Cancelar</a>
-        <button type="submit" class="rounded-xl bg-stone-900 text-white px-6 py-3 text-sm font-semibold">Guardar configuración</button>
+      <div class="set-save-bar">
+        <span class="text-sm text-stone-300">Recuerda guardar para aplicar tus cambios en la tienda.</span>
+        <div class="flex items-center gap-3">
+          <a href="/admin/dashboard" class="rounded-xl bg-white/10 text-white px-4 py-2.5 text-sm font-medium hover:bg-white/20">Volver</a>
+          <button type="submit" class="rounded-xl bg-white text-stone-900 px-6 py-2.5 text-sm font-bold hover:bg-stone-100">Guardar configuración</button>
+        </div>
       </div>
     </form>
   </main>
@@ -235,24 +347,18 @@
         </label>
         <button type="button" class="remove-default-font rounded-xl bg-red-600 text-white px-3 py-1.5 text-xs font-medium">Quitar</button>
       </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-medium mb-1">Nombre</label>
-          <input type="text" name="fontName" placeholder="Ej. Mi Fuente Nueva" class="w-full rounded-xl border border-stone-300 px-3 py-2 bg-white">
-        </div>
-        <div>
-          <label class="block text-sm font-medium mb-1">Texto de vista previa</label>
-          <input type="text" name="fontPreviewText" value="Aa" placeholder="Aa" class="w-full rounded-xl border border-stone-300 px-3 py-2 bg-white">
-        </div>
-        <div>
-          <label class="block text-sm font-medium mb-1">Archivo de fuente (.ttf, .otf, .woff2)</label>
+      <div class="set-grid">
+        <div class="set-field"><label>Nombre</label><input type="text" name="fontName" placeholder="Ej. Mi Fuente Nueva"></div>
+        <div class="set-field"><label>Texto de vista previa</label><input type="text" name="fontPreviewText" value="Aa" placeholder="Aa"></div>
+        <div class="set-field">
+          <label>Archivo de fuente (.ttf, .otf, .woff2)</label>
           <input type="hidden" name="fontFileUrl">
-          <input type="file" name="fontFile0" accept=".ttf,.otf,.woff2,.woff" data-default-font-prefix="fontFile" class="w-full rounded-xl border border-stone-300 px-3 py-2 bg-white">
+          <input type="file" name="fontFile0" accept=".ttf,.otf,.woff2,.woff" data-default-font-prefix="fontFile">
         </div>
-        <div>
-          <label class="block text-sm font-medium mb-1">Imagen de vista previa (opcional)</label>
+        <div class="set-field">
+          <label>Imagen de vista previa (opcional)</label>
           <input type="hidden" name="fontPreviewImageUrl">
-          <input type="file" name="fontPreviewImageFile0" accept="image/*" data-default-font-prefix="fontPreviewImageFile" class="w-full rounded-xl border border-stone-300 px-3 py-2 bg-white">
+          <input type="file" name="fontPreviewImageFile0" accept="image/*" data-default-font-prefix="fontPreviewImageFile">
         </div>
       </div>
     </div>
@@ -287,15 +393,46 @@
     });
     refreshDefaultFontIndexes();
 
+    document.querySelectorAll('[data-preview-target]').forEach(function (input) {
+      input.addEventListener('change', function () {
+        const key = input.dataset.previewTarget;
+        const img = document.getElementById(key + 'Preview');
+        const empty = document.getElementById(key + 'Empty');
+        const file = input.files && input.files[0];
+        if (file && img) {
+          img.src = URL.createObjectURL(file);
+          img.hidden = false;
+          if (empty) empty.hidden = true;
+        }
+      });
+    });
+
+    document.querySelectorAll('[data-clear-media]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const key = btn.dataset.clearMedia;
+        const urlInput = document.getElementById(key + 'Url');
+        const fileInput = document.getElementById(key + 'File');
+        const preview = document.getElementById(key + 'Preview');
+        const empty = document.getElementById(key + 'Empty');
+        if (urlInput) urlInput.value = '';
+        if (fileInput) fileInput.value = '';
+        if (preview) {
+          preview.removeAttribute('src');
+          preview.hidden = true;
+        }
+        if (empty) empty.hidden = false;
+      });
+    });
+
     document.getElementById('addShippingBtn')?.addEventListener('click', function () {
       const wrap = document.getElementById('shippingOptionsWrap');
       const div = document.createElement('div');
       div.className = 'shipping-row grid grid-cols-1 md:grid-cols-4 gap-3 rounded-2xl border border-stone-200 p-4 bg-stone-50';
       div.innerHTML = `
-        <input type="text" name="shippingName" placeholder="Nombre">
-        <input type="text" name="shippingDescription" placeholder="Descripción">
-        <input type="text" name="shippingPrice" placeholder="Costo">
-        <label class="flex items-center gap-2"><input type="checkbox" name="shippingActive" value="true" checked> Activo</label>
+        <input type="text" name="shippingName" placeholder="Nombre" class="rounded-xl border border-stone-300 px-3 py-2 bg-white text-sm">
+        <input type="text" name="shippingDescription" placeholder="Descripción" class="rounded-xl border border-stone-300 px-3 py-2 bg-white text-sm">
+        <input type="text" name="shippingPrice" placeholder="Costo (RD$)" class="rounded-xl border border-stone-300 px-3 py-2 bg-white text-sm">
+        <label class="flex items-center gap-2 text-sm font-medium text-stone-700"><input type="checkbox" name="shippingActive" value="true" checked> Activo</label>
       `;
       wrap.appendChild(div);
     });

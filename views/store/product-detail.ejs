@@ -538,9 +538,22 @@
         });
       }
 
+      function resolveClientPricing(rawPrice, rawCompareAt) {
+        const p = Math.max(0, Number(rawPrice || 0));
+        const c = Math.max(0, Number(rawCompareAt || 0));
+        if (c > 0 && p > 0 && c < p) return { salePrice: c, regularPrice: p, hasOffer: true };
+        if (c > p && p > 0) return { salePrice: p, regularPrice: c, hasOffer: true };
+        return { salePrice: p, regularPrice: 0, hasOffer: false };
+      }
+
       function updateLineTotal() {
         if (!lineTotalEl) return;
-        const baseUnitPrice = Number(selectedVariant?.price ?? basePrice ?? 0);
+        const rawUnit = Number(selectedVariant?.price ?? basePrice ?? 0);
+        const rawCompare = Number(selectedVariant?.compareAtPrice || 0) > 0
+          ? Number(selectedVariant.compareAtPrice)
+          : Number(baseCompareAt || 0);
+        const resolved = resolveClientPricing(rawUnit, rawCompare);
+        const baseUnitPrice = resolved.salePrice;
         const surchargeMinor = Array.from(customizationInputs).reduce(function (sum, input) {
           return sum + ((input.value || "").trim() ? Math.max(0, Number(input.dataset.priceDeltaMinor || 0)) : 0);
         }, 0);
@@ -548,6 +561,14 @@
         const unitPrice = baseUnitPrice + surcharge;
         const quantity = Math.max(1, Number(quantityInput?.value || 1));
         if (priceEl) priceEl.textContent = formatPrice(unitPrice);
+        if (compareEl) {
+          if (resolved.hasOffer) {
+            compareEl.textContent = formatPrice(resolved.regularPrice + surcharge);
+            compareEl.classList.remove("hidden");
+          } else {
+            compareEl.classList.add("hidden");
+          }
+        }
         if (basePriceTextEl) basePriceTextEl.textContent = formatPrice(baseUnitPrice);
         if (surchargeTextEl) surchargeTextEl.textContent = formatPrice(surcharge);
         lineTotalEl.textContent = formatPrice(unitPrice * quantity);
@@ -607,8 +628,11 @@
         selectedVariant = variant;
         selectedVariantIndex = index;
 
-        const price = Number(variant.price || 0);
-        const compareAt = Number(variant.compareAtPrice || 0);
+        const rawPrice = Number(variant.price || 0);
+        const rawCompareAt = Number(variant.compareAtPrice || 0) > 0 ? Number(variant.compareAtPrice) : Number(baseCompareAt || 0);
+        const pricing = resolveClientPricing(rawPrice, rawCompareAt);
+        const price = pricing.salePrice;
+        const compareAt = pricing.regularPrice;
         const unavailable = variantUnavailable(variant);
         const stock = variantStock(variant);
 
@@ -617,7 +641,7 @@
         }
 
         if (compareEl) {
-          if (compareAt > price) {
+          if (pricing.hasOffer) {
             compareEl.textContent = formatPrice(compareAt);
             compareEl.classList.remove("hidden");
           } else {

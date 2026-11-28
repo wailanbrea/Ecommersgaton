@@ -49,8 +49,7 @@
 
     const heroVideo = siteSettings?.heroVideoUrl || "";
     const heroImage = siteSettings?.heroImageUrl || "";
-    const fallbackHeroProduct = (latestProducts || []).find((product) => product && product.mainImageUrl);
-    const heroBg = heroImage || (fallbackHeroProduct ? fallbackHeroProduct.mainImageUrl : "");
+    const heroBg = heroImage;
     const featuredList = (featuredProducts && featuredProducts.length ? featuredProducts : latestProducts || []).slice(0, 8);
     const fragranceProducts = (latestProducts || [])
       .filter((product) => comparable(productCategoryName(product)).includes("fragancia") || comparable(product.name).includes("fragancia") || comparable(product.name).includes("perfume"))
@@ -143,7 +142,8 @@
                 <h3><%= t(product.name) %></h3>
                 <% if (product.shortDescription) { %><p><%= t(product.shortDescription) %></p><% } %>
                 <div class="ref10-product-bottom">
-                  <% if (product.compareAtPrice > product.basePrice) { %><del><%= formatCurrency(product.compareAtPrice) %></del><% } %><strong><%= formatCurrency ? formatCurrency(product.basePrice || 0) : ('RD$ ' + Number(product.basePrice || 0).toLocaleString('en-US')) %></strong>
+                  <% const pPricing = typeof resolveProductDisplayPricing === 'function' ? resolveProductDisplayPricing(product) : { salePrice: Number(product.basePrice || 0), regularPrice: Number(product.compareAtPrice || 0), hasOffer: Number(product.compareAtPrice || 0) > Number(product.basePrice || 0) }; %>
+                  <% if (pPricing.hasOffer) { %><del><%= formatCurrency(pPricing.regularPrice) %></del><% } %><strong><%= formatCurrency ? formatCurrency(pPricing.salePrice || 0) : ('RD$ ' + Number(pPricing.salePrice || 0).toLocaleString('en-US')) %></strong>
                   <span>+</span>
                 </div>
               </div>

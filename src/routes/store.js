@@ -19,6 +19,7 @@ const SiteSettings = require("../models/SiteSettings");
 const Order = require("../models/Order");
 const { normalizeCustomizationImage } = require("../services/customizationImage");
 const { legacyVariantKey } = require("../services/legacyInventory");
+const { resolveEffectivePricing } = require("../utils/pricing");
 
 const router = express.Router();
 
@@ -589,8 +590,13 @@ router.get("/product/:slug", async (req, res) => {
   const productUnavailable = isProductUnavailable(product);
   const defaultVariantUnavailable = defaultVariant ? isVariantUnavailable(defaultVariant) : false;
   const defaultStock = productUnavailable ? 0 : getAvailableStock(product, defaultVariant);
-  const defaultPrice = defaultVariant?.price ?? product.basePrice ?? 0;
-  const defaultCompareAt = defaultVariant?.compareAtPrice ?? product.compareAtPrice ?? 0;
+  const rawDefaultPrice = defaultVariant?.price ?? product.basePrice ?? 0;
+  const rawDefaultCompareAt = Number(defaultVariant?.compareAtPrice || 0) > 0
+    ? Number(defaultVariant.compareAtPrice)
+    : Number(product.compareAtPrice || 0);
+  const resolvedDefaultPricing = resolveEffectivePricing(rawDefaultPrice, rawDefaultCompareAt);
+  const defaultPrice = resolvedDefaultPricing.salePrice;
+  const defaultCompareAt = resolvedDefaultPricing.regularPrice;
   const defaultImage =
     defaultVariant?.imageUrl ||
     product.mainImageUrl ||
@@ -741,11 +747,16 @@ router.post("/product/:slug/add-to-cart", (req, res, next) => {
       return res.redirect(`/product/${product.slug}?stock=unavailable`);
     }
 
-    const baseUnitPrice = Number(selectedVariant?.price ?? product.basePrice ?? 0);
+    const rawBaseUnitPrice = Number(selectedVariant?.price ?? product.basePrice ?? 0);
+    const rawCompareAtPrice = Number(selectedVariant?.compareAtPrice || 0) > 0
+      ? Number(selectedVariant.compareAtPrice)
+      : Number(product.compareAtPrice || 0);
+    const resolvedUnitPricing = resolveEffectivePricing(rawBaseUnitPrice, rawCompareAtPrice);
+    const baseUnitPrice = resolvedUnitPricing.salePrice;
     const priceQuote = quoteUnitPrice(baseUnitPrice, engraving);
     if (!priceQuote) return res.redirect(`/product/${product.slug}?engraving=invalid`);
     const unitPrice = priceQuote.unitPrice;
-    const compareAtPrice = Number(selectedVariant?.compareAtPrice ?? product.compareAtPrice ?? 0);
+    const compareAtPrice = resolvedUnitPricing.regularPrice;
     const imageUrl =
       selectedVariant?.imageUrl ||
       product.mainImageUrl ||
