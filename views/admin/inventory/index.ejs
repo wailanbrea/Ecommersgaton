@@ -8,11 +8,12 @@
   <link rel="stylesheet" href="/css/admin-utilities.css">
   <link rel="stylesheet" href="/css/admin.css">
   <style>
-    .inv-page { max-width: 1280px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; display: flex; flex-direction: column; gap: 1.5rem; }
+    .inv-page { max-width: 1280px; width: 100%; min-width: 0; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; display: flex; flex-direction: column; gap: 1.5rem; overflow-x: hidden; box-sizing: border-box; }
     .inv-top-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; }
-    .inv-tools-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+    .inv-tools-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; min-width: 0; }
     @media (max-width: 900px) { .inv-tools-grid { grid-template-columns: 1fr; } }
-    .inv-card { background: #fff; border: 1px solid #e7e5e4; border-radius: 1.15rem; padding: 1.25rem 1.4rem; box-shadow: 0 1px 3px rgba(28,25,23,.04); }
+    .inv-card { background: #fff; border: 1px solid #e7e5e4; border-radius: 1.15rem; padding: 1.25rem 1.4rem; box-shadow: 0 1px 3px rgba(28,25,23,.04); min-width: 0; max-width: 100%; box-sizing: border-box; }
+    @media (max-width: 640px) { .inv-page { padding: 1rem .85rem 2.5rem; } .inv-card { padding: 1rem; } }
     .inv-card-title { font-size: 1.05rem; font-weight: 700; color: #1c1917; margin: 0 0 .35rem; display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
     .inv-card-sub { font-size: .84rem; color: #57534e; margin: 0 0 1rem; line-height: 1.45; }
     .inv-kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .85rem; margin-bottom: 1.15rem; }
