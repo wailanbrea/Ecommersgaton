@@ -142,21 +142,81 @@
           </div>
         </div>
         <div class="set-grid">
-          <div class="set-field"><label>Nombre de marca</label><input type="text" name="brandName" value="<%= formData.brandName || '' %>"></div>
-          <div class="set-field"><label>Eslogan</label><input type="text" name="slogan" value="<%= formData.slogan || '' %>"></div>
-          <div class="set-field set-full"><label>Texto de barra superior</label><input type="text" name="topbarText" value="<%= formData.topbarText || '' %>" placeholder="Envíos disponibles en RD • Joyas con intención • Personalizados con estilo"></div>
-          <div class="set-field set-full"><label>Franja después de la portada</label><input type="text" name="marqueeText" value="<%= formData.marqueeText || '' %>" placeholder="Joyas con intención ✦ Hecho a mano ✦ GATON ✦ Personalizados"></div>
-          <div class="set-field"><label>Logo de portada (URL)</label><input type="text" name="heroLogoUrl" value="<%= formData.heroLogoUrl || '' %>"></div>
-          <div class="set-field"><label>Logo del pie (URL)</label><input type="text" name="footerLogoUrl" value="<%= formData.footerLogoUrl || '' %>"></div>
-          <div class="set-field"><label>URL logo opcional</label><input type="text" name="logoUrl" value="<%= formData.logoUrl || '' %>" placeholder="/images/logo-gatondo-color.png"></div>
-          <div class="set-field"><label>Texto enlace de tarjetas</label><input type="text" name="collectionLinkText" value="<%= formData.collectionLinkText || '' %>"></div>
-          <div class="set-field"><label>Texto botón fragancias</label><input type="text" name="fragranceButtonText" value="<%= formData.fragranceButtonText || '' %>"></div>
-          <div class="set-field"><label>Destino botón fragancias</label><input type="text" name="fragranceButtonUrl" value="<%= formData.fragranceButtonUrl || '' %>"></div>
-          <div class="set-field"><label>Botón de filtrar</label><input type="text" name="filterLabel" value="<%= formData.filterLabel || '' %>"></div>
-          <div class="set-field"><label>Enlace limpiar filtros</label><input type="text" name="clearLabel" value="<%= formData.clearLabel || '' %>"></div>
-          <div class="set-field"><label>Ayuda del buscador</label><input type="text" name="searchHint" value="<%= formData.searchHint || '' %>"></div>
-          <div class="set-field"><label>Fuente principal del sitio</label><input type="text" name="primaryFont" value="<%= formData.primaryFont || 'Times New Roman' %>"></div>
-          <div class="set-field"><label>Fuente secundaria del sitio</label><input type="text" name="secondaryFont" value="<%= formData.secondaryFont || 'Open Sans' %>"></div>
+          <div class="set-field">
+            <label>Nombre de marca</label>
+            <input type="text" name="brandName" value="<%= formData.brandName || '' %>" placeholder="Ej. GATON DO">
+            <small class="text-xs text-stone-500">Se muestra en el título de la pestaña del navegador y en el pie de página.</small>
+          </div>
+          <div class="set-field">
+            <label>Eslogan</label>
+            <input type="text" name="slogan" value="<%= formData.slogan || '' %>" placeholder="Ej. Joyas que cuentan tu historia">
+            <small class="text-xs text-stone-500">Frase corta de la marca que aparece debajo del logo en el pie de página.</small>
+          </div>
+          <div class="set-field set-full">
+            <label>Texto de barra superior</label>
+            <input type="text" name="topbarText" value="<%= formData.topbarText || '' %>" placeholder="Ej. PERSONALIZAMOS LO QUE MÁS IMPORTA ✦ GRABADO LÁSER DE ALTA PRECISIÓN ✦ ENVÍOS A TODA RD">
+            <small class="text-xs text-stone-500">Franja verde superior que se desplaza de derecha a izquierda en toda la tienda.</small>
+          </div>
+          <div class="set-field set-full">
+            <label>Franja después de la portada</label>
+            <input type="text" name="marqueeText" value="<%= formData.marqueeText || '' %>" placeholder="Ej. Joyas con intención ✦ Hecho a mano ✦ GATON ✦ Personalizados">
+            <small class="text-xs text-stone-500">Separa cada frase con ✦ para que aparezca animada debajo de la portada principal.</small>
+          </div>
+          <div class="set-field">
+            <label>Logo de portada (URL)</label>
+            <input type="text" name="heroLogoUrl" value="<%= formData.heroLogoUrl || '' %>" placeholder="Vacío = usa el logo blanco oficial (/images/logo-gatondo-white.png)">
+            <small class="text-xs text-stone-500">Déjalo vacío para usar el logo blanco actualizado de la portada.</small>
+          </div>
+          <div class="set-field">
+            <label>Logo del pie (URL)</label>
+            <input type="text" name="footerLogoUrl" value="<%= formData.footerLogoUrl || '' %>" placeholder="Vacío = usa el logo blanco oficial (/images/logo-gatondo-white.png)">
+            <small class="text-xs text-stone-500">Déjalo vacío para usar el logo blanco actualizado del pie de página.</small>
+          </div>
+          <div class="set-field">
+            <label>Logo del menú superior (URL opcional)</label>
+            <input type="text" name="logoUrl" value="<%= formData.logoUrl || '' %>" placeholder="Vacío = usa el logo horizontal oficial (/images/logo-gatondo-header.png)">
+            <small class="text-xs text-stone-500">Déjalo vacío para usar el logo horizontal a color de la barra superior.</small>
+          </div>
+          <div class="set-field">
+            <label>Texto enlace de tarjetas</label>
+            <input type="text" name="collectionLinkText" value="<%= formData.collectionLinkText || '' %>" placeholder="Ej. Ver piezas">
+            <small class="text-xs text-stone-500">Texto del enlace dentro de las 4 tarjetas grandes de Colecciones (ej. “Ver piezas →”).</small>
+          </div>
+          <div class="set-field">
+            <label>Texto botón fragancias</label>
+            <input type="text" name="fragranceButtonText" value="<%= formData.fragranceButtonText || '' %>" placeholder="Ej. Explorar Fragancias">
+            <small class="text-xs text-stone-500">Texto del botón principal en la sección oscura de Fragancias.</small>
+          </div>
+          <div class="set-field">
+            <label>Destino botón fragancias</label>
+            <input type="text" name="fragranceButtonUrl" value="<%= formData.fragranceButtonUrl || '' %>" placeholder="Ej. /shop?category=fragancias">
+            <small class="text-xs text-stone-500">Ruta a la que lleva el botón de Fragancias (por defecto /shop?category=fragancias).</small>
+          </div>
+          <div class="set-field">
+            <label>Botón de filtrar</label>
+            <input type="text" name="filterLabel" value="<%= formData.filterLabel || '' %>" placeholder="Ej. Filtrar">
+            <small class="text-xs text-stone-500">Texto del botón oscuro en el buscador del catálogo (/shop).</small>
+          </div>
+          <div class="set-field">
+            <label>Enlace limpiar filtros</label>
+            <input type="text" name="clearLabel" value="<%= formData.clearLabel || '' %>" placeholder="Ej. Limpiar">
+            <small class="text-xs text-stone-500">Texto del botón para reiniciar la búsqueda en el catálogo (/shop).</small>
+          </div>
+          <div class="set-field">
+            <label>Ayuda del buscador</label>
+            <input type="text" name="searchHint" value="<%= formData.searchHint || '' %>" placeholder="Ej. Busca por nombre o etiqueta">
+            <small class="text-xs text-stone-500">Texto guía que aparece dentro de la barra de búsqueda del catálogo.</small>
+          </div>
+          <div class="set-field">
+            <label>Fuente principal del sitio</label>
+            <input type="text" name="primaryFont" value="<%= formData.primaryFont || 'Times New Roman' %>" placeholder="Ej. Times New Roman">
+            <small class="text-xs text-stone-500">Tipografía usada en los títulos principales de la tienda.</small>
+          </div>
+          <div class="set-field">
+            <label>Fuente secundaria del sitio</label>
+            <input type="text" name="secondaryFont" value="<%= formData.secondaryFont || 'Open Sans' %>" placeholder="Ej. Open Sans">
+            <small class="text-xs text-stone-500">Tipografía usada en párrafos, menús y botones.</small>
+          </div>
         </div>
       </section>
 
