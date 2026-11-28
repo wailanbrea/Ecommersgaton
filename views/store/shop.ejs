@@ -6,6 +6,57 @@
   <title>Catálogo | <%= siteSettings?.brandName || "GATON DO" %></title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/css/app.css?v=ref10c-mobilefit">
+  <style>
+    .ref10-shop-filter-card {
+      grid-template-columns: minmax(220px, 1.4fr) minmax(170px, 1fr) minmax(170px, 1fr) auto !important;
+    }
+    @media (max-width: 980px) {
+      .ref10-shop-filter-card {
+        grid-template-columns: 1fr 1fr !important;
+      }
+      .ref10-filter-search, .ref10-filter-actions {
+        grid-column: 1 / -1;
+      }
+    }
+    @media (max-width: 600px) {
+      .ref10-shop-filter-card {
+        grid-template-columns: 1fr !important;
+      }
+    }
+    .ref10-shop-gender-chips {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem;
+      margin: -0.75rem auto 1.75rem;
+      max-width: 1120px;
+      padding: 0 1.25rem;
+    }
+    .ref10-shop-gender-chips a {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.42rem 0.95rem;
+      border-radius: 999px;
+      border: 1px solid #d9d2c5;
+      background: #fff;
+      color: #3f3a34;
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+    .ref10-shop-gender-chips a:hover {
+      border-color: #0b2c32;
+      color: #0b2c32;
+    }
+    .ref10-shop-gender-chips a.active {
+      background: #0b2c32;
+      border-color: #0b2c32;
+      color: #fff;
+    }
+  </style>
 </head>
 <body class="ref10-body ref10-shop-page">
   <%
@@ -14,7 +65,19 @@
       return cleaner(value || fallback || "");
     }
     function categoryLabel(product) {
-      return categoryMap && categoryMap[product.categoryId] ? categoryMap[product.categoryId].name : "Joyería";
+      const ids = Array.isArray(product.categoryIds) && product.categoryIds.length
+        ? product.categoryIds.map(String)
+        : (product.categoryId ? [String(product.categoryId)] : []);
+      const names = ids.map((id) => (categoryMap && categoryMap[id] ? categoryMap[id].name : "")).filter(Boolean);
+      return names.length ? names.join(" · ") : "Joyería";
+    }
+    function shopUrl(params = {}) {
+      const qs = new URLSearchParams();
+      if (params.q) qs.set("q", params.q);
+      if (params.category) qs.set("category", params.category);
+      if (params.gender) qs.set("gender", params.gender);
+      const str = qs.toString();
+      return str ? ("/shop?" + str) : "/shop";
     }
   %>
 
@@ -44,6 +107,16 @@
           </select>
         </div>
 
+        <div class="ref10-filter-field">
+          <label>Género</label>
+          <select name="gender">
+            <option value="">Todos</option>
+            <% (genderOptions || []).filter(o => o.value).forEach(option => { %>
+              <option value="<%= option.value %>" <%= currentGender === option.value ? "selected" : "" %>><%= option.label %></option>
+            <% }) %>
+          </select>
+        </div>
+
         <div class="ref10-filter-actions">
           <button type="submit"><%= siteSettings?.filterLabel || "Filtrar" %></button>
           <a href="/shop"><%= siteSettings?.clearLabel || "Limpiar" %></a>
@@ -52,9 +125,16 @@
     </section>
 
     <section class="ref10-shop-chips">
-      <a href="/shop" class="<%= !currentCategorySlug && !currentGender ? 'active' : '' %>">Todo</a>
+      <a href="<%= shopUrl({ q: currentQuery, gender: currentGender }) %>" class="<%= !currentCategorySlug ? 'active' : '' %>">Todo</a>
       <% (categories || []).forEach(category => { %>
-        <a href="/shop?category=<%= category.slug %>" class="<%= currentCategorySlug === category.slug ? 'active' : '' %>"><%= t(category.name) %></a>
+        <a href="<%= shopUrl({ q: currentQuery, category: category.slug, gender: currentGender }) %>" class="<%= currentCategorySlug === category.slug ? 'active' : '' %>"><%= t(category.name) %></a>
+      <% }) %>
+    </section>
+
+    <section class="ref10-shop-gender-chips" aria-label="Filtrar por género o público">
+      <a href="<%= shopUrl({ q: currentQuery, category: currentCategorySlug }) %>" class="<%= !currentGender ? 'active' : '' %>">Todos los géneros</a>
+      <% (genderOptions || []).filter(o => o.value).forEach(option => { %>
+        <a href="<%= shopUrl({ q: currentQuery, category: currentCategorySlug, gender: option.value }) %>" class="<%= currentGender === option.value ? 'active' : '' %>"><%= option.label %></a>
       <% }) %>
     </section>
 
