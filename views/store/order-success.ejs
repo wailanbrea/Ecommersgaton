@@ -73,9 +73,14 @@
                   Personalización: <%= item.customizationSummary %>
                 </div>
               <% } %>
-              <% if (item.customizationPhotoUrl) { %>
+              <%
+                const successPhotos = Array.isArray(item.customizationPhotoUrls) && item.customizationPhotoUrls.length
+                  ? item.customizationPhotoUrls
+                  : (item.customizationPhotoUrl ? [item.customizationPhotoUrl] : []);
+              %>
+              <% if (successPhotos.length) { %>
                 <div class="text-sm text-stone-500 mt-1">
-                  Foto para fotograbado cargada. También podrás avisarlo por WhatsApp.
+                  <%= successPhotos.length === 1 ? "Foto para fotograbado cargada." : (successPhotos.length + " fotos para fotograbado cargadas.") %> También podrás avisarlo por WhatsApp.
                 </div>
               <% } %>
               <div class="text-sm text-stone-500 mt-1">

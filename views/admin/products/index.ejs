@@ -79,7 +79,13 @@
                   </td>
 
                   <td class="px-4 py-3 text-stone-600">
-                    <%= (categoryMap && categoryMap[product.categoryId]) ? categoryMap[product.categoryId] : "Sin categoría" %>
+                    <%
+                      const pCatIds = Array.isArray(product.categoryIds) && product.categoryIds.length
+                        ? product.categoryIds.map(String)
+                        : (product.categoryId ? [String(product.categoryId)] : []);
+                      const pCatNames = pCatIds.map((id) => (categoryMap && categoryMap[id]) || "").filter(Boolean);
+                    %>
+                    <%= pCatNames.length ? pCatNames.join(" · ") : "Sin categoría" %>
                   </td>
 
                   <td class="px-4 py-3 text-stone-600">

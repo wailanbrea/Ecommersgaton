@@ -149,6 +149,57 @@
         </div>
       </section>
 
+      <section id="defaultFontsSection" class="admin-form-section">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+          <div>
+            <h3>Tipografías predeterminadas para productos</h3>
+            <p>Edita, reemplaza o agrega nuevas fuentes (<code>.ttf</code>, <code>.otf</code>, <code>.woff2</code>, <code>.woff</code>). Cuando pulses <strong>“Cargar tipografías predeterminadas”</strong> al crear o editar un producto, se cargarán todas estas automáticamente.</p>
+          </div>
+          <button type="button" id="addDefaultFontBtn" class="rounded-xl bg-stone-900 text-white px-4 py-2 text-sm font-medium">Agregar tipografía</button>
+        </div>
+
+        <div id="defaultFontsContainer" class="space-y-4">
+          <% (formData.defaultFonts || []).forEach((font, index) => { %>
+            <div class="default-font-item rounded-2xl border border-stone-200 p-4 bg-stone-50">
+              <div class="flex items-center justify-between gap-3 mb-3 pb-3 border-b border-stone-200">
+                <label class="inline-flex items-center gap-2 text-sm font-medium text-stone-800 cursor-pointer">
+                  <input type="hidden" name="fontActive" value="false">
+                  <input type="checkbox" name="fontActive" value="true" <%= font.active !== false ? 'checked' : '' %> class="rounded border-stone-300">
+                  <span>Activa por defecto</span>
+                </label>
+                <button type="button" class="remove-default-font rounded-xl bg-red-600 text-white px-3 py-1.5 text-xs font-medium">Quitar</button>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium mb-1">Nombre</label>
+                  <input type="text" name="fontName" value="<%= font.name || '' %>" placeholder="Ej. Dancing Script o Mi Fuente" class="w-full rounded-xl border border-stone-300 px-3 py-2 bg-white">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-1">Texto de vista previa</label>
+                  <input type="text" name="fontPreviewText" value="<%= font.previewText || 'Aa' %>" placeholder="Aa" class="w-full rounded-xl border border-stone-300 px-3 py-2 bg-white">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-1">Archivo de fuente (.ttf, .otf, .woff2)</label>
+                  <input type="hidden" name="fontFileUrl" value="<%= font.fontFileUrl || '' %>">
+                  <input type="file" name="fontFile<%= index %>" accept=".ttf,.otf,.woff2,.woff" data-default-font-prefix="fontFile" class="w-full rounded-xl border border-stone-300 px-3 py-2 bg-white">
+                  <% if (font.fontFileUrl) { %>
+                    <p class="text-xs text-stone-500 mt-1 break-all">Fuente actual: <%= font.fontFileUrl %></p>
+                  <% } %>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-1">Imagen de vista previa (opcional)</label>
+                  <input type="hidden" name="fontPreviewImageUrl" value="<%= font.previewImageUrl || '' %>">
+                  <input type="file" name="fontPreviewImageFile<%= index %>" accept="image/*" data-default-font-prefix="fontPreviewImageFile" class="w-full rounded-xl border border-stone-300 px-3 py-2 bg-white">
+                  <% if (font.previewImageUrl) { %>
+                    <p class="text-xs text-stone-500 mt-1 break-all">Imagen actual: <%= font.previewImageUrl %></p>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </section>
+
       <section class="admin-form-section">
         <div class="flex items-center justify-between gap-4 mb-4">
           <div><h3>Opciones de envío</h3><p>Estas opciones se usarán en checkout y en el mensaje de WhatsApp.</p></div>
@@ -174,7 +225,68 @@
     </form>
   </main>
 
+  <template id="defaultFontTemplate">
+    <div class="default-font-item rounded-2xl border border-stone-200 p-4 bg-stone-50">
+      <div class="flex items-center justify-between gap-3 mb-3 pb-3 border-b border-stone-200">
+        <label class="inline-flex items-center gap-2 text-sm font-medium text-stone-800 cursor-pointer">
+          <input type="hidden" name="fontActive" value="false">
+          <input type="checkbox" name="fontActive" value="true" checked class="rounded border-stone-300">
+          <span>Activa por defecto</span>
+        </label>
+        <button type="button" class="remove-default-font rounded-xl bg-red-600 text-white px-3 py-1.5 text-xs font-medium">Quitar</button>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium mb-1">Nombre</label>
+          <input type="text" name="fontName" placeholder="Ej. Mi Fuente Nueva" class="w-full rounded-xl border border-stone-300 px-3 py-2 bg-white">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Texto de vista previa</label>
+          <input type="text" name="fontPreviewText" value="Aa" placeholder="Aa" class="w-full rounded-xl border border-stone-300 px-3 py-2 bg-white">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Archivo de fuente (.ttf, .otf, .woff2)</label>
+          <input type="hidden" name="fontFileUrl">
+          <input type="file" name="fontFile0" accept=".ttf,.otf,.woff2,.woff" data-default-font-prefix="fontFile" class="w-full rounded-xl border border-stone-300 px-3 py-2 bg-white">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Imagen de vista previa (opcional)</label>
+          <input type="hidden" name="fontPreviewImageUrl">
+          <input type="file" name="fontPreviewImageFile0" accept="image/*" data-default-font-prefix="fontPreviewImageFile" class="w-full rounded-xl border border-stone-300 px-3 py-2 bg-white">
+        </div>
+      </div>
+    </div>
+  </template>
+
   <script>
+    function refreshDefaultFontIndexes() {
+      document.querySelectorAll('#defaultFontsContainer .default-font-item').forEach(function (item, index) {
+        item.querySelectorAll('[data-default-font-prefix="fontFile"]').forEach(function (input) {
+          input.name = 'fontFile' + index;
+        });
+        item.querySelectorAll('[data-default-font-prefix="fontPreviewImageFile"]').forEach(function (input) {
+          input.name = 'fontPreviewImageFile' + index;
+        });
+      });
+    }
+
+    document.getElementById('addDefaultFontBtn')?.addEventListener('click', function () {
+      const tpl = document.getElementById('defaultFontTemplate');
+      const container = document.getElementById('defaultFontsContainer');
+      if (tpl && container) {
+        container.appendChild(tpl.content.cloneNode(true));
+        refreshDefaultFontIndexes();
+      }
+    });
+
+    document.addEventListener('click', function (event) {
+      if (event.target.classList.contains('remove-default-font')) {
+        event.target.closest('.default-font-item')?.remove();
+        refreshDefaultFontIndexes();
+      }
+    });
+    refreshDefaultFontIndexes();
+
     document.getElementById('addShippingBtn')?.addEventListener('click', function () {
       const wrap = document.getElementById('shippingOptionsWrap');
       const div = document.createElement('div');

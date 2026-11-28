@@ -2,6 +2,7 @@ const SiteSettings = require("../models/SiteSettings");
 const Category = require("../models/Category");
 const Order = require("../models/Order");
 const Review = require("../models/Review");
+const { MOON_CHARM_FONT_PRESET } = require("../services/engraving");
 
 const GENDER_WORDS = [
   "hombre",
@@ -131,7 +132,18 @@ module.exports = async function globals(req, res, next) {
       }
     }
 
+    const defaultPresetFonts = Array.isArray(settings?.defaultFonts) && settings.defaultFonts.length
+      ? settings.defaultFonts
+      : MOON_CHARM_FONT_PRESET.map((f) => ({
+          name: f.name,
+          previewText: f.previewText || "Aa",
+          previewImageUrl: "",
+          fontFileUrl: "",
+          active: true
+        }));
+
     res.locals.siteSettings = settings || null;
+    res.locals.defaultPresetFonts = defaultPresetFonts;
     res.locals.headerCategories = topLevelCategories || [];
     res.locals.publicCategories = publicCategories || [];
     res.locals.displayText = displayText;

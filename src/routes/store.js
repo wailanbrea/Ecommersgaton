@@ -106,7 +106,7 @@ const customizationUpload = multer({
   storage: multer.memoryStorage(),
   limits: {
     fileSize: CUSTOMIZATION_UPLOAD_MAX_SIZE_MB * 1024 * 1024,
-    files: 1,
+    files: 6,
     fields: 100,
     fieldSize: 8192
   },
@@ -118,7 +118,7 @@ const customizationUpload = multer({
   }
 });
 
-const parseCustomization = customizationUpload.single("customizationPhoto");
+const parseCustomization = customizationUpload.array("customizationPhoto", 6);
 
 function findVariantIndex(product, item) {
   if (!product.hasVariants || !Array.isArray(product.variants)) return -1;
@@ -499,18 +499,14 @@ router.get("/shop", async (req, res) => {
   const filter = { active: true };
   const currentGender = normalizeGender(gender);
   let selectedCategory = null;
+  let allowedCategoryIds = null;
 
   if (category) {
     selectedCategory = await Category.findOne({ slug: String(category), active: true }).lean();
     if (selectedCategory && !isGenderCategory(selectedCategory)) {
       const childCategories = await Category.find({ parentId: String(selectedCategory._id), active: true }).select("_id").lean();
-      const categoryIds = [String(selectedCategory._id)].concat(childCategories.map((item) => String(item._id)));
-      filter.categoryId = { $in: categoryIds };
+      allowedCategoryIds = new Set([String(selectedCategory._id)].concat(childCategories.map((item) => String(item._id))));
     }
-  }
-
-  if (currentGender) {
-    filter.gender = currentGender;
   }
 
   if (q && String(q).trim()) {
@@ -522,10 +518,26 @@ router.get("/shop", async (req, res) => {
     ];
   }
 
-  const [categories, products] = await Promise.all([
+  const [categories, rawProducts] = await Promise.all([
     Category.find({ active: true }).sort({ sortOrder: 1, name: 1 }).lean(),
     Product.find(filter).sort({ createdAt: -1 }).lean()
   ]);
+
+  const products = (rawProducts || []).filter((product) => {
+    if (allowedCategoryIds) {
+      const pCats = Array.isArray(product.categoryIds) && product.categoryIds.length
+        ? product.categoryIds.map(String)
+        : (product.categoryId ? [String(product.categoryId)] : []);
+      if (!pCats.some((id) => allowedCategoryIds.has(id))) return false;
+    }
+    if (currentGender) {
+      const pGenders = Array.isArray(product.genders) && product.genders.length
+        ? product.genders.map((g) => normalizeGender(g)).filter(Boolean)
+        : (product.gender ? [normalizeGender(product.gender)].filter(Boolean) : []);
+      if (!pGenders.includes(currentGender)) return false;
+    }
+    return true;
+  });
 
   const publicCategories = categories.filter((category) => !isGenderCategory(category));
   const visibleShopCategories = publicCategories.filter((category) => !category.parentId);
@@ -682,12 +694,15 @@ router.post("/product/:slug/add-to-cart", (req, res, next) => {
     if (options.unavailable || !engraving) {
       return res.redirect(`/product/${product.slug}?engraving=invalid`);
     }
-    if (req.file && !options.photo) return res.redirect(`/product/${product.slug}?engraving=invalid`);
+    const uploadedPhotoFiles = Array.isArray(req.files)
+      ? req.files
+      : (req.file ? [req.file] : []);
+    if (uploadedPhotoFiles.length && !options.photo) return res.redirect(`/product/${product.slug}?engraving=invalid`);
 
-    let normalizedPhoto = null;
-    if (req.file) {
+    const normalizedPhotos = [];
+    for (const photoFile of uploadedPhotoFiles) {
       try {
-        normalizedPhoto = await normalizeCustomizationImage(req.file.buffer, req.file.mimetype);
+        normalizedPhotos.push(await normalizeCustomizationImage(photoFile.buffer, photoFile.mimetype));
       } catch {
         return res.redirect(`/product/${product.slug}?engraving=photo`);
       }
@@ -739,10 +754,12 @@ router.post("/product/:slug/add-to-cart", (req, res, next) => {
     const customizationSummary = engraving.summary;
     const fontName = engraving.fontName;
     const fontSelections = engraving.fontSelections;
-    const photoFilename = normalizedPhoto
-      ? crypto.randomUUID() + normalizedPhoto.extension
-      : "";
-    const customizationPhotoUrl = photoFilename ? `/customization-assets/${photoFilename}` : "";
+    const photoFilesToWrite = normalizedPhotos.map((photo) => ({
+      filename: crypto.randomUUID() + photo.extension,
+      buffer: photo.buffer
+    }));
+    const customizationPhotoUrls = photoFilesToWrite.map((entry) => `/customization-assets/${entry.filename}`);
+    const customizationPhotoUrl = customizationPhotoUrls[0] || "";
 
     const cart = getSessionCart(req);
 
@@ -750,7 +767,7 @@ router.post("/product/:slug/add-to-cart", (req, res, next) => {
       String(product._id),
       selectedVariant?.label || selectedVariant?.optionValue || "",
       product.hasCustomization ? crypto.createHash("sha256")
-        .update(JSON.stringify([product.variants?.indexOf(selectedVariant), engraving.fields, fontName, customizationPhotoUrl])).digest("hex") : "",
+        .update(JSON.stringify([product.variants?.indexOf(selectedVariant), engraving.fields, fontName, customizationPhotoUrls])).digest("hex") : "",
       "",
       ""
     ].join("__");
@@ -763,15 +780,16 @@ router.post("/product/:slug/add-to-cart", (req, res, next) => {
       return res.redirect(`/product/${product.slug}?stock=limited`);
     }
 
-    if (photoFilename) {
-      await fs.promises.writeFile(path.join(CUSTOMIZATION_UPLOAD_ROOT, photoFilename), normalizedPhoto.buffer, { flag: "wx", mode: 0o600 });
+    for (const entry of photoFilesToWrite) {
+      await fs.promises.writeFile(path.join(CUSTOMIZATION_UPLOAD_ROOT, entry.filename), entry.buffer, { flag: "wx", mode: 0o600 });
     }
 
     if (existingIndex >= 0) {
       cart[existingIndex].quantity = Math.min(existingQuantity + finalQuantityToAdd, availableStock);
       cart[existingIndex].lineTotal = fromMinorUnits((toMinorUnits(cart[existingIndex].unitPrice) || 0) * Number(cart[existingIndex].quantity));
-      if (customizationPhotoUrl) {
+      if (customizationPhotoUrls.length) {
         cart[existingIndex].customizationPhotoUrl = customizationPhotoUrl;
+        cart[existingIndex].customizationPhotoUrls = customizationPhotoUrls;
       }
     } else {
       const quantity = Math.min(finalQuantityToAdd, availableStock);
@@ -796,6 +814,7 @@ router.post("/product/:slug/add-to-cart", (req, res, next) => {
         customizationSummary,
         engravingFields: engraving.fields,
         customizationPhotoUrl,
+        customizationPhotoUrls,
         fontName,
         fontSelections
       });
@@ -974,6 +993,9 @@ router.post("/checkout", async (req, res) => {
       engravingFields: item.engravingFields || [],
       fontSelections: item.fontSelections || [],
       customizationPhotoUrl: item.customizationPhotoUrl || "",
+      customizationPhotoUrls: Array.isArray(item.customizationPhotoUrls) && item.customizationPhotoUrls.length
+        ? item.customizationPhotoUrls
+        : (item.customizationPhotoUrl ? [item.customizationPhotoUrl] : []),
       fontName: item.fontName || ""
     }));
     const createdOrderId = await createOrderAndDecrementStock({

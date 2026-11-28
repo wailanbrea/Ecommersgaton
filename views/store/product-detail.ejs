@@ -252,10 +252,10 @@
 
             <% if (engraving.photo) { %>
               <div class="product-customization-field product-photo-upload">
-                <label for="customizationPhoto">Añadir fotografía <span>(opcional)</span></label>
-                <input id="customizationPhoto" type="file" name="customizationPhoto" accept="image/jpeg,image/png,image/webp">
-                <small>JPG, PNG o WEBP · Máximo 15 MB</small>
-                <small>La imagen se adjuntará al pedido para revisión.</small>
+                <label for="customizationPhoto">Añadir fotografías <span>(opcional · puedes subir varias)</span></label>
+                <input id="customizationPhoto" type="file" name="customizationPhoto" accept="image/jpeg,image/png,image/webp" multiple>
+                <small>Hasta 6 imágenes JPG, PNG o WEBP · Máximo 15 MB cada una (ej. una foto para cada lado).</small>
+                <small>Las imágenes se adjuntarán al pedido para revisión.</small>
               </div>
             <% } %>
 
@@ -273,7 +273,7 @@
 
             <% if (engraving.unavailable) { %><p role="status">La configuración del grabado no está disponible. Consulta por WhatsApp.</p><% } %>
             <% if (engravingInvalid) { %><p role="alert">Revisa el texto, el límite de caracteres y la tipografía antes de continuar.</p><% } %>
-            <% if (engravingUploadInvalid) { %><p role="alert">Selecciona una sola imagen JPG, PNG o WEBP de hasta 15 MB.</p><% } %>
+            <% if (engravingUploadInvalid) { %><p role="alert">Selecciona imágenes válidas JPG, PNG o WEBP de hasta 15 MB cada una (máximo 6 fotos).</p><% } %>
             <button type="submit" id="addToCartButton" class="product-add-to-cart" <%= (productUnavailable || engraving.unavailable) ? 'disabled' : '' %>>
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h2l2.4 12.1a2 2 0 0 0 2 1.6h8.9a2 2 0 0 0 2-1.6L22 8H7M10 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm8 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/></svg>
               <span><%= productUnavailable ? 'Agotado' : engraving.unavailable ? 'Grabado no disponible' : 'Agregar al carrito' %></span>

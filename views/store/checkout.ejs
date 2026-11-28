@@ -90,8 +90,18 @@
                 <% if (item.customizationSurcharge > 0) { %>
                   <div class="text-sm text-stone-500 mt-1">Adicional de personalización: RD$ <%= Number(item.customizationSurcharge).toFixed(2) %></div>
                 <% } %>
-                <% if (item.customizationPhotoUrl) { %>
-                  <div class="text-sm text-stone-500 mt-1">Foto cargada para fotograbado: <a href="<%= item.customizationPhotoUrl %>" target="_blank" class="text-[#016B83] underline">ver imagen</a></div>
+                <%
+                  const checkoutPhotos = Array.isArray(item.customizationPhotoUrls) && item.customizationPhotoUrls.length
+                    ? item.customizationPhotoUrls
+                    : (item.customizationPhotoUrl ? [item.customizationPhotoUrl] : []);
+                %>
+                <% if (checkoutPhotos.length) { %>
+                  <div class="text-sm text-stone-500 mt-1">
+                    Fotos cargadas para fotograbado (<%= checkoutPhotos.length %>):
+                    <% checkoutPhotos.forEach(function(url, pIdx) { %>
+                      <a href="<%= url %>" target="_blank" class="text-[#016B83] underline mr-2">Foto <%= pIdx + 1 %></a>
+                    <% }) %>
+                  </div>
                 <% } %>
                 <div class="text-sm text-stone-500 mt-1">
                   RD$ <%= Number(item.lineTotal || 0).toFixed(2) %>

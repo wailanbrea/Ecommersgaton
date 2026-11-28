@@ -13,7 +13,7 @@ const { requireAdmin, redirectIfLoggedIn } = require("../middlewares/auth");
 const { attachAdminAccess } = require("../middlewares/adminAuthorization");
 const adminCsrf = require("../middlewares/adminCsrf");
 const slugify = require("../utils/slugify");
-const { normalizeFontOptions } = require("../services/engraving");
+const { normalizeFontOptions, MOON_CHARM_FONT_PRESET } = require("../services/engraving");
 
 const router = express.Router();
 
@@ -501,6 +501,19 @@ function buildHomeStepsFromBody(body = {}) {
   return steps;
 }
 
+function resolveDefaultFonts(settings = {}) {
+  if (Array.isArray(settings?.defaultFonts) && settings.defaultFonts.length) {
+    return settings.defaultFonts;
+  }
+  return MOON_CHARM_FONT_PRESET.map((f) => ({
+    name: f.name,
+    previewText: f.previewText || "Aa",
+    previewImageUrl: "",
+    fontFileUrl: "",
+    active: true
+  }));
+}
+
 function settingsFormDataFromSettings(settings = {}) {
   return {
     brandName: settings?.brandName || "",
@@ -564,7 +577,8 @@ function settingsFormDataFromSettings(settings = {}) {
     logoUrl: settings?.logoUrl || "",
     primaryFont: settings?.primaryFont || "Times New Roman",
     secondaryFont: settings?.secondaryFont || "Open Sans",
-    shippingOptions: settings?.shippingOptions || []
+    shippingOptions: settings?.shippingOptions || [],
+    defaultFonts: resolveDefaultFonts(settings)
   };
 }
 
@@ -631,18 +645,43 @@ function settingsFormDataFromBody(body = {}, req = null) {
     logoUrl: body.logoUrl || "",
     primaryFont: body.primaryFont || "Times New Roman",
     secondaryFont: body.secondaryFont || "Open Sans",
-    shippingOptions: buildShippingOptionsFromBody(body)
+    shippingOptions: buildShippingOptionsFromBody(body),
+    defaultFonts: buildFontOptionsFromBody(body, req)
   };
 }
 
+function normalizeCategoryIdsFromBody(body = {}) {
+  const raw = [
+    ...ensureArray(body.categoryIds),
+    ...ensureArray(body.categoryId)
+  ]
+    .map((val) => String(val || "").trim())
+    .filter(Boolean);
+  return Array.from(new Set(raw));
+}
+
+function normalizeGendersFromBody(body = {}) {
+  const raw = [
+    ...ensureArray(body.genders),
+    ...ensureArray(body.gender)
+  ]
+    .map((val) => normalizeGender(val))
+    .filter(Boolean);
+  return Array.from(new Set(raw));
+}
+
 function productFormDataFromBody(body = {}, req = null) {
+  const categoryIds = normalizeCategoryIdsFromBody(body);
+  const genders = normalizeGendersFromBody(body);
   return {
     name: body.name || "",
     slug: body.slug || "",
     shortDescription: body.shortDescription || "",
     description: body.description || "",
-    categoryId: body.categoryId || "",
-    gender: normalizeGender(body.gender || ""),
+    categoryId: categoryIds[0] || "",
+    categoryIds,
+    gender: genders[0] || "",
+    genders,
     tags: body.tags || "",
     basePrice: body.basePrice || 0,
     compareAtPrice: body.compareAtPrice || 0,
@@ -975,7 +1014,9 @@ router.get("/products/new", requireAdmin, async (req, res) => {
       shortDescription: "",
       description: "",
       categoryId: "",
+      categoryIds: [],
       gender: "",
+      genders: [],
       tags: "",
       basePrice: 0,
       compareAtPrice: 0,
@@ -1037,7 +1078,9 @@ router.post("/products/new", requireAdmin, upload.any(), adminCsrf.afterMultipar
       shortDescription: formData.shortDescription || "",
       description: formData.description || "",
       categoryId: formData.categoryId || "",
+      categoryIds: formData.categoryIds || [],
       gender: formData.gender || "",
+      genders: formData.genders || [],
       tags: normalizeTags(formData.tags),
       basePrice: toNumber(formData.basePrice, 0),
       compareAtPrice: toNumber(formData.compareAtPrice, 0),
@@ -1136,6 +1179,12 @@ router.get("/products/:id/edit", requireAdmin, async (req, res) => {
     error: null,
     formData: {
       ...product,
+      categoryIds: Array.isArray(product.categoryIds) && product.categoryIds.length
+        ? product.categoryIds.map(String)
+        : (product.categoryId ? [String(product.categoryId)] : []),
+      genders: Array.isArray(product.genders) && product.genders.length
+        ? product.genders.map((g) => normalizeGender(g)).filter(Boolean)
+        : (product.gender ? [normalizeGender(product.gender)].filter(Boolean) : []),
       tags: Array.isArray(product.tags) ? product.tags.join(", ") : "",
       variants: product.variants || [],
       customizationFields: product.customizationFields || [],
@@ -1189,7 +1238,9 @@ router.post("/products/:id/edit", requireAdmin, upload.any(), adminCsrf.afterMul
     existingProduct.shortDescription = formData.shortDescription || "";
     existingProduct.description = formData.description || "";
     existingProduct.categoryId = formData.categoryId || "";
+    existingProduct.categoryIds = formData.categoryIds || [];
     existingProduct.gender = formData.gender || "";
+    existingProduct.genders = formData.genders || [];
     existingProduct.tags = normalizeTags(formData.tags);
     existingProduct.basePrice = toNumber(formData.basePrice, 0);
     existingProduct.compareAtPrice = toNumber(formData.compareAtPrice, 0);
@@ -1429,6 +1480,7 @@ router.post("/settings", requireAdmin, upload.any(), adminCsrf.afterMultipart, a
     siteSettings.primaryFont = formData.primaryFont;
     siteSettings.secondaryFont = formData.secondaryFont;
     siteSettings.shippingOptions = formData.shippingOptions;
+    siteSettings.defaultFonts = formData.defaultFonts;
 
     await siteSettings.save();
 

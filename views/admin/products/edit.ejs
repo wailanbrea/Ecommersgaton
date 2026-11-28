@@ -40,27 +40,39 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-stone-700 mb-2">Categoría</label>
-            <select name="categoryId" class="w-full rounded-xl border border-stone-300 px-4 py-3">
-              <option value="">Selecciona una categoría</option>
+            <label class="block text-sm font-medium text-stone-700 mb-2">Categorías (puedes elegir varias)</label>
+            <%
+              const selectedCategoryIds = new Set(
+                (Array.isArray(formData.categoryIds) && formData.categoryIds.length ? formData.categoryIds : (formData.categoryId ? [formData.categoryId] : [])).map(String)
+              );
+            %>
+            <div class="flex flex-wrap gap-2 rounded-xl border border-stone-300 bg-stone-50 p-3">
               <% categories.forEach(category => { %>
-                <option value="<%= category._id %>" <%= String(formData.categoryId) === String(category._id) ? "selected" : "" %>>
-                  <%= category.name %>
-                </option>
+                <label class="inline-flex items-center gap-2 rounded-full border border-stone-300 bg-white px-3 py-1.5 text-sm text-stone-800 cursor-pointer hover:bg-stone-100">
+                  <input type="checkbox" name="categoryIds" value="<%= category._id %>" <%= selectedCategoryIds.has(String(category._id)) ? "checked" : "" %> class="rounded border-stone-300">
+                  <span><%= category.name %></span>
+                </label>
               <% }) %>
-            </select>
+            </div>
+            <p class="text-xs text-stone-500 mt-2">Ej. marca «Brazaletes» y «Personalizados» para que la pieza aparezca en ambas categorías.</p>
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-stone-700 mb-2">Género / público</label>
-            <select name="gender" class="w-full rounded-xl border border-stone-300 px-4 py-3">
-              <% (genderOptions || []).forEach(option => { %>
-                <option value="<%= option.value %>" <%= String(formData.gender || "") === String(option.value) ? "selected" : "" %>>
-                  <%= option.label %>
-                </option>
+            <label class="block text-sm font-medium text-stone-700 mb-2">Género / público (puedes elegir varios)</label>
+            <%
+              const selectedGenders = new Set(
+                (Array.isArray(formData.genders) && formData.genders.length ? formData.genders : (formData.gender ? [formData.gender] : [])).map(String)
+              );
+            %>
+            <div class="flex flex-wrap gap-2 rounded-xl border border-stone-300 bg-stone-50 p-3">
+              <% (genderOptions || []).filter(o => o.value).forEach(option => { %>
+                <label class="inline-flex items-center gap-2 rounded-full border border-stone-300 bg-white px-3 py-1.5 text-sm text-stone-800 cursor-pointer hover:bg-stone-100">
+                  <input type="checkbox" name="genders" value="<%= option.value %>" <%= selectedGenders.has(String(option.value)) ? "checked" : "" %> class="rounded border-stone-300">
+                  <span><%= option.label %></span>
+                </label>
               <% }) %>
-            </select>
-            <p class="text-xs text-stone-500 mt-2">Se usa para filtrar en catálogo: Hombre, Mujer, Niñ@s o Animales.</p>
+            </div>
+            <p class="text-xs text-stone-500 mt-2">Marca una o varias opciones (ej. Hombre y Mujer para piezas unisex), o déjalo vacío.</p>
           </div>
 
           <div>
@@ -201,9 +213,9 @@
         </div>
 
         <div class="mt-5 rounded-2xl border border-dashed border-stone-300 bg-stone-50 p-4">
-          <label class="block text-sm font-medium text-stone-700 mb-2">Subir nuevas imágenes/videos a la galería</label>
+          <label class="block text-sm font-medium text-stone-700 mb-2">Subir varias fotos / videos a la galería (frente, reverso, ángulos)</label>
           <input type="file" name="galleryFiles" multiple accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" class="w-full rounded-xl border border-stone-300 bg-white px-4 py-3">
-          <p class="text-xs text-stone-500 mt-2">Los archivos que subas aquí se agregarán a la galería sin borrar las URLs existentes.</p>
+          <p class="text-xs text-stone-500 mt-2">Puedes seleccionar varias imágenes a la vez (por ejemplo, fotos de cada lado de la pieza); se agregarán sin borrar las existentes.</p>
         </div>
       </section>
 
@@ -334,9 +346,12 @@
       <section>
         <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
           <h3 class="text-xl font-semibold text-stone-900">Tipografías</h3>
-          <div class="flex flex-wrap gap-2">
+          <div class="flex flex-wrap items-center gap-2">
+            <a href="/admin/settings#defaultFontsSection" target="_blank" rel="noopener" class="text-xs font-medium text-[#016B83] hover:underline mr-1">
+              Editar predeterminadas →
+            </a>
             <button type="button" id="loadPresetFontsBtn" class="rounded-xl bg-white border border-stone-300 text-stone-800 px-4 py-2 text-sm font-medium hover:bg-stone-50">
-              Cargar 10 tipografías estándar
+              Cargar tipografías predeterminadas
             </button>
             <button type="button" id="addFontBtn" class="rounded-xl bg-stone-900 text-white px-4 py-2 text-sm font-medium hover:bg-stone-800">
               Agregar tipografía
@@ -593,18 +608,39 @@
     });
 
     document.getElementById("loadPresetFontsBtn").addEventListener("click", function () {
-      const presets = ["Black Jack", "Dancing Script", "Great Vibes", "Baskerville", "Alex Brush", "Lobster", "Life Savers", "Courier New", "Impact", "Rockwell"];
+      const presets = <%- JSON.stringify(typeof defaultPresetFonts !== "undefined" ? defaultPresetFonts : []).replace(/[<>&\u2028\u2029]/g, (c) => ({ "<": "\\u003c", ">": "\\u003e", "&": "\\u0026", "\u2028": "\\u2028", "\u2029": "\\u2029" })[c]) %>;
       const existing = new Set(
         Array.from(document.querySelectorAll('#fontsContainer input[name="fontName"]'))
           .map(function (el) { return (el.value || "").trim().toLowerCase(); })
           .filter(Boolean)
       );
-      presets.forEach(function (presetName) {
-        if (existing.has(presetName.toLowerCase())) return;
+      presets.forEach(function (preset) {
+        const presetName = String(preset?.name || "").trim();
+        if (!presetName || existing.has(presetName.toLowerCase())) return;
         const template = document.getElementById("fontTemplate");
         const clone = template.content.cloneNode(true);
         const nameInput = clone.querySelector('input[name="fontName"]');
+        const previewInput = clone.querySelector('input[name="fontPreviewText"]');
+        const fontFileHidden = clone.querySelector('input[name="fontFileUrl"]');
+        const previewImgHidden = clone.querySelector('input[name="fontPreviewImageUrl"]');
+        const activeCheckbox = clone.querySelector('input[type="checkbox"][name="fontActive"]');
         if (nameInput) nameInput.value = presetName;
+        if (previewInput && preset.previewText) previewInput.value = preset.previewText;
+        if (fontFileHidden && preset.fontFileUrl) {
+          fontFileHidden.value = preset.fontFileUrl;
+          const note = document.createElement("p");
+          note.className = "text-xs text-stone-500 mt-2";
+          note.textContent = "Fuente actual: " + preset.fontFileUrl;
+          fontFileHidden.parentElement.appendChild(note);
+        }
+        if (previewImgHidden && preset.previewImageUrl) {
+          previewImgHidden.value = preset.previewImageUrl;
+          const note = document.createElement("p");
+          note.className = "text-xs text-stone-500 mt-2";
+          note.textContent = "Imagen actual: " + preset.previewImageUrl;
+          previewImgHidden.parentElement.appendChild(note);
+        }
+        if (activeCheckbox) activeCheckbox.checked = preset.active !== false;
         document.getElementById("fontsContainer").appendChild(clone);
       });
       refreshUploadIndexes();

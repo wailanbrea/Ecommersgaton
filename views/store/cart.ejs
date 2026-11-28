@@ -69,9 +69,17 @@
                         <p class="text-sm text-stone-500 mt-1">Adicional de personalización: RD$ <%= Number(item.customizationSurcharge).toFixed(2) %></p>
                       <% } %>
 
-                      <% if (item.customizationPhotoUrl) { %>
+                      <%
+                        const cartPhotos = Array.isArray(item.customizationPhotoUrls) && item.customizationPhotoUrls.length
+                          ? item.customizationPhotoUrls
+                          : (item.customizationPhotoUrl ? [item.customizationPhotoUrl] : []);
+                      %>
+                      <% if (cartPhotos.length) { %>
                         <p class="text-sm text-stone-500 mt-2">
-                          Foto cargada para fotograbado: <a href="<%= item.customizationPhotoUrl %>" target="_blank" class="text-[#016B83] underline">ver imagen</a>
+                          Fotos cargadas para fotograbado (<%= cartPhotos.length %>):
+                          <% cartPhotos.forEach(function(url, pIdx) { %>
+                            <a href="<%= url %>" target="_blank" class="text-[#016B83] underline mr-2">Foto <%= pIdx + 1 %></a>
+                          <% }) %>
                         </p>
                       <% } %>
 
