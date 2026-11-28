@@ -300,6 +300,7 @@ function buildCustomizationFieldsFromBody(body) {
   const labels = ensureArray(body.customLabel);
   const placeholders = ensureArray(body.customPlaceholder);
   const requireds = ensureArray(body.customRequired);
+  const allowPhotos = ensureArray(body.customAllowPhoto);
   const maxLengths = ensureArray(body.customMaxLength);
   const priceDeltas = ensureArray(body.customPriceDelta);
 
@@ -308,12 +309,13 @@ function buildCustomizationFieldsFromBody(body) {
     labels.length,
     placeholders.length,
     requireds.length,
-    maxLengths.length
-    ,priceDeltas.length
+    maxLengths.length,
+    priceDeltas.length
   );
 
   const fields = [];
   let requiredIndex = 0;
+  let photoIndex = 0;
 
   for (let i = 0; i < maxLength; i++) {
     const key = String(keys[i] || "").trim();
@@ -330,11 +332,22 @@ function buildCustomizationFieldsFromBody(body) {
       requiredIndex += 1;
     }
 
+    const photoValue = String(allowPhotos[photoIndex] ?? "");
+    let allowPhoto = photoValue === "" ? true : photoValue === "true";
+    if (photoValue !== "") {
+      photoIndex += 1;
+      if (photoValue === "false" && String(allowPhotos[photoIndex] || "") === "true") {
+        allowPhoto = true;
+        photoIndex += 1;
+      }
+    }
+
     fields.push({
       key,
       label,
       placeholder,
       required,
+      allowPhoto,
       maxLength: toNumber(maxLengths[i], 100),
       priceDeltaMinor: parseCustomizationPriceDeltaMinor(priceDeltas[i])
     });
@@ -694,6 +707,7 @@ function productFormDataFromBody(body = {}, req = null) {
     hasVariants: toBoolean(body.hasVariants),
     hasCustomization: toBoolean(body.hasCustomization),
     allowPhotoCustomization: toBoolean(body.allowPhotoCustomization),
+    allowPhotoPerField: toBoolean(body.allowPhotoPerField),
     variants: buildVariantsFromBody(body, req),
     customizationFields: buildCustomizationFieldsFromBody(body),
     fontOptions: buildFontOptionsFromBody(body, req),
@@ -1029,6 +1043,7 @@ router.get("/products/new", requireAdmin, async (req, res) => {
       hasVariants: false,
       hasCustomization: false,
       allowPhotoCustomization: false,
+      allowPhotoPerField: false,
       variants: [],
       customizationFields: [],
       fontOptions: [],
@@ -1093,6 +1108,7 @@ router.post("/products/new", requireAdmin, upload.any(), adminCsrf.afterMultipar
       hasVariants: formData.hasVariants,
       hasCustomization: formData.hasCustomization,
       allowPhotoCustomization: formData.allowPhotoCustomization,
+      allowPhotoPerField: formData.allowPhotoPerField,
       variants: formData.variants,
       customizationFields: formData.customizationFields,
       fontOptions: formData.fontOptions,
@@ -1253,6 +1269,7 @@ router.post("/products/:id/edit", requireAdmin, upload.any(), adminCsrf.afterMul
     existingProduct.hasVariants = formData.hasVariants;
     existingProduct.hasCustomization = formData.hasCustomization;
     existingProduct.allowPhotoCustomization = formData.allowPhotoCustomization;
+    existingProduct.allowPhotoPerField = formData.allowPhotoPerField;
     existingProduct.variants = formData.variants;
     existingProduct.customizationFields = formData.customizationFields;
     existingProduct.fontOptions = formData.fontOptions;

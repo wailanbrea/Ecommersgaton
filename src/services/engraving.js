@@ -49,12 +49,15 @@ const FONT_SAMPLE_STYLES = new Map([
 function engravingOptions(product) {
   const enabled = Boolean(product.hasCustomization);
   const photo = enabled && Boolean(product.allowPhotoCustomization);
+  const photoPerField = photo && Boolean(product.allowPhotoPerField);
   const configuredFields = enabled && Array.isArray(product.customizationFields) ? product.customizationFields : [];
   const fields = configuredFields
     .map((field, index) => ({
       ...field,
       inputName: `engraving_${index}`,
       fontInputName: configuredFields.length === 1 ? "engravingFont" : `engravingFont_${index}`,
+      photoInputName: `customizationPhoto_${index}`,
+      allowPhoto: photoPerField ? field?.allowPhoto !== false : false,
       label: String(field?.label || field?.key || "").trim(),
       maxLength: Math.min(500, Math.max(1, Math.trunc(Number(field?.maxLength) || 100))),
       priceDeltaMinor: normalizePriceDeltaMinor(field?.priceDeltaMinor)
@@ -71,6 +74,7 @@ function engravingOptions(product) {
     });
   return {
     photo,
+    photoPerField,
     fields,
     fonts,
     unavailable: enabled && ((!fields.length && !photo) || (fields.length > 0 && !fonts.length) || fields.some((field) => field.priceDeltaMinor === null))

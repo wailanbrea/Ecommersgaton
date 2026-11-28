@@ -297,12 +297,19 @@
 
         <p class="text-sm text-stone-600 mb-4">Para joyas con varias caras, agrega un campo por cada una y nómbralo, por ejemplo, “Grabado frontal” y “Grabado posterior”. El cliente tendrá una vista previa independiente para cada texto.</p>
 
-        <div class="mb-5 rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
+        <div class="mb-5 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 space-y-3">
           <label class="flex items-start gap-3 cursor-pointer">
             <input type="checkbox" name="allowPhotoCustomization" id="allowPhotoCustomizationCheckbox" <%= formData.allowPhotoCustomization ? "checked" : "" %> class="mt-1 rounded border-stone-300">
             <span>
-              <strong class="block text-sm font-semibold text-stone-900">Permitir carga de imágenes del cliente (Fotograbado: miradas, fotos, diseños)</strong>
-              <span class="block text-xs text-stone-600 mt-0.5">Habilita en la tienda la casilla para que el cliente adjunte hasta 6 fotos (JPG, PNG o WEBP) con vista previa, ideal para grabados de miradas, retratos o una imagen por cada lado de la joya.</span>
+              <strong class="block text-sm font-semibold text-stone-900">Permitir carga de imagen del cliente (Fotograbado: miradas, fotos, diseños)</strong>
+              <span class="block text-xs text-stone-600 mt-0.5">Habilita en la tienda el recuadro “Añadir archivo” (JPG, PNG o WEBP) con vista previa.</span>
+            </span>
+          </label>
+          <label class="flex items-start gap-3 cursor-pointer pl-7 pt-2 border-t border-amber-200/80">
+            <input type="checkbox" name="allowPhotoPerField" id="allowPhotoPerFieldCheckbox" <%= formData.allowPhotoPerField ? "checked" : "" %> class="mt-1 rounded border-stone-300">
+            <span>
+              <strong class="block text-sm font-semibold text-stone-900">Pedir 1 imagen por cada lado / campo</strong>
+              <span class="block text-xs text-stone-600 mt-0.5">Si está activo, cada lado (ej. Grabado Exterior e Interior) tendrá su propio botón “Añadir archivo” (y puedes activar/desactivar la foto en cada lado). Si lo dejas desmarcado, pedirá 1 sola imagen general para toda la pieza.</span>
             </span>
           </label>
         </div>
@@ -334,11 +341,16 @@
                     <p class="mt-1 text-xs text-stone-500">Se suma solo cuando el cliente completa este campo. Usa 0 para incluirlo.</p>
                   </div>
                   <div class="flex items-end">
-                    <div class="flex items-center gap-3">
-                      <label class="inline-flex items-center gap-3">
+                    <div class="flex flex-wrap items-center gap-5">
+                      <label class="inline-flex items-center gap-2.5">
                         <input type="hidden" name="customRequired" value="false">
                         <input type="checkbox" name="customRequired" value="true" <%= field.required ? "checked" : "" %>>
                         <span class="text-sm">Obligatorio</span>
+                      </label>
+                      <label class="inline-flex items-center gap-2.5">
+                        <input type="hidden" name="customAllowPhoto" value="false">
+                        <input type="checkbox" name="customAllowPhoto" value="true" <%= field.allowPhoto !== false ? "checked" : "" %>>
+                        <span class="text-sm">Permitir imagen en este lado</span>
                       </label>
                     </div>
                   </div>
@@ -528,11 +540,18 @@
           <p class="mt-1 text-xs text-stone-500">Se suma solo cuando el cliente completa este campo. Usa 0 para incluirlo.</p>
         </div>
         <div class="flex items-end">
-          <label class="inline-flex items-center gap-3">
-            <input type="hidden" name="customRequired" value="false">
-            <input type="checkbox" name="customRequired" value="true">
-            <span class="text-sm">Obligatorio</span>
-          </label>
+          <div class="flex flex-wrap items-center gap-5">
+            <label class="inline-flex items-center gap-2.5">
+              <input type="hidden" name="customRequired" value="false">
+              <input type="checkbox" name="customRequired" value="true">
+              <span class="text-sm">Obligatorio</span>
+            </label>
+            <label class="inline-flex items-center gap-2.5">
+              <input type="hidden" name="customAllowPhoto" value="false">
+              <input type="checkbox" name="customAllowPhoto" value="true" checked>
+              <span class="text-sm">Permitir imagen en este lado</span>
+            </label>
+          </div>
         </div>
       </div>
       <div class="mt-4">

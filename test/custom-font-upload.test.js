@@ -119,3 +119,67 @@ test("product-detail.ejs emite @font-face y muestra selector de tipografía visi
   assert.match(html, /data-font-group-for="engraving_1">/);
   assert.doesNotMatch(html, /data-font-group-for="engraving_1"\s+hidden/);
 });
+
+test("engravingOptions y product-detail.ejs soportan 1 imagen por lado o 1 imagen general con boton Añadir archivo", () => {
+  const viewPath = path.join(__dirname, "..", "views", "store", "product-detail.ejs");
+  const template = fs.readFileSync(viewPath, "utf8");
+  const product = {
+    name: "Brazalete Foto",
+    slug: "brazalete-foto",
+    basePrice: 1200,
+    compareAtPrice: 0,
+    mainImageUrl: "/images/test.jpg",
+    gallery: [],
+    hasVariants: false,
+    variants: [],
+    hasCustomization: true,
+    allowPhotoCustomization: true,
+    allowPhotoPerField: true,
+    customizationFields: [
+      { key: "frente", label: "Frente", maxLength: 20, required: true, allowPhoto: true },
+      { key: "reverso", label: "Reverso", maxLength: 20, required: false, allowPhoto: false }
+    ],
+    fontOptions: [{ name: "Dancing Script", previewText: "Aa", active: true }]
+  };
+
+  const engraving = engravingOptions(product);
+  assert.equal(engraving.photoPerField, true);
+  assert.equal(engraving.fields[0].allowPhoto, true);
+  assert.equal(engraving.fields[1].allowPhoto, false);
+
+  const html = ejs.render(template, {
+    filename: viewPath,
+    product,
+    category: null,
+    engraving,
+    defaultImage: product.mainImageUrl,
+    defaultPrice: 1200,
+    defaultCompareAt: 0,
+    defaultStock: 5,
+    defaultVariantIndex: null,
+    productUnavailable: false,
+    cartAdded: false,
+    stockLimited: false,
+    stockUnavailable: false,
+    engravingInvalid: false,
+    engravingUploadInvalid: false,
+    initialWhatsAppUrl: "https://wa.me/18090000000",
+    reviews: [],
+    reviewSubmitted: false,
+    reviewInvalid: false,
+    reviewError: false,
+    relatedProducts: [],
+    siteSettings: { brandName: "GATON DO", menuItems: [] },
+    cartCount: 0,
+    currentPath: "/product/brazalete-foto",
+    safePublicUrl: (u) => u,
+    isVariantUnavailable: () => false,
+    getVariantStock: () => 5
+  });
+
+  assert.match(html, /name="customizationPhoto_0"/);
+  assert.doesNotMatch(html, /name="customizationPhoto_1"/);
+  assert.doesNotMatch(html, /name="customizationPhoto"/);
+  assert.match(html, /Añadir archivo/);
+  assert.match(html, /No grabamos imágenes de baja calidad, en blanco y negro o pixeladas\./);
+});

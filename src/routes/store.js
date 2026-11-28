@@ -107,11 +107,14 @@ const customizationUpload = multer({
   storage: multer.memoryStorage(),
   limits: {
     fileSize: CUSTOMIZATION_UPLOAD_MAX_SIZE_MB * 1024 * 1024,
-    files: 6,
+    files: 25,
     fields: 100,
     fieldSize: 8192
   },
   fileFilter(req, file, cb) {
+    if (file.fieldname !== "customizationPhoto" && !/^customizationPhoto_\d+$/.test(String(file.fieldname || ""))) {
+      return cb(new Error("Campo de archivo no permitido."));
+    }
     if (!CUSTOMIZATION_ALLOWED_UPLOAD_TYPES.has(file.mimetype)) {
       return cb(new Error("Tipo de archivo no permitido. Usa JPG, PNG o WEBP."));
     }
@@ -119,7 +122,7 @@ const customizationUpload = multer({
   }
 });
 
-const parseCustomization = customizationUpload.array("customizationPhoto", 6);
+const parseCustomization = customizationUpload.any();
 
 function findVariantIndex(product, item) {
   if (!product.hasVariants || !Array.isArray(product.variants)) return -1;
@@ -789,12 +792,26 @@ router.post("/product/:slug/add-to-cart", (req, res, next) => {
       : (req.file ? [req.file] : []);
     if (uploadedPhotoFiles.length && !options.photo) return res.redirect(`/product/${product.slug}?engraving=invalid`);
 
-    const normalizedPhotos = [];
+    const groupedPhotoFiles = new Map();
     for (const photoFile of uploadedPhotoFiles) {
-      try {
-        normalizedPhotos.push(await normalizeCustomizationImage(photoFile.buffer, photoFile.mimetype));
-      } catch {
+      const fieldKey = String(photoFile.fieldname || "customizationPhoto");
+      const list = groupedPhotoFiles.get(fieldKey) || [];
+      if (list.length >= 1) {
         return res.redirect(`/product/${product.slug}?engraving=photo`);
+      }
+      list.push(photoFile);
+      groupedPhotoFiles.set(fieldKey, list);
+    }
+
+    const normalizedPhotoEntries = [];
+    for (const [fieldKey, filesList] of groupedPhotoFiles.entries()) {
+      for (const photoFile of filesList) {
+        try {
+          const norm = await normalizeCustomizationImage(photoFile.buffer, photoFile.mimetype);
+          normalizedPhotoEntries.push({ fieldKey, norm });
+        } catch {
+          return res.redirect(`/product/${product.slug}?engraving=photo`);
+        }
       }
     }
 
@@ -849,12 +866,24 @@ router.post("/product/:slug/add-to-cart", (req, res, next) => {
     const customizationSummary = engraving.summary;
     const fontName = engraving.fontName;
     const fontSelections = engraving.fontSelections;
-    const photoFilesToWrite = normalizedPhotos.map((photo) => ({
-      filename: crypto.randomUUID() + photo.extension,
-      buffer: photo.buffer
+    const photoFilesToWrite = normalizedPhotoEntries.map(({ fieldKey, norm }) => ({
+      fieldKey,
+      filename: crypto.randomUUID() + norm.extension,
+      buffer: norm.buffer
     }));
     const customizationPhotoUrls = photoFilesToWrite.map((entry) => `/customization-assets/${entry.filename}`);
     const customizationPhotoUrl = customizationPhotoUrls[0] || "";
+    const customizationPhotosByField = [];
+    if (options.photoPerField) {
+      options.fields.forEach((f) => {
+        const urls = photoFilesToWrite
+          .filter((entry) => entry.fieldKey === f.photoInputName)
+          .map((entry) => `/customization-assets/${entry.filename}`);
+        if (urls.length) {
+          customizationPhotosByField.push({ key: f.key || f.inputName, label: f.label, urls });
+        }
+      });
+    }
 
     const cart = getSessionCart(req);
 
@@ -862,7 +891,7 @@ router.post("/product/:slug/add-to-cart", (req, res, next) => {
       String(product._id),
       selectedVariant?.label || selectedVariant?.optionValue || "",
       product.hasCustomization ? crypto.createHash("sha256")
-        .update(JSON.stringify([product.variants?.indexOf(selectedVariant), engraving.fields, fontName, customizationPhotoUrls])).digest("hex") : "",
+        .update(JSON.stringify([product.variants?.indexOf(selectedVariant), engraving.fields, fontName, customizationPhotoUrls, customizationPhotosByField])).digest("hex") : "",
       "",
       ""
     ].join("__");
@@ -885,6 +914,7 @@ router.post("/product/:slug/add-to-cart", (req, res, next) => {
       if (customizationPhotoUrls.length) {
         cart[existingIndex].customizationPhotoUrl = customizationPhotoUrl;
         cart[existingIndex].customizationPhotoUrls = customizationPhotoUrls;
+        cart[existingIndex].customizationPhotosByField = customizationPhotosByField;
       }
     } else {
       const quantity = Math.min(finalQuantityToAdd, availableStock);
@@ -910,6 +940,7 @@ router.post("/product/:slug/add-to-cart", (req, res, next) => {
         engravingFields: engraving.fields,
         customizationPhotoUrl,
         customizationPhotoUrls,
+        customizationPhotosByField,
         fontName,
         fontSelections
       });
@@ -1091,6 +1122,7 @@ router.post("/checkout", async (req, res) => {
       customizationPhotoUrls: Array.isArray(item.customizationPhotoUrls) && item.customizationPhotoUrls.length
         ? item.customizationPhotoUrls
         : (item.customizationPhotoUrl ? [item.customizationPhotoUrl] : []),
+      customizationPhotosByField: Array.isArray(item.customizationPhotosByField) ? item.customizationPhotosByField : [],
       fontName: item.fontName || ""
     }));
     const createdOrderId = await createOrderAndDecrementStock({
