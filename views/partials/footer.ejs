@@ -17,9 +17,9 @@
 
 <footer class="ref10-footer">
   <div class="ref10-footer-inner">
-    <div class="ref10-footer-brand">
-      <a href="/" aria-label="<%= footerBrand %>"><img src="<%= safePublicUrl(siteSettings?.footerLogoUrl, '/images/logo-gatondo-white.png?v=2026-logos') %>" alt="<%= footerBrand %>"></a>
-      <p><%= footer10Text(siteSettings?.slogan || siteSettings?.footerSlogan, "Joyas con intención. Hechas a mano en República Dominicana.") %></p>
+    <div class="ref10-footer-brand" style="display:flex;flex-direction:column;align-items:center;text-align:center;">
+      <a href="/" aria-label="<%= footerBrand %>" style="display:inline-flex;justify-content:center;"><img src="<%= safePublicUrl(siteSettings?.footerLogoUrl, '/images/logo-gatondo-white.png?v=2026-logos') %>" alt="<%= footerBrand %>" style="margin-left:auto;margin-right:auto;"></a>
+      <p style="margin-left:auto;margin-right:auto;text-align:center;"><%= footer10Text(siteSettings?.slogan || siteSettings?.footerSlogan, "Joyas con intención. Hechas a mano en República Dominicana.") %></p>
     </div>
 
     <nav class="ref10-footer-col" aria-label="Tienda">
